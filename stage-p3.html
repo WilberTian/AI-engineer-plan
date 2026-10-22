@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="P3 Agent 运行时（W10–W13）：读 harness 源码、上下文压缩、持久化与恢复、审批、MCP、可观测性。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="P3 Agent 运行时（W10–W13）：读 harness 源码、上下文压缩、持久化与恢复、审批、MCP、可观测性。">
+<title>P3 · Agent 运行时（harness） · W10–W13</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>P3 · W10–W13</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html">P2</a>
+      <a href="stage-p3.html" class="on">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html">P5</a>
+      <a href="stage-p6.html">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="txtbtn" id="expandAll" type="button" aria-expanded="false">全部展开</button>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html">总览与日历</a>
+      <a href="stage-p2.html">← P2 检索与上下文</a>
+    </nav>
+    <h4>W10 · 读懂 harness</h4>
+    <nav>
+      <a href="#w10" class="on">本周目标</a>
+      <a href="#p3-1">1 读源码的四步法</a>
+      <a href="#p3-2">2 s01–s03 对照</a>
+      <a href="#p3-3">3 s04–s06 对照</a>
+    </nav>
+    <h4>W11 · 上下文与恢复</h4>
+    <nav>
+      <a href="#w11">本周目标</a>
+      <a href="#p3-4">4 s07–s09</a>
+      <a href="#p3-5">5 s10–s12</a>
+      <a href="#p3-6">6 压缩策略对照表</a>
+    </nav>
+    <h4>W12 · 持久化与审批</h4>
+    <nav>
+      <a href="#w12">本周目标</a>
+      <a href="#p3-7">7 checkpoint + resume</a>
+      <a href="#p3-8">8 人工审批点</a>
+    </nav>
+    <h4>W13 · MCP 与 trace</h4>
+    <nav>
+      <a href="#w13">本周目标</a>
+      <a href="#p3-9">9 写一个 MCP server</a>
+      <a href="#p3-10">10 客户端接入与权限</a>
+      <a href="#p3-11">11 全链路 trace</a>
+    </nav>
+    <nav style="margin-top:14px">
+      <a href="#selftest">闭卷自测</a>
+      <a href="#done">交付物清单</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
+  </aside>
+
+  <main>
+    <div class="phasehead">
+      <div class="ph-tag">P3 · Week 10–13 · 12/28–01/24</div>
+      <h2>Agent 运行时：从「能跑一次」到「能跑很久」</h2>
+      <p><b>目标：</b>把你的 loop 升级成 harness——能中断恢复、能压缩上下文、能审批危险动作、能被完整观测。</p>
+      <p>这一阶段你不需要从零发明任何东西：本地 <code>repos/learn-claude-code</code>（s01–s20）和 <code>repos/claw0</code>（10 节）已经把这些拆成了可读的积木。<b>你的任务是读懂、删减、并说清为什么删。</b></p>
+      <div class="deliv">
+        <span>可恢复的 harness</span>
+        <span>压缩策略对照表</span>
+        <span>一个 MCP server</span>
+        <span>全链路 trace</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>先看清这两个仓库是什么</b>
+      <p><code>learn-claude-code</code>：s01–s20，每节一个 <code>code.py</code> + 中文 README，从 loop 一路到 agent teams / worktree / MCP。<b>教学向</b>，代码短、概念清晰，适合「逐节对照自己的实现」。<br>
+      <code>claw0</code>：10 节，每节一个可运行 Python 文件，从 loop 走到 gateway（sessions / channels / routing / heartbeat / delivery queue / 重试洋葱 / 并发）。<b>生产向</b>，适合看「真实的工程约束长什么样」。<br>
+      <code>claw0</code> 的中文文档在 <code>sessions/zh/</code>。</p>
+    </div>
+
+    <!-- ============ W10 ============ -->
+    <h2 id="w10"><span class="num">W10</span>读懂 harness：先把「为什么需要」搞清楚</h2>
+    <p class="lead">12/28–01/03 · 这一周不写新功能，只做一件事：把每节代码和自己的 P1 实现对照，找出「它多做了什么、为什么值得做」。</p>
+
+    <details class="task" open id="p3-1">
+      <summary>
+        <span class="tid">P3-1</span>
+        <span class="tname">读源码的四步法（每节 30 分钟，别用别的方式）</span>
+        <span class="tmin">本周通用</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：直接读代码会「看懂每一行但不知道它在解决什么」。四步法是反过来的：<b>先跑出行为，再回头找实现</b>。这样你记住的是「问题 → 方案」，不是「代码长什么样」。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:44px">步</th><th>动作</th><th>时长</th><th>产出</th></tr></thead>
+            <tbody>
+              <tr><td><b>1</b></td><td><b>跑起来</b>。按 README 跑通这一节，观察它比上一节多了什么行为（比如 s03 会问你「允许执行这个命令吗」）</td><td>5min</td><td>一句话：「这节新加的行为是 ___」</td></tr>
+              <tr><td><b>2</b></td><td><b>画调用图</b>。纸笔或文本框，画出「用户输入 → … → 输出」经过哪几个函数。<b>不许看代码画</b>，看行为画，然后再对着代码修正</td><td>10min</td><td>一张 6–10 个框的图</td></tr>
+              <tr><td><b>3</b></td><td><b>找到最小改动</b>。和上一节的 <code>code.py</code> 做 diff（<code>diff s02_tool_use/code.py s03_permission/code.py</code>），看它加了哪几行。added lines 通常不超过 30 行</td><td>10min</td><td>「核心是这 N 行，因为 ___」</td></tr>
+              <tr><td><b>4</b></td><td><b>回答三个问题</b>：解决了什么故障？代价是什么？什么时候不该用？</td><td>5min</td><td>三句话进 <code>notes/harness.md</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>笔记模板（每节一段，照抄格式）</h5>
+<pre><code>### s03_permission
+- 解决什么故障：模型自己决定执行 `rm -rf`，没有拦截点
+- 怎么实现：在 tool dispatch 前插一个 check，返回 (allow, reason)
+- 代价：每个工具都要声明风险等级；用户会被频繁打断
+- 什么时候不该用：纯只读工具集（查天气、查文档），加了只是噪音
+- 和我 P1 的 loop 差在哪：我的 loop 直接调用 tool.fn()，没有前置检查点</code></pre>
+
+        <div class="out"><b>产物</b><code>notes/harness.md</code>，每节一段五行</div>
+        <div class="verify"><b>验收</b>每一节的「代价」和「什么时候不该用」都写了。<b>只写「解决了什么」= 没读懂</b>——因为任何设计都有代价，说不出代价说明你在背。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「跑不起来」</b>：看 <code>requirements.txt</code>，用 <code>uv pip install -r requirements.txt</code> 到一个独立 venv。别污染 agentlab 的环境。</li>
+            <li><b>「改不动，一改就崩」</b>：这正是第 3 步的价值。先只读 diff，不改代码。等 W12 你要自己实现时才改自己的。</li>
+            <li><b>「代码风格不熟，看得很慢」</b>：这节代码量通常 100–300 行。设个 30 分钟闹钟，到点就写你已经理解的部分，剩下的标记「待回看」，别陷进去。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p3-2">
+      <summary>
+        <span class="tid">P3-2</span>
+        <span class="tname">s01–s03：loop / tool / permission（对照你的 P1）</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这三节你已经在 P1 手写过了。所以重点不是学，是<b>比对差异</b>——差异处就是你没考虑到的地方，也是最容易被面试问倒的地方。</div>
+
+        <h5>逐节对照表（填完这张表，W10 就完成一半）</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:130px">节</th><th>它在做什么</th><th>我的 P1 实现</th><th>差异说明什么</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>s01_agent_loop</code></td>
+                <td>while + stop_reason 的最小循环</td>
+                <td><code>loop.py</code> 的 for + 三个停止条件</td>
+                <td>我用 <code>for range(max_steps)</code>，它用 <code>while</code> + 显式 <code>stop_reason</code>。后者更容易在「模型主动停止 / 达到上限 / 被中断」之间区分——这个区分在持久化时很关键</td>
+              </tr>
+              <tr>
+                <td><code>s02_tool_use</code></td>
+                <td>dispatch table：名字 → 函数</td>
+                <td><code>Registry._tools</code> 字典</td>
+                <td>基本相同。但我多了一层 <code>ToolResult</code>（ok/content/meta）——它的做法是直接把字符串返回。我的更好还是更啰嗦？想清楚</td>
+              </tr>
+              <tr>
+                <td><code>s03_permission</code></td>
+                <td>工具执行前的检查点，可拒绝</td>
+                <td><b>没有</b></td>
+                <td>这是真实差距。我的 loop 无条件执行任何工具调用。危险工具（写文件、发请求、执行 SQL）必须有闸门</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>s03 的一个关键设计，值得单独想 5 分钟</b>
+          <p>权限检查放在<b>工具执行前</b>，而不是放在 prompt 里说「不要执行危险操作」。区别是：prompt 是建议（模型可以不听），代码是强制（不听就跑不下去）。<b>凡是有外部副作用的动作，规则必须写在代码里。</b>这句话在 P4 的安全部分还会出现，现在先记住。</p>
+        </div>
+
+        <div class="out"><b>产物</b>对照表填完 + <code>notes/harness.md</code> 里 s01–s03 三段</div>
+        <div class="verify"><b>验收</b>能说出「s03 的检查点应该插在我 loop.py 的哪一行之前」，并说明为什么不能插在 tool.fn 里面（提示：插在里面就没有统一的拦截点，每个工具都要自己实现一遍）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「觉得我的实现更好」</b>：可能确实。写下来「我的好在哪、代价是什么」。这种判断力比照抄更有价值，面试时也能讲。</li>
+            <li><b>「diff 出来改动太大」</b>：只看 <code>s03</code> 里新增的函数和它在主循环里的调用点，其他忽略。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-3">
+      <summary>
+        <span class="tid">P3-3</span>
+        <span class="tname">s04–s06：hooks / todo / subagent</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这三节对应三种「不改变循环结构但改变能力」的扩展方式。理解它们，你就理解了为什么成熟的 harness 是「一个小核心 + 一堆钩子」，而不是「一个大而全的循环」。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:150px">节</th><th>解决什么</th><th>实现要点</th><th>代价 / 何时不该用</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>s04_hooks</code></td>
+                <td>在固定时机插入外部逻辑（工具调用前/后、会话开始/结束），不用改主循环</td>
+                <td>定义事件名 + 注册回调 + 按顺序执行；回调能拿到上下文、能阻断</td>
+                <td>钩子之间有隐式顺序依赖，多了就很难排查「到底谁改的」；纯内部脚本不需要</td>
+              </tr>
+              <tr>
+                <td><code>s05_todo_write</code></td>
+                <td>让 agent 显式维护待办，长任务不丢步骤</td>
+                <td>一个 <code>todo_write</code> 工具 + 强制在 system prompt 里要求先写待办；状态存在会话里</td>
+                <td>短任务（&lt;3 步）加了只是噪音；待办本身会占上下文</td>
+              </tr>
+              <tr>
+                <td><code>s06_subagent</code></td>
+                <td>把「翻找大量信息」这种脏活隔离到独立上下文，只把结论带回主线程</td>
+                <td>子 agent 有独立 messages 数组和独立预算；返回结构化摘要而非全文</td>
+                <td>子 agent 看不到主线程上下文，容易重复劳动；调试变成两层，trace 必须能串起来</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>动手：给 subagent 做一个「上下文节省」测量</h5>
+        <p>这是最容易被忽略但最能体现工程判断的实验：</p>
+<pre><code><span class="cmt"># 场景：让 agent 在 20 个文件里找某个配置项</span>
+<span class="cmt"># A 方案：主 agent 逐个 read_file（20 次工具调用，结果全进主上下文）</span>
+<span class="cmt"># B 方案：主 agent 派一个 subagent，subagent 内部读 20 个文件，只回一句结论</span>
+
+<span class="cmt"># 记录三个数：</span>
+<span class="cmt"># 1. 主线程最终 prompt_tokens（决定成本和后续每轮延迟）</span>
+<span class="cmt"># 2. 总调用次数（决定总耗时）</span>
+<span class="cmt"># 3. 结论正确性</span></code></pre>
+
+        <p>预期结果：B 方案主线程 token 少很多（可能只有 1/10），但总调用次数和耗时可能更高。这个权衡就是「subagent 什么时候值得用」的答案。</p>
+
+        <div class="out"><b>产物</b><code>notes/harness.md</code> 里 s04–s06 三段 + subagent 测量数据</div>
+        <div class="verify"><b>验收</b>能回答「什么任务该拆 subagent，什么不该」。判据应该是「子任务的信息量是否远大于它的结论」——是就拆，不是就别拆。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>不想实现 subagent</b>：这周只要求读懂，不要求实现。W12 也不做 subagent（那是 P4 之后的事）。把测量做成「纸面推算」也可以——但要算出具体 token 数。</li>
+            <li><b>hooks 看不出价值</b>：想一个具体需求——「每次工具调用都记一条审计日志，但不想改工具实现」，这就是 hooks 的典型场景。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W11 ============ -->
+    <h2 id="w11"><span class="num">W11</span>上下文、记忆、错误恢复</h2>
+    <p class="lead">01/04–01/10 · 这一周的主题是「长任务为什么活不下来」。四个原因：上下文爆了、忘了关键约束、出错了不会绕、任务状态没地方存。</p>
+
+    <details class="task" open id="p3-4">
+      <summary>
+        <span class="tid">P3-4</span>
+        <span class="tname">s07–s09：skill 加载 / 上下文压缩 / 记忆</span>
+        <span class="tmin">周六 2.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：s08（compact）是整个仓库最值钱的一节。所有长任务 agent 都绕不开「上下文总会满」这个物理事实，而压缩策略的选择直接决定「长任务能不能不迷失」。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:150px">节</th><th>解决什么</th><th>实现要点</th><th>关键判断</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>s07_skill_loading</code></td>
+                <td>能力按需加载，而不是全塞进 system prompt</td>
+                <td>先只给「技能名 + 一句话描述」，模型认为需要时才加载完整内容</td>
+                <td>什么时候该拆成技能：内容超过 ~2000 token 且不是每次都用</td>
+              </tr>
+              <tr>
+                <td><code>s08_context_compact</code></td>
+                <td>接近窗口上限时压缩历史</td>
+                <td>触发阈值（如 80%）→ 保留最近 N 轮 + 摘要旧轮 → 拼接；摘要要保留约束/结论/待办</td>
+                <td><b>压缩会丢信息，一定要丢得可控</b>。哪些不能丢见下</td>
+              </tr>
+              <tr>
+                <td><code>s09_memory</code></td>
+                <td>跨会话保留用户偏好和项目事实</td>
+                <td>抽取 → 存储（文件/DB）→ 检索 → 注入；写入要有触发条件和去重</td>
+                <td>记忆是「全局上下文污染」的高发区：写错一条会影响之后所有会话</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>读 s08 时重点看这四行逻辑</h5>
+        <p>不用看全部代码，找到这四个决策点就够了：</p>
+        <ol>
+          <li><b>触发条件</b>：按 token 数还是按轮数？按 token 更准，但需要每次都统计。</li>
+          <li><b>保留什么</b>：通常保留最近 K 轮原文 + 系统提示 + 第一条用户消息（原始目标最容易被压丢）。</li>
+          <li><b>摘要用什么模型</b>：用同一个贵模型是浪费，用小模型可能丢关键细节。多数人用便宜的。</li>
+          <li><b>压缩后怎么衔接</b>：直接替换？还是插入一条「以下是之前对话的摘要」？后者模型更容易接上。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/harness.md</code> 里 s07–s09 三段，s08 那段要写清上面四个决策点各自的做法</div>
+        <div class="verify"><b>验收</b>能说出「压缩时绝对不能丢的四样东西」（用户约束、已确认结论、未完成待办、失败过的路径）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「压缩逻辑看不懂」</b>：先只读 README（中文的），读懂「什么时候压、压掉什么」，代码里找对应的 if 和字符串拼接就行。</li>
+            <li><b>「memory 那节太长」</b>：只看「写入条件」和「检索方式」两个函数。其余跳过。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-5">
+      <summary>
+        <span class="tid">P3-5</span>
+        <span class="tname">s10–s12：system prompt 组装 / 错误恢复 / 任务系统</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：s10 会让你重新审视自己的 SYSTEM 常量——你可能一直是「想一句加一句」，而成熟的做法是分层组装。s11 则直接对应 P4 的容错设计。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:170px">节</th><th>要点</th><th>对你的直接用处</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>s10_system_prompt</code></td>
+                <td>分层组装：身份 → 能力边界 → 工具使用规则 → 输出格式 → 当前环境信息（动态）</td>
+                <td>把 P1 的 <code>SYSTEM</code> 常量改成函数：<code>build_system(ctx)</code>，动态部分（时间、可用工具、用户偏好）在运行时注入</td>
+              </tr>
+              <tr>
+                <td><code>s11_error_recovery</code></td>
+                <td>错误分类 → 可重试/需改参数/需上报；重试要带退避和上限；错误要压缩后回灌</td>
+                <td>P4 的故障注入会用这套分类。现在先对照你的 loop 缺哪几层</td>
+              </tr>
+              <tr>
+                <td><code>s12_task_system</code></td>
+                <td>多步骤任务的状态机：pending / in_progress / done / blocked，支持依赖</td>
+                <td>直接决定 W12 的 checkpoint schema 该怎么设计</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>动手：改掉你的 SYSTEM 常量</h5>
+<pre><code><span class="str">"""src/agentlab/prompt.py — 分层组装，替代 loop.py 里的 SYSTEM 常量"""</span>
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
+
+IDENTITY = "你是一个可以使用工具的助手，服务于个人工程知识库。"
+
+BOUNDARIES = """能力边界：
+- 只能访问 data/ 和 notes/ 目录下的文件
+- 不能执行 shell 命令、不能修改文件
+- 不知道的信息就说不知道，不要推测
+"""
+
+TOOL_RULES = """工具使用规则：
+1. 需要外部信息时才调用，能直接回答就直接回答
+2. 一次可以调多个，但不要重复查同一件事
+3. 工具报错时先读懂错误，再决定改参数还是放弃
+4. 最多 6 次工具调用，信息足够就立刻给答案
+"""
+
+OUTPUT = """输出要求：
+- 直接回答，不描述思考过程
+- 引用文件时写出文件名
+- 不确定的部分明确标注「不确定」
+"""
+
+
+def build_system(extra: str = "") -&gt; str:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    files = len(list(Path("data/corpus").glob("*.md")))
+    dynamic = f"""当前环境：
+- 时间：{now}
+- 语料文件数：{files}
+"""
+    parts = [IDENTITY, BOUNDARIES, TOOL_RULES, OUTPUT, dynamic]
+    if extra:
+        parts.append(f"本次任务补充说明：\n{extra}")
+    return "\n\n".join(p.strip() for p in parts if p.strip())</code></pre>
+
+        <div class="out"><b>产物</b><code>src/agentlab/prompt.py</code> + <code>loop.py</code> 改为调 <code>build_system()</code>，跑一次 eval 确认通过率不下降</div>
+        <div class="verify"><b>验收</b>eval 通过率不低于改动前；能说出「动态部分为什么不能写死在常量里」（因为时间/文件数会变，写死会让模型基于过期信息行动，还会破坏 prompt 缓存）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>改完通过率掉了</b>：说明原来的常量里有某句关键的约束被你归错层或删了。用 eval 逐条查哪条 case 翻转，把它加回去。</li>
+            <li><b>动态内容破坏了缓存</b>：这是真实代价。正确做法是动态部分放最后，且尽量稳定（比如只精确到天，不精确到秒）。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-6">
+      <summary>
+        <span class="tid">P3-6</span>
+        <span class="tname">产出一张「压缩策略对照表」（面试可直接用）</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：上下文管理是 2026 年 AI 工程师最核心的手艺之一。能讲清四种压缩策略的适用场景和代价，比会用一个框架值钱。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>策略</th><th>怎么做</th><th>保真度</th><th>成本</th><th>适用</th><th>失效场景</th></tr></thead>
+            <tbody>
+              <tr><td><b>滑动窗口</b></td><td>只保留最近 N 轮，旧的直接丢</td><td>低</td><td>零</td><td>闲聊、无长程依赖</td><td>任务目标在第一条消息里（一丢就迷失）</td></tr>
+              <tr><td><b>摘要压缩</b></td><td>用小模型把旧轮压成要点</td><td>中</td><td>一次额外调用</td><td>长对话、需要保留脉络</td><td>需要精确原文（法条、代码、数字）</td></tr>
+              <tr><td><b>结构化抽取</b></td><td>把历史抽成 {目标, 约束, 已完成, 待办, 失败路径}</td><td>中高</td><td>一次额外调用 + schema 维护</td><td>多步骤任务、agent 长跑</td><td>对话型场景（抽取会丢掉语气和上下文）</td></tr>
+              <tr><td><b>外置检索</b></td><td>历史存起来，需要时再检索回来</td><td>高（按需）</td><td>存储 + 检索延迟</td><td>超长会话、可回溯的工作记录</td><td>需要「一直在眼前」的信息（当前任务状态）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>加一栏「组合用法」，这才是真实答案：</p>
+        <p class="muted">典型生产组合 = <b>结构化抽取管任务状态</b> + <b>摘要压缩管对话脉络</b> + <b>外置检索管历史细节</b> + <b>滑动窗口兜底最近 3 轮原文</b>。单一策略都不够。</p>
+
+        <div class="out"><b>产物</b><code>notes/context-strategies.md</code>：上面这张表 + 你的组合方案 + 一次实测（压缩前后任务完成率对比）</div>
+        <div class="verify"><b>验收</b>能回答「压缩后任务失败率上升，你怎么定位是哪部分信息丢了」——方法：对比压缩前后的抽取结果，看哪个字段缺失；再针对那条 case 做最小复现。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没实现压缩，做不出实测</b>：用「手工压缩」代替——把一段长对话手动摘要，然后同一条任务分别用原文和摘要跑，看结果差异。这就是最小实验。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W12 ============ -->
+    <h2 id="w12"><span class="num">W12</span>持久化、中断恢复、人工审批</h2>
+    <p class="lead">01/11–01/17 · 这一周把 agent 从「一个进程」变成「一个有状态的服务」。做完你就能回答「你的 agent 跑到一半机器挂了会怎样」。</p>
+
+    <details class="task" open id="p3-7">
+      <summary>
+        <span class="tid">P3-7</span>
+        <span class="tname">checkpoint + resume：kill -9 之后能接着跑</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：长任务的现实是「一定会被打断」——部署、超时、用户关闭页面、机器重启。没有 checkpoint 的 agent 每次都从头开始，等于每次都烧一遍钱。</div>
+
+        <h5>三张表，别设计得更复杂</h5>
+<pre><code>CREATE TABLE IF NOT EXISTS runs (
+  run_id      text PRIMARY KEY,
+  task        text NOT NULL,
+  status      text NOT NULL,          <span class="cmt">-- running | awaiting_approval | done | failed | aborted</span>
+  step_idx    integer NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS run_messages (
+  run_id      text NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+  seq         integer NOT NULL,
+  payload     jsonb NOT NULL,          <span class="cmt">-- 原样存一条 message</span>
+  PRIMARY KEY (run_id, seq)
+);
+
+CREATE TABLE IF NOT EXISTS approvals (
+  id          bigserial PRIMARY KEY,
+  run_id      text NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+  step_idx    integer NOT NULL,
+  tool_name   text NOT NULL,
+  args        jsonb NOT NULL,
+  decision    text,                    <span class="cmt">-- NULL=待定 | allow | deny</span>
+  decided_at  timestamptz,
+  UNIQUE (run_id, step_idx)
+);</code></pre>
+
+        <p class="muted">为什么 <code>run_messages</code> 存原始的 message 数组而不是「状态摘要」？因为 <b>prompt 缓存和上下文重建都要求消息字节级一致</b>。摘要会让恢复后的行为和中断前不同，这种「看起来恢复了但结果变了」的 bug 极难查。</p>
+
+        <h5>改造 loop：每步落盘</h5>
+<pre><code><span class="str">"""src/agentlab/runtime/store.py（节选）"""</span>
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import psycopg
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+
+
+def save_run(run_id: str, task: str, status: str, step_idx: int) -&gt; None:
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO runs (run_id, task, status, step_idx)
+               VALUES (%s,%s,%s,%s)
+               ON CONFLICT (run_id) DO UPDATE
+                 SET status = EXCLUDED.status,
+                     step_idx = EXCLUDED.step_idx,
+                     updated_at = now()""",
+            (run_id, task, status, step_idx),
+        )
+        conn.commit()
+
+
+def append_messages(run_id: str, start_seq: int, messages: list[dict[str, Any]]) -&gt; None:
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.executemany(
+            """INSERT INTO run_messages (run_id, seq, payload) VALUES (%s,%s,%s)
+               ON CONFLICT (run_id, seq) DO NOTHING""",
+            [(run_id, start_seq + i, json.dumps(m, ensure_ascii=False))
+             for i, m in enumerate(messages)],
+        )
+        conn.commit()
+
+
+def load_run(run_id: str) -&gt; tuple[str, str, int, list[dict[str, Any]]]:
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute("SELECT task, status, step_idx FROM runs WHERE run_id=%s", (run_id,))
+        task, status, step_idx = cur.fetchone()
+        cur.execute(
+            "SELECT payload FROM run_messages WHERE run_id=%s ORDER BY seq", (run_id,)
+        )
+        messages = [json.loads(r[0]) for r in cur.fetchall()]
+    return task, status, step_idx, messages</code></pre>
+
+        <p>然后在 <code>loop.py</code> 里每轮做两件事：<b>（1）</b> 追加新消息后立即落盘；<b>（2）</b> 更新 <code>step_idx</code>。<b>顺序很重要：先落盘再执行下一步</b>，否则崩在中间会丢消息。</p>
+
+        <h5>做一次真实的崩溃测试（必须做，不能只看代码）</h5>
+<pre><code><span class="cmt"># 1. 跑一个至少 20 轮的长任务</span>
+uv run python scripts/long_task.py --run-id test-crash &amp;
+
+<span class="cmt"># 2. 等 10 秒，然后硬杀（模拟断电，不给清理机会）</span>
+sleep 10
+kill -9 $!
+
+<span class="cmt"># 3. 检查库里留下了什么</span>
+uv run python -c "
+from agentlab.runtime.store import load_run
+task, status, step, msgs = load_run('test-crash')
+print(f'status={status} step={step} messages={len(msgs)}')
+print('last:', msgs[-1]['role'], str(msgs[-1].get('content'))[:80])
+"
+
+<span class="cmt"># 4. 恢复并继续</span>
+uv run python scripts/resume.py --run-id test-crash</code></pre>
+
+        <div class="out"><b>产物</b><code>runtime/store.py</code> + <code>scripts/long_task.py</code> + <code>scripts/resume.py</code> + 崩溃测试记录</div>
+        <div class="verify"><b>验收</b>
+          kill 后库里 <code>status='running'</code>（不是 done），消息数 = 中断前最后一次落盘的数量；<code>resume</code> 能从 <code>step_idx+1</code> 继续，且最终答案和「不中断跑完」一致（或至少结论相同）。
+        </div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>恢复后模型又从头开始</b>：检查 <code>load_run</code> 返回的 messages 是不是被完整传给 LLM。常见错误是恢复了 task 但没恢复 messages。</li>
+            <li><b>恢复后重复执行了工具</b>：说明「执行工具」和「落盘结果」之间崩了。解法是<b>幂等键</b>——每次工具调用带 <code>run_id + step_idx</code>，执行前查是否已有记录。P4 会正式做。</li>
+            <li><b>Postgres 装不上</b>：用 SQLite 也行（<code>sqlite3</code> 标准库），schema 里 <code>jsonb</code> 改 <code>text</code>、<code>timestamptz</code> 改 <code>text</code>。但要注意并发写锁。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p3-8">
+      <summary>
+        <span class="tid">P3-8</span>
+        <span class="tname">人工审批点：危险动作必须停下来等人</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是「能给别人用」的必要条件。没有审批的 agent 只能处理只读任务；有审批，才能碰写操作、发消息、花钱。</div>
+
+        <h5>设计：审批是一种工具调用，不是异常</h5>
+<pre><code><span class="str">"""src/agentlab/runtime/approval.py"""</span>
+from __future__ import annotations
+
+import json
+
+import psycopg
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+
+<span class="cmt"># 按工具名 + 参数特征判断风险。不要只看工具名 —— 同一个工具可能安全也可能危险。</span>
+DANGEROUS_PATTERNS = {
+    "write_file": lambda a: True,
+    "delete_file": lambda a: True,
+    "send_message": lambda a: True,
+    "run_sql": lambda a: not a.get("sql", "").strip().lower().startswith("select"),
+    "fetch_url": lambda a: True,          <span class="cmt"># 出网就该确认，防止数据外泄</span>
+}
+
+
+def needs_approval(tool_name: str, args: dict) -&gt; bool:
+    rule = DANGEROUS_PATTERNS.get(tool_name)
+    return bool(rule and rule(args))
+
+
+def request(run_id: str, step_idx: int, tool_name: str, args: dict) -&gt; str:
+    <span class="str">"""登记待审批，返回 'pending'。调用方据此中断整个 run。"""</span>
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute(
+            """INSERT INTO approvals (run_id, step_idx, tool_name, args)
+               VALUES (%s,%s,%s,%s)
+               ON CONFLICT (run_id, step_idx) DO NOTHING""",
+            (run_id, step_idx, tool_name, json.dumps(args, ensure_ascii=False)),
+        )
+        conn.commit()
+    return "pending"
+
+
+def get_decision(run_id: str, step_idx: int) -&gt; str | None:
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute(
+            "SELECT decision FROM approvals WHERE run_id=%s AND step_idx=%s",
+            (run_id, step_idx),
+        )
+        row = cur.fetchone()
+    return row[0] if row else None</code></pre>
+
+        <h5>在 loop 里接入（三处改动）</h5>
+<pre><code><span class="cmt"># 1. 执行工具前：</span>
+if needs_approval(name, args):
+    decision = get_decision(run_id, step_idx)
+    if decision is None:
+        request(run_id, step_idx, name, args)
+        save_run(run_id, task, "awaiting_approval", step_idx)   <span class="cmt"># 落盘后返回</span>
+        return RunResult("awaiting_approval", "等待人工审批", steps, messages, ...)
+    if decision == "deny":
+        <span class="cmt"># 关键：拒绝也要作为工具结果回灌，让模型知道并被要求换方案</span>
+        result = ToolResult(ok=False, content="用户拒绝了此操作。请换一种不需要该操作的方式完成任务，或说明无法完成。")
+        ...  <span class="cmt"># 走正常回灌流程</span>
+
+<span class="cmt"># 2. CLI 里提供审批命令：</span>
+<span class="cmt">#    uv run python scripts/approve.py --run-id X --step 3 --allow</span>
+
+<span class="cmt"># 3. resume 时先查是否有待审批：</span>
+<span class="cmt">#    status == "awaiting_approval" 就等，不要重新调模型</span></code></pre>
+
+        <div class="callout">
+          <b>三个容易做错的地方</b>
+          <p><b>①</b> 只在工具名前判断风险——<code>run_sql</code> 里 SELECT 和 DROP 差别巨大，要看参数。<b>②</b> 拒绝后直接终止任务——更好的是把「被拒绝」当信息回灌，模型往往能找到替代路径。<b>③</b> 审批状态不落盘——重启后不知道在等审批，会重新执行一遍。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>runtime/approval.py</code> + <code>scripts/approve.py</code> + 一次完整流程记录（触发 → 挂起 → 批准 → 继续 → 完成）</div>
+        <div class="verify"><b>验收</b>
+          ① 危险工具触发时进程真的停下来（不是打印一句继续跑）；② 拒绝后模型换方案而不是死循环；③ 重启进程后仍在等待状态。
+        </div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「我的工具都是只读的，没东西可审批」</b>：加一个 <code>write_file</code> 工具（写进 <code>data/out/</code>），它就天然需要审批。这个工具后面 P5 也用得上。</li>
+            <li><b>审批后 resume 重新调了一遍模型</b>：说明你把「等审批」也当成了一次模型调用。正确顺序是：检查审批 → 有结果就直接执行工具 → 再进下一轮模型调用。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W13 ============ -->
+    <h2 id="w13"><span class="num">W13</span>MCP 与可观测性</h2>
+    <p class="lead">01/18–01/24 · 两件事：让工具能被别人（别的客户端）复用，让你的每一步都能被看见。</p>
+
+    <div class="callout warn">
+      <b>写之前先知道：MCP 在 2026-07 做了一次大改</b>
+      <p>你现在能搜到的 MCP 教程，绝大多数写的是 <b>2025-11-25</b> 那一版——有 <code>initialize</code> 握手、有 <code>Mcp-Session-Id</code>。而 <b>2026-07-28</b> 的规范把这些都删了：协议核心改成<b>无状态</b>，版本和能力走每个请求的 <code>_meta</code>，网关靠 <code>Mcp-Method</code> / <code>Mcp-Name</code> 头路由，列表结果带 <code>ttlMs</code> 可缓存，Tasks 和 MCP Apps 变成扩展，Roots / Sampling / Logging 进入弃用（12 个月移除窗口）。</p>
+      <p><b>对你的直接影响：几乎没有。</b>你这张卡写的是 <code>stdio</code> 传输的本地 server，不走 Streamable HTTP，<b>照原样写就行</b>。唯一的动作是——写完之后读一遍官方 changelog，确认自己知道无状态改了什么。为什么值得花这 20 分钟：面试问「MCP 架构」时，说出「2026 年改成无状态核了，所以能放普通负载均衡后面」，比背「MCP 是客户端-服务端协议」值钱得多。完整对照表见 <a href="resources.html#mcp2026">Harness 地图 §4</a>。</p>
+    </div>
+
+    <details class="task" open id="p3-9">
+      <summary>
+        <span class="tid">P3-9</span>
+        <span class="tname">写一个 MCP server，暴露你的语料检索</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：MCP 的价值不是「又一个协议」，而是<b>工具写一次、所有客户端都能用</b>。你把 P2 的检索包成 MCP server 之后，Claude Desktop、Cursor、你自己的 agent 都能直接调——这才叫「能力复用」。</div>
+
+<pre><code>uv add "mcp[cli]"</code></pre>
+
+<pre><code><span class="str">"""src/agentlab/mcp_server.py — 把 RAG 检索暴露成 MCP 工具"""</span>
+from __future__ import annotations
+
+from mcp.server.fastmcp import FastMCP
+
+from agentlab.rag.retrieve import hybrid_retrieve   <span class="cmt"># P2 的实现</span>
+
+mcp = FastMCP("agentlab-kb")
+
+
+@mcp.tool()
+def search_knowledge(query: str, top_k: int = 5) -&gt; str:
+    """在个人工程知识库中检索。
+
+    适合回答「文档里怎么写的」「某个配置项是什么」类问题。
+    返回带编号和来源文件名的片段；没有命中时会明确说明。
+    """
+    chunks = hybrid_retrieve(query, top_k=top_k)
+    if not chunks:
+        return f"知识库中没有与「{query}」相关的内容。"
+    return "\n\n".join(
+        f"[{i}] ({c.source}) {c.text[:600]}" for i, c in enumerate(chunks, 1)
+    )
+
+
+@mcp.tool()
+def list_documents() -&gt; str:
+    """列出知识库中的所有文档名。用户问「你有哪些资料」时使用。"""
+    from pathlib import Path
+
+    files = sorted(p.name for p in Path("data/corpus").glob("*.md"))
+    return f"共 {len(files)} 个文档：\n" + "\n".join(f"- {f}" for f in files)
+
+
+@mcp.resource("kb://stats")
+def stats() -&gt; str:
+    """知识库统计信息（只读资源，不是工具）。"""
+    import psycopg
+
+    with psycopg.connect("postgresql://postgres:devpass@localhost:5432/agentlab") as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT count(*), count(DISTINCT doc_id) FROM chunks")
+            n, d = cur.fetchone()
+    return f"chunks={n}, documents={d}"
+
+
+if __name__ == "__main__":
+    <span class="cmt"># stdio：给本地客户端用（Claude Desktop / Cursor / Claude Code）</span>
+    <span class="cmt"># 如果要给别人远程连，改成 transport="streamable-http" 并加鉴权</span>
+    mcp.run(transport="stdio")</code></pre>
+
+        <h5>三步验证</h5>
+        <ol>
+          <li><b>Inspector</b>：<code>uv run mcp dev src/agentlab/mcp_server.py</code>，在网页里手点 <code>search_knowledge</code>，看返回。</li>
+          <li><b>接进 Claude Desktop</b>：编辑 <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>：
+<pre><code>{
+  "mcpServers": {
+    "agentlab-kb": {
+      "command": "uv",
+      "args": ["run", "--directory", "/Users/you/code/agentlab",
+               "python", "src/agentlab/mcp_server.py"]
+    }
+  }
+}</code></pre>
+            重启客户端，问「知识库里关于 X 说了什么」，看它是否调用你的工具。
+          </li>
+          <li><b>写一个程序化客户端测试</b>（这样能进 CI）：
+<pre><code><span class="str">"""scripts/test_mcp.py"""</span>
+import asyncio
+from mcp import ClientSession
+from mcp.client.stdio import stdio_client
+
+async def main() -&gt; None:
+    params = stdio_client(["uv", "run", "python", "src/agentlab/mcp_server.py"])
+    async with params as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools = await session.list_tools()
+            print("tools:", [t.name for t in tools.tools])
+            res = await session.call_tool("search_knowledge", {"query": "分块", "top_k": 3})
+            print("result:", res.content[0].text[:300])
+
+asyncio.run(main())</code></pre>
+          </li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>src/agentlab/mcp_server.py</code> + <code>scripts/test_mcp.py</code> + 客户端调用成功的截图或日志</div>
+        <div class="verify"><b>验收</b>三个工具/资源都能被外部客户端列出并调用；<code>search_knowledge</code> 的 description 让模型在「问配置项」时能选对。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>客户端看不到工具</b>：90% 是路径问题。配置里必须用绝对路径，且 <code>--directory</code> 指向项目根（这样 <code>agentlab</code> 才能被 import）。</li>
+            <li><b>stdio 模式下 print 破坏协议</b>：MCP 用 stdout 传 JSON-RPC，任何 <code>print</code> 都会污染。所有调试输出改用 <code>logging</code> 到文件。</li>
+            <li><b><code>mcp dev</code> 起不来</b>：装 <code>mcp[cli]</code> 而不是裸 <code>mcp</code>；或用 <code>npx @modelcontextprotocol/inspector</code> 直接指命令。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-10">
+      <summary>
+        <span class="tid">P3-10</span>
+        <span class="tname">把 MCP 工具接进自己的 agent，并做权限隔离</span>
+        <span class="tmin">周日 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：MCP server 写出来只是「能给别人用」，接进自己的 loop 才是「我能用别人的」。这一步之后你的工具集就不再局限于自己写的三个函数。</div>
+
+        <h5>改造 registry：支持远程工具</h5>
+<pre><code><span class="str">"""src/agentlab/tools_mcp.py — 把 MCP server 的工具适配进 Registry"""</span>
+from __future__ import annotations
+
+import asyncio
+import json
+
+from mcp import ClientSession
+from mcp.client.stdio import stdio_client
+
+from agentlab.tools import Registry, Tool, ToolResult
+
+
+def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
+    <span class="str">"""连接一个 stdio MCP server，把它的工具包装成同步 Tool。
+
+    注意：这里用 asyncio.run 简化了实现。生产环境应该把整个 agent 改成 async，
+    而不是在每个工具里起一个事件循环。
+    """</span>
+    registry = Registry()
+
+    async def _load() -&gt; list[tuple[str, str, dict]]:
+        async with stdio_client(command) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                listed = await session.list_tools()
+                return [(t.name, t.description or "", t.inputSchema) for t in listed.tools]
+
+    for name, desc, schema in asyncio.run(_load()):
+        def make(tool_name: str):
+            def call(**kwargs) -&gt; ToolResult:
+                async def _call() -&gt; ToolResult:
+                    async with stdio_client(command) as (read, write):
+                        async with ClientSession(read, write) as session:
+                            await session.initialize()
+                            res = await session.call_tool(tool_name, kwargs)
+                            text = "\n".join(
+                                c.text for c in res.content if hasattr(c, "text")
+                            )
+                            return ToolResult(ok=not res.isError, content=text)
+
+                return asyncio.run(_call())
+
+            return call
+
+        registry.register(Tool(
+            name=f"{prefix}_{name}",
+            description=desc,
+            parameters=schema,
+            fn=make(name),
+        ))
+    return registry</code></pre>
+
+        <div class="callout warn">
+          <b>关于第三方 MCP server 的两条硬规矩</b>
+          <p><b>①</b> 当作安装软件来对待：看它是谁写的、能碰什么、有没有写操作。只读工具优先，写/删工具必须走审批（P3-8 的机制直接复用）。<b>②</b> 加前缀（<code>kb_</code>、<code>fs_</code>）：不同 server 可能有同名工具，前缀是唯一能避免歧义的办法。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>tools_mcp.py</code> + 一次「agent 调用 MCP 工具完成任务」的完整 trace</div>
+        <div class="verify"><b>验收</b>agent 能通过 MCP 调到你自己的检索工具；工具名带前缀；写操作类工具被审批机制拦住。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>每次工具调用都重启 server，很慢</b>：这是上面简化实现的代价。真实做法是全程 async 并复用 session。把这条写进笔记——面试问「你怎么优化 MCP 调用延迟」时这就是答案。</li>
+            <li><b>schema 传进去报错</b>：MCP 返回的 <code>inputSchema</code> 已经是 JSON Schema，直接放 <code>parameters</code> 即可，别再包一层 <code>{"type":"function",...}</code>。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-11">
+      <summary>
+        <span class="tid">P3-11</span>
+        <span class="tname">全链路 trace：一次任务能看到每一步</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：没有 trace 的 agent 调试等于盲猜。有了 trace，你能回答「这次为什么花了 8 秒」「这个工具的输入到底是什么」「第 3 轮上下文多大」——这些是面试里「你怎么定位线上问题」的底气。</div>
+
+        <h5>起 Langfuse（自托管，5 分钟）</h5>
+<pre><code>git clone https://github.com/langfuse/langfuse.git
+cd langfuse
+docker compose up -d
+<span class="cmt"># 打开 http://localhost:3000，建项目，拿 public/secret key</span></code></pre>
+
+<pre><code><span class="cmt"># 写进 .env</span>
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=http://localhost:3000</code></pre>
+
+        <h5>接入：装饰器方式最省事</h5>
+<pre><code>uv add langfuse</code></pre>
+
+<pre><code><span class="str">"""src/agentlab/observability.py"""</span>
+from __future__ import annotations
+
+import os
+from contextlib import contextmanager
+
+from langfuse import Langfuse, observe
+
+langfuse = Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
+    host=os.getenv("LANGFUSE_HOST", "http://localhost:3000"),
+)
+
+
+@contextmanager
+def trace_run(run_id: str, task: str):
+    <span class="str">"""一次任务 = 一个 trace，每个 step = 一个 span。"""</span>
+    with observe(name="agent_run", as_type="span") as span:
+        span.update(input={"task": task}, metadata={"run_id": run_id})
+        yield span
+
+
+def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
+    <span class="str">"""手工打点：工具调用、上下文大小、token 用量。"""</span>
+    langfuse.create_event(name=name, metadata=payload)
+    if usage:
+        <span class="cmt"># 让成本列有数：必须把 usage 报给 Langfuse</span>
+        langfuse.update_current_generation(usage_details=usage)</code></pre>
+
+        <p class="muted">更省事的做法是用 <code>@observe()</code> 装饰 <code>loop.run</code>、<code>llm.with_tools</code>、每个 <code>tool.fn</code>——嵌套调用会自动变成嵌套 span。先试这个，不够细再手工打点。</p>
+
+        <h5>trace 里必须能看到的五样东西</h5>
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>看什么</th><th>为什么</th><th>怎么加</th></tr></thead>
+            <tbody>
+              <tr><td>每轮的完整 messages</td><td>定位「模型看到的是不是我以为的」</td><td>span 的 input</td></tr>
+              <tr><td>工具名 + 参数 + 结果长度</td><td>定位工具误用和结果膨胀</td><td>工具 span 的 input/output</td></tr>
+              <tr><td>token 用量（输入/输出/缓存）</td><td>算钱、看上下文增长曲线</td><td><code>usage_details</code></td></tr>
+              <tr><td>每步耗时</td><td>定位延迟来自模型还是工具</td><td>span 自动记录</td></tr>
+              <tr><td>上下文大小随轮次变化</td><td>预判何时会爆</td><td>每轮记 <code>prompt_tokens</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b><code>observability.py</code> + 一次完整 trace 的截图（能看到 5 个以上 span）</div>
+        <div class="verify"><b>验收</b>打开 trace 能回答三个问题：这次任务调用了几次模型、最慢的一步是哪步、第 3 轮到第 5 轮输入 token 涨了多少。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>Langfuse 起不来（内存不够）</b>：它要 Postgres + ClickHouse + Redis，至少 4GB。改用 <b>Langfuse Cloud 免费档</b>，或本地写一个 60 行的 JSONL logger（每步追加一行），先用着。</li>
+            <li><b>trace 里看不到工具调用</b>：<code>@observe()</code> 只对同步函数生效；异步要 <code>@observe(as_type="tool")</code> 并确认在同一个 trace 上下文里。</li>
+            <li><b>token 数是 0</b>：没把 <code>resp.usage</code> 传进去。OpenAI 的 usage 在 <code>resp.usage.prompt_tokens</code>。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
+
+    <details class="task" id="selftest-card">
+      <summary>
+        <span class="tid">Q1–Q7</span>
+        <span class="tname">P3 阶段验收自测（点开看答题要点）</span>
+        <span class="tmin">30min</span>
+      </summary>
+      <div class="task-body">
+        <h5>Q1 workflow 和 agent 的分界线在哪？给一个「看起来像 agent 但应该做成 workflow」的例子。</h5>
+        <p class="muted">要点：分界线是「下一步走哪由谁决定」——由代码决定是 workflow，由模型决定是 agent。例子：客服工单分类 + 按类别走不同处理流程，看似需要 agent，实际分类后每条路径都是固定的，做成 workflow 更稳更便宜。</p>
+
+        <h5>Q2「工具太多」为什么会降低准确率？你怎么判断该拆还是该合？</h5>
+        <p class="muted">要点：工具越多，description 之间的边界越模糊，模型在「选哪个」上的决策空间变大、出错概率上升；同时工具定义本身占上下文。判断方法：如果两个工具在 80% 的情况下都会被考虑，说明它们该合并或该拆清边界。<b>可操作判据：把工具数从 12 降到 6 跑一遍 eval，看准确率变化。</b></p>
+
+        <h5>Q3 什么规则必须写进代码（hook / deny）而不是写进 prompt？为什么？</h5>
+        <p class="muted">要点：凡是有<b>不可逆副作用</b>或<b>合规要求</b>的——删数据、转账、发外部消息、访问越权数据。原因是 prompt 是概率性约束（模型可能不听、可能被注入绕过），代码是确定性约束。</p>
+
+        <h5>Q4 长任务跨多个上下文窗口时，怎么让新会话快速接上？</h5>
+        <p class="muted">要点：把状态外置成结构化记录（目标 / 约束 / 已完成 / 待办 / 失败路径），新会话先读这份记录再开工；而不是靠「摘要整段对话」。补充：文件系统本身也是上下文——把进展写进 <code>progress.md</code>，新会话读它，比塞进 prompt 更可控。</p>
+
+        <h5>Q5 MCP 是什么？它解决了什么「不用它就很难受」的问题？</h5>
+        <p class="muted">要点：工具/数据的标准协议，让一个 server 被所有客户端复用。不用它的话，每换一个客户端（Claude Desktop / Cursor / 自己的 agent）就要重写一遍工具适配层，N×M 的工作量。</p>
+
+        <h5>Q6 你的 checkpoint 存了什么？为什么不存「状态摘要」而存原始 messages？</h5>
+        <p class="muted">要点：存 runs（任务/状态/步数）+ run_messages（原始消息）+ approvals。存原始消息是因为恢复后的行为必须和中断前一致，摘要会导致模型看到不同的上下文、做出不同决策，且破坏 prompt 缓存。</p>
+
+        <h5>Q7 审批被拒绝后，为什么不应该直接终止任务？</h5>
+        <p class="muted">要点：「被拒绝」是一条有价值的信息，回灌给模型它常能找到替代路径（比如不能写文件就输出到对话里）。直接终止会让用户体验成「半途而废」，而且浪费了前面的工作。</p>
+      </div>
+    </details>
+
+    <div class="callout danger">
+      <b>阶段通关条件</b>
+      <p>① kill -9 之后能恢复并跑完；② 危险工具触发时真的挂起等人；③ 外部客户端能调你的 MCP 工具；④ trace 里能看到 5 个以上 span 且带 token 数；⑤ Q1–Q7 至少答对 5 题。</p>
+    </div>
+
+    <h2 id="done"><span class="num">6</span>交付物清单</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>产物</th><th>路径</th><th>面试时怎么用</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>harness 读码笔记</td><td><code>notes/harness.md</code></td><td>「我读了 12 节，每节都写了它的代价」</td></tr>
+          <tr><td>☐</td><td>分层 prompt</td><td><code>src/agentlab/prompt.py</code></td><td>「动态信息放最后，避免破坏缓存」</td></tr>
+          <tr><td>☐</td><td>压缩策略表</td><td><code>notes/context-strategies.md</code></td><td>「四种策略 + 我的组合方案」</td></tr>
+          <tr><td>☐</td><td>持久化</td><td><code>runtime/store.py</code></td><td>「三张表，存原始消息不存摘要」</td></tr>
+          <tr><td>☐</td><td>审批</td><td><code>runtime/approval.py</code></td><td>「按参数判风险，拒绝也回灌」</td></tr>
+          <tr><td>☐</td><td>MCP server</td><td><code>src/agentlab/mcp_server.py</code></td><td>「工具写一次，三个客户端都能用」</td></tr>
+          <tr><td>☐</td><td>trace</td><td><code>observability.py</code></td><td>「每步的 token、耗时、工具结果长度」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="nextprev">
+      <a href="stage-p2.html"><span>返回</span>← P2 检索与上下文</a>
+      <a href="stage-p4.html"><span>下一步</span>P4 可靠性与成本 →</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · P3 Agent 运行时 · W10–W13 · 12/28–01/24
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

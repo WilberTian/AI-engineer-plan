@@ -1,0 +1,123 @@
+# AI Engineer 转型实操手册
+
+一套 10 页的纯静态站点：从「做前端」到「做 AI / Agent 工程」的 24 周执行计划，75 张任务卡，每张都带命令、产物和验收标准。
+
+没有构建步骤、没有 npm、没有 CDN 依赖——所有样式和脚本都在 `assets/` 里，离线也能完整打开。
+
+## 目录结构
+
+```
+.
+├── index.html          总览：24 周日历、时间预算换算、四个里程碑、七个坑
+├── env.html            Day 0：uv + Python 3.12、目录骨架、check_env.py
+├── stage-p0.html       W01      定位与基线
+├── stage-p1.html       W02–W05  地基：Python + 手写 agent loop + 评测 v1
+├── stage-p2.html       W06–W09  检索与上下文
+├── stage-p3.html       W10–W13  Agent 运行时
+├── stage-p4.html       W14–W17  可靠性与成本
+├── stage-p5.html       W18–W21  产品化与差异化
+├── stage-p6.html       W22–W24  求职冲刺
+├── resources.html      资源库 + Harness 地图（其 §5 是 2026 年框架全景）
+├── 404.html            GitHub Pages 的自定义 404
+├── assets/
+│   ├── style.css       设计系统（明暗主题、响应式、打印样式、笔记面板）
+│   └── app.js          主题、进度条、目录高亮、代码复制、深链展开、学习笔记
+├── .nojekyll           告诉 GitHub Pages 不要走 Jekyll
+├── .gitignore          排除 .DS_Store 等本机文件
+└── README.md
+```
+
+## 部署到 GitHub Pages
+
+页面之间的链接全部是**相对路径**（`stage-p1.html`、`assets/style.css`），所以放在仓库根目录或子目录都能正常工作。
+
+### 1. 建仓库并推送
+
+在本目录执行（把 `你的用户名` 和 `仓库名` 换掉）：
+
+```bash
+git init
+git add -A
+git commit -m "AI engineer plan site"
+git branch -M main
+git remote add origin git@github.com:你的用户名/仓库名.git
+git push -u origin main
+```
+
+### 2. 打开 Pages
+
+仓库 → **Settings → Pages** → Source 选 **Deploy from a branch** → Branch 选 `main`，目录选 **`/ (root)`** → Save。
+
+等 1 分钟左右，地址是：
+
+```
+https://你的用户名.github.io/仓库名/
+```
+
+### 3. 如果站点放在仓库的子目录
+
+比如放在 `docs/`，第 2 步的目录就选 **`/docs`**，其他不变。
+
+## 本地预览
+
+直接双击 `index.html` 也能看，但用本地服务器更接近线上环境（相对路径、锚点、主题记忆都一致）：
+
+```bash
+python3 -m http.server 8000
+# 浏览器打开 http://localhost:8000
+```
+
+## 更新
+
+改完文件直接 `git commit && git push`，Pages 会自动重建，通常 30–60 秒生效。手机上已经打开的页面需要下拉刷新（`app.js` 不缓存内容）。
+
+## 学习笔记（纯前端，没有后端）
+
+右下角那个笔形按钮就是笔记入口。数据全部存在浏览器 `localStorage`（键名 `aip-plan:notes:v1`），**不会发往任何服务器**，也不需要数据库。
+
+三种记法：
+
+| 记在哪 | 怎么用 |
+| --- | --- |
+| 某一节 | 标题右侧的「笔记」按钮，点开就地写，`⌘/Ctrl + Enter` 收起 |
+| 某张任务卡 | 卡片标题栏右侧的「笔记」按钮，**折叠状态也能记**，不会误展开卡片 |
+| 整页感想 | 面板顶部的「本页随手记」 |
+
+写过的区块，按钮会亮起小圆点；右下角徽标显示全站笔记条数，跨页面共享。
+
+导出三种方式（面板底部）：
+
+- **导出 Markdown**：按页面 → 区块顺序排版，每条带标题、正文、更新时间和回原文链接，可直接丢进 Obsidian / Notion / 语雀。勾选「全站」导出全部，否则只导当前页。
+- **备份 JSON**：完整原始数据，换电脑、换浏览器时用「导入」还原（按更新时间合并，不会覆盖更新的那条）。
+- **清空**：二次确认后删除全部笔记。
+
+要注意的三件事：
+
+1. **换浏览器 / 换设备 / 清缓存 / 隐私模式，笔记都不会跟过去**——它是本机存储，不是账号。重要内容请定期「备份 JSON」。
+2. 无痕窗口里写入的笔记关掉窗口就没了（`localStorage` 不落盘）。
+3. 浏览器对单站点有 5MB 左右上限，纯文字笔记基本用不完。
+
+## 两个可以自己改的开关
+
+**① 是否允许搜索引擎收录**
+
+每个页面的 `<head>` 里都有一行：
+
+```html
+<meta name="robots" content="noindex,nofollow">
+```
+
+现在的设置是**不收录**——地址能打开、能分享，但不会被 Google / 百度检索到。想让别人搜得到，把这行从 10 个文件里删掉即可：
+
+```bash
+perl -0pi -e 's/<meta name="robots" content="noindex,nofollow">\n//' *.html
+```
+
+**② 想不想要带 `.html` 的地址**
+
+现在地址是 `.../stage-p1.html`。要变成 `.../stage-p1/` 需要把每个页面改成 `stage-p1/index.html` 的目录结构，并且把所有链接改成 `stage-p1/`。**不建议现在做**：改动面覆盖全部 10 个文件的所有链接，收益只是地址好看一点。
+
+## 内容上的两条提醒
+
+- **仓库是 public 的话，内容对所有人可见。**这里面包含个人能力自评、简历改写策略、目标公司分层、薪资谈判口径——是给自己看的执行手册，不是公开作品。如果只想给自己和少数人看，有两个办法：GitHub 私有仓库 + Pro 计划才能开 Pages；或者用任何支持密码保护的静态托管。
+- **数字与 API 会过时。**站内的市场数字、版本号、API 名称的事实核对截止到 2026 年 10 月，页面里已经标注了哪些是「占位值、需要用自己的数据标定」。

@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="P5 产品化（W18–W21）：流式对话、工具渲染三态、生成式 UI、部署、配额与成本看板、60 秒 demo。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="P5 产品化（W18–W21）：流式对话、工具渲染三态、生成式 UI、部署、配额与成本看板、60 秒 demo。">
+<title>P5 · 产品化与差异化 · W18–W21</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>P5 · W18–W21</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html">P2</a>
+      <a href="stage-p3.html">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html" class="on">P5</a>
+      <a href="stage-p6.html">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="txtbtn" id="expandAll" type="button" aria-expanded="false">全部展开</button>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html">总览与日历</a>
+      <a href="stage-p4.html">← P4 可靠性与成本</a>
+    </nav>
+    <h4>W18 · 流式体验</h4>
+    <nav>
+      <a href="#w18" class="on">本周目标</a>
+      <a href="#p5-1">1 技术选型</a>
+      <a href="#p5-2">2 流式最小闭环</a>
+      <a href="#p5-3">3 过程可视化</a>
+      <a href="#p5-4">4 首字 &lt;2s</a>
+      <a href="#p5-5">5 中断与重试</a>
+    </nav>
+    <h4>W19 · 生成式 UI</h4>
+    <nav>
+      <a href="#w19">本周目标</a>
+      <a href="#p5-6">6 组件注册表</a>
+      <a href="#p5-7">7 边界与降级</a>
+    </nav>
+    <h4>W20 · 部署运营</h4>
+    <nav>
+      <a href="#w20">本周目标</a>
+      <a href="#p5-8">8 上线</a>
+      <a href="#p5-9">9 限额与多租户</a>
+      <a href="#p5-10">10 成本看板</a>
+    </nav>
+    <h4>W21 · 作品集打磨</h4>
+    <nav>
+      <a href="#w21">本周目标</a>
+      <a href="#p5-11">11 README 六块</a>
+      <a href="#p5-12">12 60 秒 demo</a>
+    </nav>
+    <nav style="margin-top:14px">
+      <a href="#selftest">闭卷自测</a>
+      <a href="#done">交付物清单</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
+  </aside>
+
+  <main>
+    <div class="phasehead">
+      <div class="ph-tag">P5 · Week 18–21 · 02/22–03/21</div>
+      <h2>产品化与差异化：做别人做不出来的那一半</h2>
+      <p><b>目标：</b>把前 17 周的能力包成一个<b>有公开链接、首字 &lt;2s、能看见过程、有成本看板</b>的产品。</p>
+      <p>这一阶段是你相对其他候选人的<b>结构性优势</b>：大多数 AI 工程师做不出好前端，而 LLM 产品的成败很大程度在流式交互、延迟感知、错误可读性上。别人做不到，你能。</p>
+      <div class="deliv">
+        <span>公开可访问的产品链接</span>
+        <span>生成式 UI 场景</span>
+        <span>限额 + 成本看板</span>
+        <span>3 个仓库的 README</span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>先定一个原则：不做「聊天框 + 消息列表」</b>
+      <p>那是最容易做、也最没有区分度的形态。你要做的是<b>把 agent 的过程变成界面的一部分</b>：它在查什么、查到几条、为什么改了参数、花了多少钱。这件事只有懂前端的人做得好，也正好是面试官会记住的部分。</p>
+    </div>
+
+    <!-- ============ W18 ============ -->
+    <h2 id="w18"><span class="num">W18</span>流式体验：延迟的感知比延迟本身重要</h2>
+    <p class="lead">02/22–02/28 · 目标：首字 &lt;2s，且用户在等待期间知道系统在做什么。</p>
+
+    <details class="task" open id="p5-1">
+      <summary>
+        <span class="tid">P5-1</span>
+        <span class="tname">技术选型：为什么是 Next.js + Vercel AI SDK</span>
+        <span class="tmin">40min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：你有前端底子，选型的核心不是「哪个最强」，是<b>哪个能让你把时间花在交互而不是管道上</b>。AI SDK 把流式协议、消息状态、工具调用渲染都处理了，你直接写 UI。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>选择</th><th>为什么</th><th>代价</th></tr></thead>
+            <tbody>
+              <tr><td><b>Next.js（App Router）</b></td><td>你熟 React；流式 + Server Action 天然契合；部署路径最短</td><td>RSC 的边界要理解清楚，否则会踩「在 client 里用 server 的东西」</td></tr>
+              <tr><td><b>Vercel AI SDK 7</b><br><span class="muted">2026-07 发布</span></td><td><code>useChat</code> 管消息状态、<code>streamText</code> 管流式、tool part 自动带类型；v7 起工具循环有现成的 <code>ToolLoopAgent</code> 类</td><td><b>破坏性升级</b>：Node 22 起、只支持 ESM。<code>system</code>→<code>instructions</code>、<code>onFinish</code>→<code>onEnd</code>、<code>fullStream</code>→<code>stream</code>，<code>toUIMessageStreamResponse()</code> 已标弃用。见下方 P5-2 的版本说明</td></tr>
+              <tr><td><b>Tailwind</b></td><td>迭代 UI 快，不用维护 CSS 文件</td><td>类名长；团队协作需要约定</td></tr>
+              <tr><td><b>Zod</b></td><td>tool 的 <code>inputSchema</code> 用它，和 TS 类型自动对齐</td><td>无</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+<pre><code><span class="cmt"># 用 v7 的脚手架。Node 22 起，package.json 需要 "type": "module"</span>
+npx create-next-app@latest agentlab-web --typescript --tailwind --app
+cd agentlab-web
+npm i ai @ai-sdk/react @ai-sdk/openai zod
+node -v   <span class="cmt"># 必须 ≥ 22，v7 不再支持 CJS require()</span></code></pre>
+
+        <div class="callout warn">
+          <b>版本核对（2026-10）：你装到的是 v7，不是 v6</b>
+          <p>AI SDK 7 在 2026 年 7 月发布，把 agent 变成了一等公民（<code>ToolLoopAgent</code> / <code>WorkflowAgent</code> / <code>HarnessAgent</code>），代价是一次硬破坏：<b>Node 22 最低、只支持 ESM</b>，并且改了几个高频名字。</p>
+          <p>下面 P5-2 的代码按<b>语义</b>读，不要逐字照抄——先跑 <code>npm ls ai</code> 确认版本，再对照官方 v7 文档。<b>网上绝大多数教程还停在 v5/v6。</b>官方提供 <code>npx @ai-sdk/codemod v7</code> 做机械迁移，但它覆盖不到所有调用点。</p>
+        </div>
+
+        <p class="muted">后端（Python 的 RAG + loop）继续跑在自己机器或一个小 VPS 上，前端通过 HTTP 调它。<b>不要在 Next.js 里重写一遍 Python 的检索逻辑</b>——那是两周的浪费。</p>
+
+        <div class="out"><b>产物</b><code>agentlab-web/</code> 项目能 <code>npm run dev</code> 起来</div>
+        <div class="verify"><b>验收</b>首页能打开；<code>npm run build</code> 无类型错误。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>装完发现 API 和教程对不上</b>：先 <code>npm ls ai</code> 看实际版本，再按该版本文档写。AI SDK 的 breaking change 很频繁，这是常态。</li>
+            <li><b>想用 Vue/Svelte</b>：也行，但 AI SDK 的 React 生态最全（tool part 渲染、<code>useChat</code> 的成熟度）。这阶段别给自己加难度。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p5-2">
+      <summary>
+        <span class="tid">P5-2</span>
+        <span class="tname">流式最小闭环：两个文件跑通</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：先跑通「打字机效果」，再谈其他。很多人第一天就想做工具可视化，结果卡在流式协议上三天。</div>
+
+        <h5>服务端：一个 route handler</h5>
+<pre><code>// app/api/chat/route.ts
+import { streamText, convertToModelMessages, type UIMessage } from "ai";
+import { openai } from "@ai-sdk/openai";
+
+export const maxDuration = 60;
+
+export async function POST(req: Request) {
+  const { messages }: { messages: UIMessage[] } = await req.json();
+
+  const result = streamText({
+    model: openai("gpt-4.1-mini"),
+    <span class="cmt">// v7：system 已改名 instructions（v6 及以前叫 system）</span>
+    instructions: "你是个人知识库助手。回答简洁，引用文件时写出文件名。",
+    messages: convertToModelMessages(messages),
+  });
+
+  <span class="cmt">// v7：toUIMessageStreamResponse() 已标弃用。
+  // 照官方 v7 文档换成等价写法，别照旧教程抄这一行。</span>
+  return result.toUIMessageStreamResponse();
+}</code></pre>
+
+        <h5>客户端：<code>useChat</code> + 渲染 <code>parts</code></h5>
+<pre><code>// app/page.tsx
+"use client";
+
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
+
+export default function Page() {
+  const { messages, sendMessage, status, stop, error, regenerate } = useChat();
+  const [input, setInput] = useState("");
+
+  const busy = status === "streaming" || status === "submitted";
+
+  return (
+    &lt;main className="mx-auto max-w-2xl p-6 space-y-6"&gt;
+      &lt;div className="space-y-4"&gt;
+        {messages.map((m) =&gt; (
+          &lt;div key={m.id} className={m.role === "user" ? "text-right" : ""}&gt;
+            {m.parts.map((p, i) =&gt; {
+              if (p.type === "text") {
+                return (
+                  &lt;p key={i} className="whitespace-pre-wrap"&gt;{p.text}&lt;/p&gt;
+                );
+              }
+              return null; // 工具渲染见 P5-3
+            })}
+          &lt;/div&gt;
+        ))}
+      &lt;/div&gt;
+
+      {error && (
+        &lt;div className="rounded border border-red-300 bg-red-50 p-3 text-sm"&gt;
+          请求失败：{error.message}
+          &lt;button onClick={() =&gt; regenerate()} className="ml-2 underline"&gt;
+            重试
+          &lt;/button&gt;
+        &lt;/div&gt;
+      )}
+
+      &lt;form
+        className="flex gap-2"
+        onSubmit={(e) =&gt; {
+          e.preventDefault();
+          if (!input.trim() || busy) return;
+          sendMessage({ text: input });
+          setInput("");
+        }}
+      &gt;
+        &lt;input
+          className="flex-1 rounded border px-3 py-2"
+          value={input}
+          onChange={(e) =&gt; setInput(e.target.value)}
+          placeholder="问点什么…"
+        /&gt;
+        {busy ? (
+          &lt;button type="button" onClick={stop} className="rounded bg-neutral-800 px-4 text-white"&gt;
+            停止
+          &lt;/button&gt;
+        ) : (
+          &lt;button type="submit" className="rounded bg-neutral-900 px-4 text-white"&gt;
+            发送
+          &lt;/button&gt;
+        )}
+      &lt;/form&gt;
+    &lt;/main&gt;
+  );
+}</code></pre>
+
+        <div class="callout">
+          <b>三个必须知道的版本差异</b>
+          <p><b>①</b> <code>useChat</code> 在 v5 之后<b>不再管输入框状态</b>——<code>input</code>/<code>handleInputChange</code> 要自己用 <code>useState</code>，发送改用 <code>sendMessage({ text })</code>。<b>②</b> 返回值从 <code>toDataStreamResponse()</code> 改名为 <code>toUIMessageStreamResponse()</code>。看到旧教程用错名字会报 500 或前端一直 loading。</p>
+          <p><b>③ v7（2026-07）又改了一批</b>：<code>system</code>→<code>instructions</code>、<code>onFinish</code>→<code>onEnd</code>、<code>fullStream</code>→<code>stream</code>，<code>toUIMessageStreamResponse()</code> 进入弃用。<b>你真正要做的是记住「这三代改名的方向」</b>——名字永远会变，但「服务端产出流、客户端消费 parts」这个结构从 v4 到现在没变过。抓住结构，剩下的照着官方文档补。</p>
+        </div>
+
+        <div class="out"><b>产物</b>两个文件 + 能逐字出字的界面</div>
+        <div class="verify"><b>验收</b>输入问题后文字逐字出现；点「停止」立刻中断；断网后能看到错误提示并能重试。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>一直 loading 不出字</b>：先看 Network 里 <code>/api/chat</code> 的响应是流还是一整块 JSON。是一整块说明你用了 <code>generateText</code> 或忘了 <code>streamText</code>。</li>
+            <li><b><code>useChat is not exported</code></b>：import 来源错。v4 是 <code>ai/react</code>，v5+ 是 <code>@ai-sdk/react</code>。</li>
+            <li><b>消息重复渲染</b>：<code>parts</code> 里已经包含文本和工具调用，别再额外渲染 <code>content</code>。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p5-3">
+      <summary>
+        <span class="tid">P5-3</span>
+        <span class="tname">把「它在做什么」变成界面（本阶段最有区分度的一张卡）</span>
+        <span class="tmin">周六 2.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：用户等待时最大的焦虑是「它到底在干嘛」。把工具调用过程可视化，感知延迟会显著下降——<b>这不是装饰，是延迟优化手段</b>。</div>
+
+        <h5>服务端：定义工具（带 execute）</h5>
+<pre><code>// app/api/chat/route.ts（增量）
+import { tool, stepCountIs } from "ai";
+import { z } from "zod";
+
+const tools = {
+  search_knowledge: tool({
+    description: "在个人知识库中检索。适合回答「文档里怎么写的」类问题。",
+    inputSchema: z.object({
+      query: z.string().describe("检索关键词"),
+      top_k: z.number().int().min(1).max(10).default(5),
+    }),
+    execute: async ({ query, top_k }) =&gt; {
+      // 调你的 Python 后端
+      const r = await fetch(`${process.env.PY_API}/search`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query, top_k }),
+      });
+      if (!r.ok) return { ok: false, error: `检索服务返回 ${r.status}` };
+      const data = await r.json();
+      // 关键：返回结构化结果，前端才能渲染成卡片而不是一段文字
+      return { ok: true, chunks: data.chunks as { id: string; source: string; text: string }[] };
+    },
+  }),
+};
+
+const result = streamText({
+  model: openai("gpt-4.1-mini"),
+  system: SYSTEM,
+  messages: convertToModelMessages(messages),
+  tools,
+  stopWhen: stepCountIs(4),   // 最多 4 步，防前端无限请求
+});</code></pre>
+
+        <h5>客户端：按 part 类型渲染不同 UI</h5>
+<pre><code>// components/ToolPart.tsx
+"use client";
+
+type AnyPart = {
+  type: string;
+  state?: string;
+  input?: unknown;
+  output?: unknown;
+  errorText?: string;
+};
+
+export function ToolPart({ part }: { part: AnyPart }) {
+  const name = part.type.replace(/^tool-/, "");
+
+  if (part.state === "input-streaming" || part.state === "input-available") {
+    return (
+      &lt;div className="flex items-center gap-2 text-sm text-neutral-500"&gt;
+        &lt;span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-500" /&gt;
+        正在调用 {name}…
+      &lt;/div&gt;
+    );
+  }
+
+  if (part.state === "output-error" || part.errorText) {
+    return (
+      &lt;div className="rounded border border-amber-300 bg-amber-50 p-2 text-sm"&gt;
+        {name} 失败：{part.errorText ?? "未知错误"}
+        &lt;span className="ml-2 text-neutral-500"&gt;（可继续对话，我会换一种方式）&lt;/span&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  const out = part.output as { ok?: boolean; chunks?: { source: string; text: string }[] };
+  if (out?.chunks?.length) {
+    return (
+      &lt;details className="rounded border p-2 text-sm"&gt;
+        &lt;summary className="cursor-pointer text-neutral-600"&gt;
+          检索到 {out.chunks.length} 条
+        &lt;/summary&gt;
+        &lt;ul className="mt-2 space-y-1"&gt;
+          {out.chunks.map((c, i) =&gt; (
+            &lt;li key={i} className="text-xs text-neutral-500"&gt;
+              &lt;b&gt;{c.source}&lt;/b&gt; · {c.text.slice(0, 90)}…
+            &lt;/li&gt;
+          ))}
+        &lt;/ul&gt;
+      &lt;/details&gt;
+    );
+  }
+
+  return null;
+}</code></pre>
+
+        <h5>渲染侧改造</h5>
+<pre><code>{m.parts.map((p, i) =&gt;
+  p.type === "text" ? (
+    &lt;p key={i}&gt;{p.text}&lt;/p&gt;
+  ) : p.type.startsWith("tool-") ? (
+    &lt;ToolPart key={i} part={p} /&gt;
+  ) : null
+)}</code></pre>
+
+        <div class="out"><b>产物</b><code>ToolPart.tsx</code> + 聊天界面里的工具调用卡片（含 loading / 结果 / 错误三态）</div>
+        <div class="verify"><b>验收</b>三态都能出现：正常检索显示「检索到 N 条」并展开看内容；后端故意返回 500 时显示黄色错误条而不是白屏。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>看不到 tool part</b>：确认服务端 <code>tools</code> 里的工具有 <code>execute</code>。没有 execute 的工具不会自动执行，前端永远等不到 output。</li>
+            <li><b><code>part.state</code> 值和我写的不一样</b>：打印一下 <code>Object.keys(p)</code> 和 <code>p.state</code>，按实际值写分支。这个字段在版本间改过名。</li>
+            <li><b>工具结果是一坨字符串，没法渲染卡片</b>：这就是为什么 execute 要返回<b>结构化对象</b>而不是拼好的文本。文本给模型，结构给 UI。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-4">
+      <summary>
+        <span class="tid">P5-4</span>
+        <span class="tname">首字 &lt;2s：先测准，再优化</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：用户对等待的容忍在前 1–2 秒内急剧下降。首字时间是体验的第一道门槛，而它主要由「输入有多大」决定——这直接连回 P2 的检索块大小和 P4 的上下文管理。</div>
+
+        <h5>怎么量（前端 + 服务端各测一次）</h5>
+<pre><code>// 前端：从点击到第一个字出现
+const t0 = performance.now();
+let firstCharMs: number | null = null;
+
+// 在流式渲染的回调里（或用一个 ref 观察首个 text part 出现）
+useEffect(() =&gt; {
+  const hasText = messages.at(-1)?.parts.some(
+    (p) =&gt; p.type === "text" &amp;&amp; "text" in p &amp;&amp; p.text.length &gt; 0
+  );
+  if (hasText &amp;&amp; firstCharMs === null) {
+    firstCharMs = performance.now() - t0;
+    console.log("首字延迟", Math.round(firstCharMs), "ms");
+    // 上报到你的成本/性能表
+  }
+}, [messages]);</code></pre>
+
+        <h5>四步优化，按性价比排序</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:44px">序</th><th>优化</th><th>预期收益</th><th>代价</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><b>立刻给出「正在检索」状态</b>（哪怕只是三个点动画 + 一句话）</td><td>感知延迟降 50%+，真实延迟不变</td><td>几乎为零</td></tr>
+              <tr><td>2</td><td><b>压缩输入</b>：检索只取 top 3、单块 ≤600 字、去掉无关页眉</td><td>TTFT 降 30–50%</td><td>可能损失召回（用 eval 验证）</td></tr>
+              <tr><td>3</td><td><b>并行</b>：检索与「生成开场白」同时开始（先流一句「正在查你的笔记…」）</td><td>感知再降一截</td><td>代码复杂度上升</td></tr>
+              <tr><td>4</td><td><b>把首轮换成小模型</b>（路由），复杂问题第二步再升级</td><td>TTFT 降 40%+</td><td>需要质量验证</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b>首字延迟的实测日志（至少 20 次）+ 优化前后对比</div>
+        <div class="verify"><b>验收</b>p50 首字 &lt;1.5s，p95 &lt;2.5s；能说出「主要耗时在输入 token 还是网络」。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>首字一直 &gt;4s</b>：先看 <code>performance</code> 里 TTFB（服务器响应开始时间）。如果 TTFB 就 3s，说明后端检索慢，不是前端问题。</li>
+            <li><b>本地很快，部署后很慢</b>：跨地域。前端在 Vercel、后端在本地 = 每次跨洋。把后端也部署到同一区域，或接受这个代价并诚实写进 README。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-5">
+      <summary>
+        <span class="tid">P5-5</span>
+        <span class="tname">中断、重试、错误可读：三态都要有出路</span>
+        <span class="tmin">周日 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：LLM 应用失败是常态（限流、超时、工具错）。把「失败」设计成一条死路还是设计成一个可继续的状态，这就是产品能力的差别。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>状态</th><th>用户看到什么</th><th>能做什么</th><th>实现</th></tr></thead>
+            <tbody>
+              <tr><td><b>流式中</b></td><td>逐字输出 + 停止按钮</td><td>点停止，保留已生成内容</td><td><code>stop()</code>；注意服务端要能收到 abort</td></tr>
+              <tr><td><b>被中断</b></td><td>「已停止」+ 重试 / 继续</td><td>重试整轮，或「接着说完」</td><td><code>regenerate()</code>；「继续」需要把已有文本作为上下文</td></tr>
+              <tr><td><b>工具失败</b></td><td>黄色提示 + 原因一句话</td><td>自动重试一次，或让用户换个问法</td><td>服务端不要抛异常，返回 <code>{ ok:false, error }</code></td></tr>
+              <tr><td><b>限流/超时</b></td><td>「请求太频繁，10 秒后自动重试」+ 倒计时</td><td>自动重试一次，失败则手动</td><td>服务端退避（P4-3），前端显示倒计时</td></tr>
+              <tr><td><b>无权限</b></td><td>「这部分资料你无权访问」</td><td>说明范围，不要假装没找到</td><td>后端返回明确错误码，前端区分文案</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>一个常见错误：把错误文案写成技术术语</b>
+          <p>「429 Too Many Requests」用户看不懂。改成「请求太频繁，请等 10 秒」。「fetch failed」改成「网络中断，已保留上面的内容，可以点重试」。<b>错误文案是产品的一部分，不是日志的一部分。</b></p>
+        </div>
+
+        <div class="out"><b>产物</b>五种状态的 UI + 一次人为制造 429 / 工具失败的录屏</div>
+        <div class="verify"><b>验收</b>五种状态都能触发并显示可操作的出路；没有任何一种会白屏或无限转圈。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>点停止后服务端还在跑（继续烧钱）</b>：把 <code>req.signal</code> 传进 <code>streamText</code> 的 <code>abortSignal</code>，并让下游 fetch 也带这个 signal。</li>
+            <li><b>重试后出现两条重复回答</b>：<code>regenerate()</code> 是不带新消息的重生成；自己实现重试时要先移除最后一条 assistant 消息。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W19 ============ -->
+    <h2 id="w19"><span class="num">W19</span>生成式 UI：让模型决定渲染什么</h2>
+    <p class="lead">03/01–03/07 · 目标不是炫技，是让输出形态匹配内容——该是表格的别写成句子，该是卡片的别写成列表。</p>
+
+    <details class="task" open id="p5-6">
+      <summary>
+        <span class="tid">P5-6</span>
+        <span class="tname">方案 A：组件注册表（先做这个，稳且可控）</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么先用注册表而不是 RSC 流式组件</b>：注册表的思路是「模型返回 <code>{component:"bar_chart", props:{...}}</code>，前端查表渲染」。它有三个好处——可控（只有白名单组件）、可测（props 是数据，能校验）、可降级（组件不存在就显示文本）。RSC 方案更强但调试成本高，等你把这条跑通再说。</div>
+
+        <h5>1. 定义允许的组件和它的 props schema</h5>
+<pre><code>// lib/blocks.ts
+import { z } from "zod";
+
+export const blocks = {
+  text: z.object({ body: z.string() }),
+
+  source_list: z.object({
+    items: z.array(z.object({
+      title: z.string(),
+      source: z.string(),
+      snippet: z.string(),
+    })).max(8),
+  }),
+
+  metric_row: z.object({
+    items: z.array(z.object({
+      label: z.string(),
+      value: z.string(),
+      delta: z.string().optional(),
+    })).max(4),
+  }),
+
+  step_trace: z.object({
+    steps: z.array(z.object({
+      name: z.string(),
+      status: z.enum(["ok", "fail", "skip"]),
+      detail: z.string().optional(),
+    })).max(10),
+  }),
+
+  code: z.object({ lang: z.string(), body: z.string() }),
+};
+
+export type BlockName = keyof typeof blocks;
+export const BlockSchema = z.object({
+  blocks: z.array(
+    z.object({
+      type: z.string(),
+      props: z.record(z.string(), z.unknown()),
+    })
+  ).max(6),
+});</code></pre>
+
+        <h5>2. 让模型输出 blocks（结构化输出，不是自由文本）</h5>
+<pre><code>// app/api/answer/route.ts
+import { generateObject } from "ai";
+import { BlockSchema } from "@/lib/blocks";
+
+const { object } = await generateObject({
+  model: openai("gpt-4.1-mini"),
+  schema: BlockSchema,
+  system: `把答案组织成 blocks。可用类型：
+- text: 普通段落
+- source_list: 引用来源列表（有引用时必用）
+- metric_row: 2-4 个关键数字
+- step_trace: 执行步骤
+- code: 代码片段
+规则：优先用最贴合内容形态的类型；不要用 blocks 表达同一件事两次；
+不确定时用 text。`,
+  prompt: userQuestion,
+});</code></pre>
+
+        <h5>3. 前端查表渲染，未知类型降级为文本</h5>
+<pre><code>// components/BlockRenderer.tsx
+"use client";
+
+import { blocks } from "@/lib/blocks";
+
+const Registry: Record&lt;string, (p: any) =&gt; React.ReactNode&gt; = {
+  text: (p) =&gt; &lt;p className="whitespace-pre-wrap"&gt;{String(p.body)}&lt;/p&gt;,
+
+  source_list: (p) =&gt; (
+    &lt;ul className="space-y-2"&gt;
+      {(p.items ?? []).map((it: any, i: number) =&gt; (
+        &lt;li key={i} className="rounded border p-2 text-sm"&gt;
+          &lt;div className="font-medium"&gt;{it.title}&lt;/div&gt;
+          &lt;div className="text-xs text-neutral-500"&gt;{it.source} · {it.snippet}&lt;/div&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ul&gt;
+  ),
+
+  metric_row: (p) =&gt; (
+    &lt;div className="grid grid-cols-2 gap-2 sm:grid-cols-4"&gt;
+      {(p.items ?? []).map((it: any, i: number) =&gt; (
+        &lt;div key={i} className="rounded border p-3"&gt;
+          &lt;div className="text-xs text-neutral-500"&gt;{it.label}&lt;/div&gt;
+          &lt;div className="text-lg font-semibold"&gt;{it.value}&lt;/div&gt;
+          {it.delta &amp;&amp; &lt;div className="text-xs"&gt;{it.delta}&lt;/div&gt;}
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  ),
+
+  step_trace: (p) =&gt; (
+    &lt;ol className="space-y-1 text-sm"&gt;
+      {(p.steps ?? []).map((s: any, i: number) =&gt; (
+        &lt;li key={i} className="flex gap-2"&gt;
+          &lt;span&gt;{s.status === "ok" ? "✓" : s.status === "fail" ? "✕" : "–"}&lt;/span&gt;
+          &lt;span className="font-medium"&gt;{s.name}&lt;/span&gt;
+          &lt;span className="text-neutral-500"&gt;{s.detail}&lt;/span&gt;
+        &lt;/li&gt;
+      ))}
+    &lt;/ol&gt;
+  ),
+
+  code: (p) =&gt; (
+    &lt;pre className="overflow-x-auto rounded bg-neutral-900 p-3 text-xs text-neutral-100"&gt;
+      &lt;code&gt;{String(p.body)}&lt;/code&gt;
+    &lt;/pre&gt;
+  ),
+};
+
+export function BlockRenderer({ blocks: list }: { blocks: { type: string; props: any }[] }) {
+  return (
+    &lt;div className="space-y-3"&gt;
+      {list.map((b, i) =&gt; {
+        const render = Registry[b.type];
+        // 关键：未知类型必须降级，不能白屏
+        if (!render) return &lt;p key={i}&gt;{JSON.stringify(b.props)}&lt;/p&gt;;
+        const parsed = blocks[b.type as keyof typeof blocks]?.safeParse(b.props);
+        if (!parsed?.success) return &lt;p key={i}&gt;{JSON.stringify(b.props)}&lt;/p&gt;;
+        return &lt;div key={i}&gt;{render(parsed.data)}&lt;/div&gt;;
+      })}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+        <div class="out"><b>产物</b><code>lib/blocks.ts</code> + <code>BlockRenderer.tsx</code> + 至少 3 种组件在真实问答里被触发</div>
+        <div class="verify"><b>验收</b>同一个问题，换成「有哪些资料提到 X」时会出 <code>source_list</code>，换成「这个月花了多少」时会出 <code>metric_row</code>；手工塞一个非法 props，界面降级为文本而不是崩。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>模型总是只返回 text</b>：system prompt 里给 2 个具体例子（「问资料 → source_list」），比列类型更有效。或者在 tool description 里写清触发条件。</li>
+            <li><b>blocks 数量爆炸（一次返回 6 个 text）</b>：schema 里限制 <code>.max(6)</code> 并在 prompt 里说「能合并就合并」。</li>
+            <li><b>想直接渲染 React 组件（RSC 方案）</b>：那就是另一个复杂度级别。先把注册表做扎实——面试时这个方案的「可控性」论述反而更容易讲清。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-7">
+      <summary>
+        <span class="tid">P5-7</span>
+        <span class="tname">生成式 UI 的边界：什么时候不该用</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：能讲清「不该用的场景」的人，才是真懂。这份判断力在面试里比会用一个 API 值钱得多。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>不该用的场景</th><th>原因</th><th>改用</th></tr></thead>
+            <tbody>
+              <tr><td><b>需要精确对齐/可访问性的表单</b></td><td>模型生成的字段顺序和校验规则不可控，无障碍语义难保证</td><td>固定表单 + 模型只填默认值</td></tr>
+              <tr><td><b>高频重复的固定任务</b></td><td>每次都让模型选组件是浪费延迟和钱</td><td>写死模板，模型只填内容</td></tr>
+              <tr><td><b>数字/金额展示</b></td><td>模型可能选错单位、四舍五入，风险高</td><td>服务端算数，前端固定格式渲染</td></tr>
+              <tr><td><b>需要严格审计的界面</b></td><td>「这次为什么显示这个组件」难以复现</td><td>固定模板 + 记录渲染决策</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><b>判断口诀</b>：内容形态<b>不确定</b>（可能是表格也可能是段落）→ 用生成式；内容形态<b>确定但值不确定</b> → 用模板。</p>
+
+        <div class="out"><b>产物</b><code>notes/generative-ui.md</code>：你的使用边界 + 一个「我决定不用」的具体场景及理由</div>
+        <div class="verify"><b>验收</b>能回答「你这个功能如果用户量涨 100 倍，第一个崩的是哪里」——通常是每次问答都多一次结构化输出调用的成本。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>觉得「生成式 UI 就是高级感」</b>：那说明还没找到真实需求。回到你的语料问一句：什么问题的答案用文字很别扭？从那里倒推该做什么组件。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W20 ============ -->
+    <h2 id="w20"><span class="num">W20</span>部署与运营：让陌生人能打开</h2>
+    <p class="lead">03/08–03/14 · 这一周的目标很朴素：<b>给出一个链接，别人点开能用，且你不会因此破产。</b></p>
+
+    <details class="task" open id="p5-8">
+      <summary>
+        <span class="tid">P5-8</span>
+        <span class="tname">上线：前端 + 后端两条路径</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：作品集没有公开链接等于没有作品集。面试官不会 clone 你的仓库跑起来——但如果链接能点开，他会点。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>方案</th><th>适合</th><th>步骤</th><th>代价</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>前端 Vercel + 后端 Fly.io / Railway</b></td>
+                <td>最省事，也最像真实产品</td>
+                <td>Vercel 连 GitHub 自动部署；后端 Dockerfile 推到 Fly</td>
+                <td>两个平台各自有免费额度；冷启动可能几秒</td>
+              </tr>
+              <tr>
+                <td><b>一台 VPS 全放</b></td>
+                <td>想省钱、想练 docker compose</td>
+                <td>Nginx 反代 + 两个容器 + certbot 证书</td>
+                <td>要自己管证书、备份、监控</td>
+              </tr>
+              <tr>
+                <td><b>Vercel 前后端都用 TS 重写</b></td>
+                <td>不想维护 Python 服务</td>
+                <td>把检索逻辑搬到 Next.js route handler</td>
+                <td>重写成本 1–2 周，且丢掉 Python 生态</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>后端的 Dockerfile（Python 服务）</h5>
+<pre><code>FROM python:3.12-slim
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN pip install --no-cache-dir uv &amp;&amp; uv sync --frozen --no-dev
+
+COPY src ./src
+COPY data/corpus ./data/corpus
+
+ENV PYTHONUNBUFFERED=1
+EXPOSE 8000
+CMD ["uv", "run", "uvicorn", "agentlab.api:app", "--host", "0.0.0.0", "--port", "8000"]</code></pre>
+
+        <div class="callout warn">
+          <b>上线前必须做的三件事</b>
+          <p><b>①</b> 所有密钥走平台的环境变量，<code>.env</code> 不进镜像（<code>.dockerignore</code> 加一行）。<b>②</b> CORS 只允许你的前端域名，不要 <code>*</code>。<b>③</b> 加一个 <code>/health</code> 端点，部署后先访问它——它不能依赖模型调用，只检查进程和数据库连接。</p>
+        </div>
+
+        <div class="out"><b>产物</b>可公开访问的 URL + <code>/health</code> 返回 200 + <code>README</code> 里写明架构图</div>
+        <div class="verify"><b>验收</b>用手机 4G（不连公司 wifi）打开能正常问答；<code>curl -sS https://你的域名/health</code> 返回 ok。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>部署后 500，本地正常</b>：90% 是环境变量没配或路径不对（本地用相对路径 <code>data/corpus</code>，容器里工作目录不同）。加日志打一下 <code>os.getcwd()</code>。</li>
+            <li><b>首次请求很慢（10s+）</b>：embedding 模型在冷启动加载。解决：把 embedding 改成 API 调用，或加一个定时 ping 保温。</li>
+            <li><b>镜像 2GB+</b>：sentence-transformers 会带 torch。用 <code>--no-cache-dir</code>、分离 CPU-only 版本，或换 API embedding。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-9">
+      <summary>
+        <span class="tid">P5-9</span>
+        <span class="tname">限额与多租户：超出预算要拒绝，而不是烧钱</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：一个公开链接 + 免费 API key = 有人会写脚本刷你。限额不是防坏人，是防你自己破产。同时它是「生产级」的标志之一。</div>
+
+<pre><code>// lib/ratelimit.ts —— 用 Postgres 做计数（不引入 Redis 也能跑）
+import { sql } from "@/lib/db";
+
+export async function checkQuota(userKey: string, costUsd: number) {
+  const day = new Date().toISOString().slice(0, 10);
+  const row = await sql`
+    INSERT INTO usage_daily (user_key, day, calls, cost_usd)
+    VALUES (${userKey}, ${day}, 1, ${costUsd})
+    ON CONFLICT (user_key, day)
+    DO UPDATE SET calls = usage_daily.calls + 1,
+                  cost_usd = usage_daily.cost_usd + ${costUsd}
+    RETURNING calls, cost_usd
+  `;
+  const { calls, cost_usd } = row[0];
+
+  const LIMITS = { calls: 50, cost: 0.30 };   // 每用户每天
+  if (calls &gt; LIMITS.calls || Number(cost_usd) &gt; LIMITS.cost) {
+    return { ok: false, reason: "quota_exceeded" as const, calls, cost_usd };
+  }
+  return { ok: true as const, calls, cost_usd };
+}</code></pre>
+
+        <h5>四层限额，从上到下越来越细</h5>
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>层</th><th>限制什么</th><th>实现</th></tr></thead>
+            <tbody>
+              <tr><td>全局</td><td>每分钟总请求数</td><td>平台层（Vercel）或 Nginx limit_req</td></tr>
+              <tr><td>每用户</td><td>每天调用次数 + 金额</td><td>上面的 <code>usage_daily</code></td></tr>
+              <tr><td>每次请求</td><td>输入长度、max_tokens、最大步数</td><td>route handler 里校验</td></tr>
+              <tr><td>每租户（数据）</td><td>只能检索自己的文档</td><td>检索 SQL 的 <code>tenant_id</code>（P2-11）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b>限额表 + <code>checkQuota</code> 接入 + 一次「超额被拒」的截图</div>
+        <div class="verify"><b>验收</b>连续调用超过 50 次后被拒绝，提示文案友好；数据库里能看到累计花费。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没有用户系统，<code>userKey</code> 用什么</b>：用 IP + 一个匿名 cookie UUID。够用了，别在这阶段做登录。</li>
+            <li><b>成本拿不到（流式响应里 usage 在最后）</b>：先按「每次请求固定估算」扣费，事后用实际 usage 校正。粗但可用。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-10">
+      <summary>
+        <span class="tid">P5-10</span>
+        <span class="tname">成本看板：一页看清钱花在哪</span>
+        <span class="tmin">周日 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是最容易被面试官记住的小细节——大多数个人项目只有一个聊天框，你有一个真实的运营视图。</div>
+
+        <div class="tw">
+          <table>
+            <thead><tr><th>指标</th><th>SQL 口径</th><th>看什么</th></tr></thead>
+            <tbody>
+              <tr><td>今日花费</td><td><code>SELECT sum(cost_usd) FROM usage_daily WHERE day=today</code></td><td>是否接近预算</td></tr>
+              <tr><td>每次问答均成本</td><td><code>sum(cost) / sum(calls)</code></td><td>成本趋势（涨了说明上下文在膨胀）</td></tr>
+              <tr><td>P95 延迟</td><td><code>percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms)</code></td><td>长尾</td></tr>
+              <tr><td>失败率</td><td><code>count(status='error') / count(*)</code></td><td>可靠性</td></tr>
+              <tr><td>拒答率</td><td><code>count(refused) / count(*)</code></td><td>太高=检索差，太低=可能瞎答</td></tr>
+              <tr><td>缓存命中率</td><td><code>sum(cached_tokens)/sum(input_tokens)</code></td><td>&lt;50% 检查前缀稳定性</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>界面别做复杂：一个表格 + 一行大数字 + 一张 7 天花费的柱状图，就够了。</p>
+
+        <div class="out"><b>产物</b><code>/admin</code> 页面（加一个简单的口令保护）+ 截图放进 README</div>
+        <div class="verify"><b>验收</b>能看到今天花了多少、几次问答、P95 延迟、失败率。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没数据（只有自己用）</b>：跑 30 次脚本生成数据。看板的价值在「能算」，不在于数据多。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W21 ============ -->
+    <h2 id="w21"><span class="num">W21</span>作品集打磨：让陌生人 3 分钟看懂</h2>
+    <p class="lead">03/15–03/21 · 这一周的产出不是代码，是<b>让别人愿意读你代码的入口</b>。投简历时，90% 的时间花在 README 上。</p>
+
+    <details class="task" open id="p5-11">
+      <summary>
+        <span class="tid">P5-11</span>
+        <span class="tname">README 六块：没有这六块等于没有作品</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：面试官看仓库的顺序是：<b>一句话是做什么 → 有没有截图/链接 → 有没有数据 → 结构清不清楚</b>。四个都过不了就关掉了。README 是产品的一部分。</div>
+
+        <h5>六块结构（照这个顺序写）</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:60px">块</th><th>内容</th><th>要求</th><th>反面例子</th></tr></thead>
+            <tbody>
+              <tr><td><b>1 一句话</b></td><td>它是什么 + 解决什么问题</td><td>一句话，不超过 40 字，不用术语堆砌</td><td>「基于大模型的智能知识管理解决方案」</td></tr>
+              <tr><td><b>2 在线地址</b></td><td>可点的链接 + 一张截图或 GIF</td><td>链接必须真的能打开</td><td>「本地运行 npm run dev」</td></tr>
+              <tr><td><b>3 关键数字</b></td><td>3–5 个可验证指标</td><td>每个都写清口径（在什么测试集上）</td><td>「效果优秀」</td></tr>
+              <tr><td><b>4 架构图</b></td><td>一张图 + 3 句说明数据怎么流</td><td>标出哪一步是可替换的</td><td>贴一堆技术 logo</td></tr>
+              <tr><td><b>5 取舍说明</b></td><td>3–5 条「我选了 X 没选 Y，因为 Z」</td><td>每条都要有代价</td><td>只列技术栈</td></tr>
+              <tr><td><b>6 诚实的局限</b></td><td>3 条当前做不到的事</td><td>具体，不说「还有优化空间」</td><td>「功能还在完善中」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>第 3 块怎么写（这是最能拉开差距的）</h5>
+<pre><code>## 关键数字
+
+在 30 条人工标注问答上（12 事实 / 6 多跳 / 4 精确串 / 6 不可答 / 2 注入）：
+
+| 指标 | 数值 | 说明 |
+|---|---|---|
+| 答案正确率 | 78% (23/30) | LLM judge + 人工复核，一致率 28/30 |
+| 检索 recall@5 | 0.83 | 混合检索 + 重排后；纯向量为 0.67 |
+| 引用可追溯率 | 96% | 引用编号能对上原文的比例 |
+| 不可答拒答率 | 5/6 | 1 条误答，见 issue #3 |
+| 单任务成本 | $0.0031 | 相比初版 $0.0052 降 40% |
+| 首字延迟 p50/p95 | 1.1s / 2.3s | 20 次采样 |</code></pre>
+
+        <p class="muted">注意：<b>没有全部满分，还有一条误答</b>。这不是缺点，是可信度来源。写「78%」比写「准确率很高」强十倍。</p>
+
+        <h5>第 5 块怎么写（每条都要有代价）</h5>
+<pre><code>## 关键取舍
+
+- **用手写 loop 而不是 LangGraph**：需要完整的步级控制（含审批中断）。
+  代价：没有现成的可视化编排，复杂分支要自己写状态机。
+- **pgvector 而不是专用向量库**：已有的 Postgres 运维经验可直接复用，
+  且元数据过滤能进 SQL。代价：千万级向量以上会撞性能天花板。
+- **混合检索而不是纯向量**：产品型号、错误码这类精确串纯向量召回很差。
+  代价：多维护一套 BM25 索引，写入时要做双写。
+- **注册表式生成式 UI 而不是 RSC 流式组件**：组件白名单可控、props 可校验、
+  未知类型能降级。代价：表现力不如真正的动态组件。</code></pre>
+
+        <div class="out"><b>产物</b>三个仓库的 README（主仓库写得最细）+ 架构图（手绘拍照也行）</div>
+        <div class="verify"><b>验收</b>找一个不懂你项目的人（同事/朋友）看 3 分钟，然后让他复述「这是做什么的、你解决了什么难的问题」。复述对了才算过。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「数字拿不出手（正确率 60%）」</b>：照实写。然后写「已知问题 + 下一步」。诚实 + 有分析 > 漂亮但假。</li>
+            <li><b>「不会画架构图」</b>：用 excalidraw 画 6 个方框 + 箭头，导出 PNG。别用炫酷工具，信息清楚就行。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-12">
+      <summary>
+        <span class="tid">P5-12</span>
+        <span class="tname">60 秒 demo：按分镜录，不要临场发挥</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：面试时你只有一次机会让人看到它跑起来。提前录好，面试时可以边放边讲；如果网络挂了还能用录制版。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:60px">秒</th><th>画面</th><th>你要说什么</th></tr></thead>
+            <tbody>
+              <tr><td>0–8</td><td>首页 + 一句话标题</td><td>「这是一个基于我个人 200 页工程文档的问答助手。」</td></tr>
+              <tr><td>8–20</td><td>问一个需要跨两段回答的问题</td><td>「这个问题需要跨两个章节，注意它在查什么。」（让工具卡片可见）</td></tr>
+              <tr><td>20–32</td><td>答案出现 + 引用卡片展开</td><td>「每个结论都能回到原文，点开能看到来源和原文片段。」</td></tr>
+              <tr><td>32–44</td><td>问一个文档里没有的问题</td><td>「没有依据时它明确拒答，而不是编一个。」</td></tr>
+              <tr><td>44–54</td><td>后台的成本看板</td><td>「每次问答大约 3 厘钱，首字 1.1 秒，这两块是实时统计的。」</td></tr>
+              <tr><td>54–60</td><td>架构图</td><td>「整体五个组件，评测集 30 条，正确率 78%，剩下 22% 的失败我做了归因。」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><b>录制要点</b>：1080p、无背景音乐、鼠标动作放慢、不要录"打字过程"（提前把问题粘好）。录 3 遍选一遍，别追求一次过。</p>
+
+        <div class="out"><b>产物</b><code>demo-60s.mp4</code> + 上传到 README（或 B 站/YouTube 未公开链接）</div>
+        <div class="verify"><b>验收</b>自己回看一遍：能听懂、没有卡顿、关键画面（工具卡片/引用/看板）都出现了。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「录出来很业余」</b>：先写脚本再录，别即兴。分镜就是脚本。</li>
+            <li><b>「没时间录」</b>：用 OBS 或系统自带录屏，剪掉等待段。30 分钟能搞定。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
+
+    <details class="task" id="selftest-card">
+      <summary>
+        <span class="tid">Q1–Q6</span>
+        <span class="tname">P5 阶段验收自测（点开看答题要点）</span>
+        <span class="tmin">25min</span>
+      </summary>
+      <div class="task-body">
+        <h5>Q1 为什么「流式」不只是体验问题，还是成本问题？</h5>
+        <p class="muted">要点：流式让用户可在中途停止，避免为不需要的长回答付费；同时首字快意味着可以用更大的 max_tokens 而不担心等待；反过来，非流式必须等完整生成，超时就白花钱。</p>
+
+        <h5>Q2 生成式 UI 的风险是什么？什么场景不该用？</h5>
+        <p class="muted">要点：风险是不确定性（渲染错形态）、成本（多一次结构化输出调用）、可测性差（难断言）。不该用于：精确表单、固定高频任务、金额展示、强审计场景。</p>
+
+        <h5>Q3 多租户 RAG 里，权限在哪一层做？为什么不能「检索完再过滤」？</h5>
+        <p class="muted">要点：必须在检索 SQL 的 WHERE 里做。检索完再过滤的问题是：前 10 条可能全被过滤掉，用户看到「没找到」而实际有权限的文档排在第 30 位；另外无权限内容进了上下文就有泄露风险。</p>
+
+        <h5>Q4 你的产品如果用户量涨 100 倍，第一个崩的是哪里？</h5>
+        <p class="muted">要点：要给出具体判断，通常是「每次问答的模型调用成本」或「embedding 服务并发」。加分项：说出缓冲方案（缓存相同问题、批处理 embedding、把生成式 UI 的多余调用改成按需触发）。</p>
+
+        <h5>Q5 你的 README 里为什么写「一条误答」？不会减分吗？</h5>
+        <p class="muted">要点：不减分反而加分——它证明你做了评测且敢公开。招聘方最怕的是「不知道自己不知道」。关键是配套写清「已定位原因 + 下一步」。</p>
+
+        <h5>Q6 首字延迟 4 秒，但用户反馈「还好」，你要不要优化？</h5>
+        <p class="muted">要点：先确认「还好」是不是因为等待期间有可见反馈。如果是，说明感知管理有效，可以把优化优先级降低；但如果 p95 很差，长尾用户会流失。判断依据是数据不是感觉。</p>
+      </div>
+    </details>
+
+    <div class="callout danger">
+      <b>阶段通关条件</b>
+      <p>① 有公开可访问的链接且手机能打开；② 工具调用过程在界面上可见；③ 首字 p50 &lt;1.5s；④ 超额请求被拒且提示友好；⑤ 成本看板能报出今日花费；⑥ README 六块齐全，陌生人 3 分钟能复述。</p>
+    </div>
+
+    <h2 id="done"><span class="num">6</span>交付物清单</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>产物</th><th>位置</th><th>面试时怎么用</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>流式对话</td><td><code>app/api/chat/route.ts</code> + <code>app/page.tsx</code></td><td>「首字 1.1s，中断不浪费 token」</td></tr>
+          <tr><td>☐</td><td>工具可视化</td><td><code>components/ToolPart.tsx</code></td><td>「过程可见，感知延迟降一半」</td></tr>
+          <tr><td>☐</td><td>五态错误处理</td><td>同上</td><td>「每种失败都有出路」</td></tr>
+          <tr><td>☐</td><td>生成式 UI</td><td><code>lib/blocks.ts</code> + <code>BlockRenderer.tsx</code></td><td>「注册表式，未知类型降级」</td></tr>
+          <tr><td>☐</td><td>部署</td><td>公开 URL</td><td>「手机能打开」</td></tr>
+          <tr><td>☐</td><td>限额</td><td><code>lib/ratelimit.ts</code></td><td>「四层限额，超额拒绝」</td></tr>
+          <tr><td>☐</td><td>成本看板</td><td><code>/admin</code></td><td>「今日花费 / P95 / 失败率」</td></tr>
+          <tr><td>☐</td><td>README ×3</td><td>三个仓库根目录</td><td>六块齐全，含诚实局限</td></tr>
+          <tr><td>☐</td><td>60 秒 demo</td><td><code>demo-60s.mp4</code></td><td>面试时边放边讲</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="nextprev">
+      <a href="stage-p4.html"><span>返回</span>← P4 可靠性与成本</a>
+      <a href="stage-p6.html"><span>下一步</span>P6 求职冲刺 →</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · P5 产品化与差异化 · W18–W21 · 02/22–03/21
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

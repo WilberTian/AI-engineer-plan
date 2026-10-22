@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="P6 求职冲刺（W22–W24）：简历 v3、作品集、90 秒四段讲法、20 道高频题、三批投递。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="P6 求职冲刺（W22–W24）：简历 v3、作品集、90 秒四段讲法、20 道高频题、三批投递。">
+<title>P6 · 求职冲刺 · W22–W24</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>P6 · W22–W24</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html">P2</a>
+      <a href="stage-p3.html">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html">P5</a>
+      <a href="stage-p6.html" class="on">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="txtbtn" id="expandAll" type="button" aria-expanded="false">全部展开</button>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html">总览与日历</a>
+      <a href="stage-p5.html">← P5 产品化</a>
+      <a href="#rounds">先看懂战场（轮次 + 框架）</a>
+    </nav>
+    <h4>W22 · 材料</h4>
+    <nav>
+      <a href="#w22" class="on">本周目标</a>
+      <a href="#p6-1">1 简历 v3</a>
+      <a href="#p6-2">2 作品集页</a>
+    </nav>
+    <h4>W23 · 讲与答</h4>
+    <nav>
+      <a href="#w23">本周目标</a>
+      <a href="#p6-3">3 项目四段 + 8 追问</a>
+      <a href="#p6-4">4 20 道高频题</a>
+      <a href="#p6-5">5 反问与薪资</a>
+    </nav>
+    <h4>W24 · 投递</h4>
+    <nav>
+      <a href="#w24">本周目标</a>
+      <a href="#p6-6">6 投递策略</a>
+      <a href="#p6-7">7 面试后复盘</a>
+    </nav>
+    <nav style="margin-top:14px">
+      <a href="#checklist">投递前检查</a>
+      <a href="#done">交付物清单</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
+  </aside>
+
+  <main>
+    <div class="phasehead">
+      <div class="ph-tag">P6 · Week 22–24 · 03/22–04/11</div>
+      <h2>求职冲刺：把 5 个月翻译成面试</h2>
+      <p><b>目标：</b>投 20 家拿到 ≥3 个技术面。拿不到不是运气问题，是材料问题——回 W22 重做，不要加大投递量。</p>
+      <p>三周只做三件事：<b>材料</b>（能换来面试）、<b>表达</b>（能把项目讲清楚）、<b>投递与迭代</b>（用真实反馈校准）。</p>
+      <div class="deliv">
+        <span>简历 v3（一页）</span>
+        <span>作品集页</span>
+        <span>3 个项目 × (90 秒版 + 8 追问)</span>
+        <span>投递记录表</span>
+      </div>
+    </div>
+
+    <!-- ============ 轮次与框架 ============ -->
+    <h2 id="rounds"><span class="num">0</span>先看懂战场：四类轮次和一个万能框架</h2>
+
+    <p class="lead">AI 应用岗的面试结构和传统前端面试完全不同。<b>把准备时间按轮次分配，比按知识点分配有效得多。</b></p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:16%">轮次</th><th>考什么</th><th style="width:34%">怎么准备</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>编码轮</b></td>
+            <td>算法题过了基本线就够（LRU、合并区间这一档），重点常被追问「并发场景怎么办」</td>
+            <td><b>别把时间全砸在这。</b>刷到能过线即停，剩下的时间给系统设计</td>
+          </tr>
+          <tr>
+            <td><b>系统设计轮</b><br><span class="pill a">主战场</span></td>
+            <td>设计一个客服 agent / 多租户 RAG / 评测平台</td>
+            <td>用下面那个六段框架，每个主题各练一遍，限时 25 分钟讲完</td>
+          </tr>
+          <tr>
+            <td><b>领域深挖</b><br><span class="pill warn">挂人最多</span></td>
+            <td>RAG 故障定位、eval 设计、上下文管理、失败兜底</td>
+            <td>拿你自己项目的真实 bad case 练：每个域准备 2 个「我遇到过、我这样定位」的故事</td>
+          </tr>
+          <tr>
+            <td><b>行为轮</b></td>
+            <td>「讲一个你做的 agent 线上出问题的故事」——几乎必问，且是资深与否的过滤器</td>
+            <td>准备 1 个「出问题 → 怎么发现 → 怎么定位 → 改了什么 → 现在怎么防」的完整叙事，这里必须显示你是资深</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>一个万能答题框架（六段）</h3>
+
+    <p>遇到任何设计题、开放题，按这个顺序说。它的作用是让你在前 60 秒就显出结构感：</p>
+
+    <ol>
+      <li><b>目标</b>：用户 / 业务要什么结果（一句话，别铺垫）</li>
+      <li><b>约束</b>：延迟、成本、隐私、风险上限——先框死边界</li>
+      <li><b>怎么算成功</b>：eval 与判据。<b>这一步先说，会让面试官立刻高看你一眼</b></li>
+      <li><b>最简可行架构</b>：能不用 agent 就不用，先给最小方案</li>
+      <li><b>失败模式</b>：在哪断、怎么观测、怎么恢复</li>
+      <li><b>取舍</b>：为什么不选另一种方案，代价是什么</li>
+    </ol>
+
+    <div class="callout ok">
+      <b>为什么第 ③ 步这么关键</b>
+      <p>大部分候选人从「我打算用向量库 + LangGraph」开始讲——那是第 ④ 步的内容，而且没有 ①②③ 支撑时听起来像抄来的。而先说「我们怎么算成功」，等于当场证明你是个工程师：<b>你知道要先有尺子再动手</b>。这句话和你 W05 就在做的事是同一件事，只是换到面试场景说。</p>
+    </div>
+
+    <!-- ============ W22 ============ -->
+    <h2 id="w22"><span class="num">W22</span>材料：让陌生人愿意给你 45 分钟</h2>
+    <p class="lead">03/22–03/28 · 简历和作品集页的唯一目标：<b>让对方产生一个具体的追问</b>。不产生追问的材料等于被拒。</p>
+
+    <details class="task" open id="p6-1">
+      <summary>
+        <span class="tid">P6-1</span>
+        <span class="tname">简历 v3：一页，五块，每块都能撑住追问</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：v0 是「翻译已有经验」，v3 是「用真实数据支撑」。区别在于：v0 只能说「我做了什么」，v3 能说「效果是多少、代价是什么」。</div>
+
+        <h5>结构（严格一页，顺序不要改）</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:90px">块</th><th>内容</th><th>行数</th><th>必须包含</th></tr></thead>
+            <tbody>
+              <tr><td><b>一句话定位</b></td><td>旧优势 + 新能力 + 目标岗位</td><td>1 行</td><td>不出现「转型/学习/热爱」</td></tr>
+              <tr><td><b>项目</b></td><td>3 个项目，每个 3–4 个 bullet</td><td>约半页</td><td>数字 + 取舍 + 链接</td></tr>
+              <tr><td><b>工作经历</b></td><td>倒序，每段 2–3 个 bullet</td><td>约 1/3 页</td><td>只留和 AI 系统相关的</td></tr>
+              <tr><td><b>技能</b></td><td>按域分组，不打熟练度</td><td>3–4 行</td><td>分「模型/检索/运行时/评测/工程」</td></tr>
+              <tr><td><b>教育</b></td><td>一行</td><td>1 行</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>一句话定位（三个版本，选一个）</h5>
+<pre><code>A（偏产品）：10 年前端工程经验，擅长复杂交互与性能优化；独立完成带评测的 RAG 问答
+   与可恢复 agent 运行时，能一个人从交互做到部署。
+
+B（偏平台）：10 年后端/前端工程经验，专注分布式系统与性能；近半年构建可观测的 agent
+   运行时（checkpoint / 审批 / trace），关注长任务的可靠性。
+
+C（偏交付）：10 年工程经验，做过多个 0→1 项目；近半年交付两个 LLM 应用（含评测体系与
+   成本控制），擅长把不确定的模型能力包装成可用的产品。</code></pre>
+
+        <h5>项目 bullet 的四段公式</h5>
+        <p><b>背景约束 → 我做了什么选择 → 数据结果 → 代价或局限</b>。最后一段是 90% 的人漏掉的，也是最能证明你不是在吹的部分。</p>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:30%">反面（大多数人的写法）</th><th>正面（v3 写法）</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>「使用 RAG 技术实现知识库问答系统，提升检索准确率」</td>
+                <td>「为 240 页内部文档搭建问答系统：对比 3 种分块策略（固定/递归/标题感知），标题感知的 recall@5 达 0.83（纯向量 0.67）；混合检索 + 重排在 30 条标注集上把 MRR 从 0.51 提到 0.72，代价是 P95 延迟 +310ms」</td>
+              </tr>
+              <tr>
+                <td>「实现 Agent 系统，支持多轮工具调用」</td>
+                <td>「手写 agent 运行时（无框架）：3 层兜底（重复调用检测 / token 预算 / 总超时）使注入 5 类故障时不出现未捕获异常；SQLite/Postgres checkpoint 支持 kill -9 后恢复，重启后不重复执行副作用（幂等键 = run+step+参数摘要）」</td>
+              </tr>
+              <tr>
+                <td>「优化系统性能，降低成本」</td>
+                <td>「三档模型路由 + prompt 前缀缓存：单任务成本 $0.0052 → $0.0031（-40%），30 条 eval 通过率仅下降 1 个点（95% → 94%）；缓存命中率 62%」</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b><code>notes/resume-v3.md</code> + 导出 PDF（一页）</div>
+        <div class="verify"><b>验收</b>
+          ① 一页，不超；② 每个项目 bullet 都有数字；③ 至少 3 处写了代价/局限；④ <code>grep -E "转型|学习|热爱|了解|熟悉"</code> 无输出；⑤ 两个业内人看过，能分别说出「这人做过什么」。
+        </div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「一页放不下」</b>：删工作经历里最早的一段，或把 3 个项目砍成 2 个（每个写深一点）。一页是硬约束——超页会被认为「不会抓重点」。</li>
+            <li><b>「数字不好看」</b>：照实写，配「已知问题」。60% 的正确率 + 归因分析 > 「效果显著」。</li>
+            <li><b>「不知道代价怎么写」</b>：每个技术选择问一句「它让我放弃了什么」，答案就是代价。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p6-2">
+      <summary>
+        <span class="tid">P6-2</span>
+        <span class="tname">作品集页：一屏之内看完三个项目</span>
+        <span class="tmin">周日 2.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：简历附件可能是 PDF，但作品集页是一个<b>可点的链接</b>——对方在手机上就能看，还能直接点进 demo。这对转岗候选人尤其重要，因为你缺「AI 工作经历」，需要别的证据补。</div>
+
+        <h5>一屏结构（不要做成 fancy 官网）</h5>
+<pre><code>┌─────────────────────────────────────────────┐
+│  你的名字 · AI 应用工程                          │
+│  10 年前端 → 手写 agent 运行时 + 评测体系        │
+│  [简历 PDF]  [GitHub]  [邮箱]                  │
+├─────────────────────────────────────────────┤
+│  项目一  带评测的个人知识库问答          [在线 demo] │
+│  一句话：240 页文档，78% 正确率，每个答案可溯源      │
+│  数字：recall@5 0.83 · 引用可追溯 96% · 首字 1.1s │
+│  我做的最难的决定：标题感知分块 vs 纯语义分块（附理由）│
+├─────────────────────────────────────────────┤
+│  项目二  可恢复的 agent 运行时            [仓库]     │
+│  ...                                         │
+├─────────────────────────────────────────────┤
+│  项目三  全栈 AI 产品（含生成式 UI + 成本看板）[在线]  │
+│  ...                                         │
+├─────────────────────────────────────────────┤
+│  我怎么工作的：评测驱动 / 先手写再上框架 / 写清代价     │
+└─────────────────────────────────────────────┘</code></pre>
+
+        <p><b>每个项目只放四样</b>：一句话、三个数字、一个「最难的决定」、一个链接。不要放技术栈图标墙。</p>
+
+        <div class="callout">
+          <b>「我做的最难的决定」这一栏为什么值钱</b>
+          <p>它把一个「做过项目的人」变成「做过判断的人」。招聘方招的是判断力，不是执行力。写的时候用固定句式：<b>「我在 A 和 B 之间选了 A，因为 C；代价是 D。」</b></p>
+        </div>
+
+        <div class="out"><b>产物</b>一个静态页（可以用 P5 的 Next.js 加一个 <code>/portfolio</code> 路由，或直接一个 HTML）</div>
+        <div class="verify"><b>验收</b>手机打开一屏内能看到三个项目和联系方式；所有链接可点且不 404。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「设计不好看」</b>：用纯文本 + 间距 + 一条分割线就够。信息密度 > 视觉花活。这页的读者是在扫，不是在看。</li>
+            <li><b>「没有三个项目」</b>：两个也行。一个 RAG + 一个运行时已经能覆盖大部分考点。宁可两个写深。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W23 ============ -->
+    <h2 id="w23"><span class="num">W23</span>表达：90 秒讲清一个项目，8 个追问不卡壳</h2>
+    <p class="lead">03/29–04/04 · 这一周全部是说的训练。写下来、录音、回听、改。不要只在脑子里过。</p>
+
+    <details class="task" open id="p6-3">
+      <summary>
+        <span class="tid">P6-3</span>
+        <span class="tname">项目四段法 + 每个项目预演 8 个追问</span>
+        <span class="tmin">周六 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：面试官问「介绍一个项目」时，他在评估三件事——你是否真的做过、你是否有判断力、你能不能把复杂的事讲清楚。四段法同时覆盖这三点。</div>
+
+        <h5>90 秒版四段（按这个顺序，不要跳）</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:60px">段</th><th>时长</th><th>说什么</th><th>要点</th></tr></thead>
+            <tbody>
+              <tr><td><b>1 问题</b></td><td>15s</td><td>什么场景、什么约束、为什么值得做</td><td>给具体规模（240 页、30 条测试集），别说「一个知识库」</td></tr>
+              <tr><td><b>2 方案</b></td><td>30s</td><td>整体分几层，关键选择是什么</td><td>讲「为什么这么分」，不要讲实现细节</td></tr>
+              <tr><td><b>3 数据</b></td><td>25s</td><td>2–3 个指标 + 口径</td><td>必须说清「在什么测试集上」</td></tr>
+              <tr><td><b>4 取舍</b></td><td>20s</td><td>最难的决定 + 代价 + 现在会怎么改</td><td>这一段决定你被当资深还是初级</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>示范（背下来，然后换成自己的）</h5>
+        <div class="callout">
+          <p><b>问题</b>：我们内部有 240 页工程文档，新人查一个问题平均要翻 15 分钟，而且经常查到过期版本。<br>
+          <b>方案</b>：分三层——解析层用 Docling 保留标题层级；检索层做混合（向量 + BM25）加重排；生成层强制引用编号，并在检索分低于阈值时直接拒答。<br>
+          <b>数据</b>：30 条人工标注集上正确率 78%，recall@5 0.83（纯向量 0.67），引用可追溯率 96%，首字延迟 p50 1.1 秒。<br>
+          <b>取舍</b>：最难的是分块。我一开始用固定 400 token，多跳问题几乎全错——因为答案跨两节。改成标题感知并把标题路径拼进块文本后，多跳从 1/6 提到 4/6。代价是块长差异很大，短块多，入库数涨了 40%。现在回头看，我会给短块加合并逻辑，而不是靠重排去救。</p>
+        </div>
+
+        <h5>每个项目必须预演的 8 个追问</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:26px">#</th><th>追问</th><th>他在考什么</th><th>你的答案必须有</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>为什么不用 LangChain / LangGraph？</td><td>技术选型判断力</td><td>具体需求（比如审批中断）+ 框架缺什么 + 你付出了什么代价</td></tr>
+              <tr><td>2</td><td>这个 78% 是怎么测的？谁标的？</td><td>数据严谨性</td><td>样本量、类型分布、标注方式、judge 与人工一致率</td></tr>
+              <tr><td>3</td><td>剩下 22% 错在哪？</td><td>是否真做过归因</td><td>分层归因（检索/生成/数据），最好说 2 个具体 case</td></tr>
+              <tr><td>4</td><td>如果文档从 240 页涨到 24 万页，什么会先坏？</td><td>规模化思考</td><td>具体的瓶颈（索引构建时间 / 检索延迟 / 元数据管理），不要泛泛说「要分布式」</td></tr>
+              <tr><td>5</td><td>你怎么知道改了之后更好？</td><td>评测意识</td><td>eval 集 + 改动前后对比 + 哪几条 case 翻转</td></tr>
+              <tr><td>6</td><td>线上出过一次什么问题？</td><td>真实经验</td><td>具体故障 + 你怎么定位 + 怎么修的 + 加了什么防复发</td></tr>
+              <tr><td>7</td><td>这个方案的成本是多少？怎么降的？</td><td>工程经济性</td><td>单任务成本、最贵的一环、降本手段 + 质量验证</td></tr>
+              <tr><td>8</td><td>如果重做一遍，你会改什么？</td><td>反思能力</td><td>具体的一个技术决策 + 为什么当时错了</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b>三个项目各一份 <code>notes/pitch-项目名.md</code>（90 秒稿 + 8 个追问的答案）+ 录音</div>
+        <div class="verify"><b>验收</b>录音回听：90 秒内讲完四段、没有「嗯/那个/就是说」超过 3 次、第 4 段能自然说出代价。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「讲不完，总想讲细节」</b>：细节是留给追问的。90 秒版只讲「结构 + 判断」，细节讲多了会被打断，反而显得不会抓重点。</li>
+            <li><b>「第 8 题答不出来」</b>：说明你还没真正复盘。回 P4 的错题本，那里有你当时的痛。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p6-4">
+      <summary>
+        <span class="tid">P6-4</span>
+        <span class="tname">20 道高频题：按域分组，每题 2 分钟脱稿</span>
+        <span class="tmin">周日 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这 20 题覆盖了 AI 应用岗技术面的绝大部分。不是背答案，是背「答题骨架 + 一个具体例子」。</div>
+
+        <h4 style="margin-top:4px">检索与 RAG（5 题）</h4>
+        <div class="tw wide">
+          <table class="compact">
+            <thead><tr><th style="width:24px">#</th><th>题</th><th style="width:46%">骨架</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>RAG 的完整链路，离线/在线各做什么</td><td>解析→分块→embedding→索引 / query 改写→混合检索→重排→上下文组装→生成→引用校验</td></tr>
+              <tr><td>2</td><td>分块大小怎么定？切分策略怎么选</td><td>从结构出发（标题）→ token 兜底 → 用 recall@5 验证 → 说清「结构感知的代价是块长不均」</td></tr>
+              <tr><td>3</td><td>召回不相关，怎么判断是 embedding 还是切分问题</td><td>五步排查（语料有无→切分是否完整→是否进前 k→排名→上下文是否被截）</td></tr>
+              <tr><td>4</td><td>为什么需要重排？它能否提高召回</td><td>双塔快而粗、交叉编码器准而慢；只改顺序不改集合，所以 recall 可能降、MRR 升</td></tr>
+              <tr><td>5</td><td>长上下文模型出来了，还需要 RAG 吗</td><td>新鲜度、权限、成本、可溯源四点上 RAG 不可替代；长上下文解决的是「一次能看多少」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Agent 与工具（5 题）</h4>
+        <div class="tw wide">
+          <table class="compact">
+            <thead><tr><th style="width:24px">#</th><th>题</th><th style="width:46%">骨架</th></tr></thead>
+            <tbody>
+              <tr><td>6</td><td>Agent 和 workflow 怎么选</td><td>下一步由谁决定；能画成固定流程图就别用 agent；给一个「看似 agent 实则 workflow」的例子</td></tr>
+              <tr><td>7</td><td>工具怎么设计？数量和粒度</td><td>description 写「做什么+何时用+何时不用」；工具间不重叠；12 个降到 6 个跑 eval 看准确率</td></tr>
+              <tr><td>8</td><td>死循环怎么防</td><td>三层：重复调用检测 / token 预算 / 总超时；每层拦什么说清</td></tr>
+              <tr><td>9</td><td>上下文满了怎么办</td><td>四种策略（窗口/摘要/结构化抽取/外置检索）+ 你的组合 + 什么绝不能丢</td></tr>
+              <tr><td>10</td><td>MCP 是什么，解决什么问题</td><td>工具协议；N×M 适配问题；对比「每个客户端各写一遍」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>评测与可靠性（5 题）</h4>
+        <div class="tw wide">
+          <table class="compact">
+            <thead><tr><th style="width:24px">#</th><th>题</th><th style="width:46%">骨架</th></tr></thead>
+            <tbody>
+              <tr><td>11</td><td>你怎么评测一个 LLM 应用</td><td>测试集构造（类型分布+含失败用例）→ 分层指标（检索/生成）→ judge 校准 → CI 集成</td></tr>
+              <tr><td>12</td><td>LLM-as-judge 的偏差和校准</td><td>长度偏好/自我偏好/位置偏差；一致率检验；prompt 里禁止以长度扣分</td></tr>
+              <tr><td>13</td><td>线上效果突然变差，怎么查</td><td>按时间对齐：模型版本变了吗→prompt 改了吗→数据变了吗→流量构成变了吗；trace 逐层看</td></tr>
+              <tr><td>14</td><td>怎么防止 agent 干危险操作</td><td>最小权限（凭据只读）+ 参数白名单 + 审批 + 审计日志；说清「prompt 不够」</td></tr>
+              <tr><td>15</td><td>怎么降成本/延迟</td><td>四段分解→路由→缓存（前缀/结果）→压缩输入→并行；每次都要带质量验证</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h4>工程与协作（5 题）</h4>
+        <div class="tw wide">
+          <table class="compact">
+            <thead><tr><th style="width:24px">#</th><th>题</th><th style="width:46%">骨架</th></tr></thead>
+            <tbody>
+              <tr><td>16</td><td>需求说「做个 AI 客服」，你怎么拆</td><td>先定成功判据（解决率/转人工率）→ 划边界（能做什么不能做什么）→ 最小闭环→ 再扩</td></tr>
+              <tr><td>17</td><td>模型升级了，要不要切</td><td>用 eval 对比（不是看榜单）→ 看边缘 case 和成本/延迟 → 灰度 → 保留回滚</td></tr>
+              <tr><td>18</td><td>怎么和非技术的人解释不确定性</td><td>用「可答/需确认/拒答」三档代替百分比；给兜底路径</td></tr>
+              <tr><td>19</td><td>你怎么跟进这个领域</td><td>说具体来源（官方 engineering blog、几个仓库的 release）+ 你怎么筛选（只信有数据的）</td></tr>
+              <tr><td>20</td><td>你缺什么</td><td>诚实说一个真实短板 + 你的补法 + 已经做了什么</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <b>答题四件套（每个回答都套这个结构）</b>
+          <p><b>一句话结论</b>（先给判断）→ <b>两三点理由</b>（带对比）→ <b>一个我自己的例子</b>（真实数据）→ <b>代价或边界</b>（什么时候不适用）。<br>
+          这个结构的价值是：即使你某个知识点记不清，前两句也能撑住场面，不会一开口就乱。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>notes/interview-20.md</code>：每题 5 行（结论/理由/例子/代价）+ 20 段录音</div>
+        <div class="verify"><b>验收</b>随机抽 5 题，2 分钟内讲完且包含一个真实例子；不看笔记能讲。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「背不下来」</b>：不要背文字，背<b>骨架关键词</b>（比如第 8 题就记「重复/预算/超时」三个词）。面试时按关键词展开。</li>
+            <li><b>「没有真实例子」</b>：说明前面 20 周有任务卡没做。用你现在有的项目例子也行，但要能说出具体数字。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p6-5">
+      <summary>
+        <span class="tid">P6-5</span>
+        <span class="tname">反问与薪资：别在这一步丢分</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：反问是唯一由你主导的环节，也是判断「这地方值不值得去」的唯一机会。问「团队现在最大的技术难题是什么」比问「加班多吗」得到的信息多十倍。</div>
+
+        <h5>按轮次准备反问</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>轮次</th><th>问什么</th><th>为什么问这个</th></tr></thead>
+            <tbody>
+              <tr><td><b>技术面</b></td><td>「你们现在的评测是怎么做的？有没有固定的测试集？」<br>「agent 的失败主要是哪一类？」<br>「这个岗位前三个月最想解决的一个问题是什么？」</td><td>试探团队成熟度；也让你了解真实工作</td></tr>
+              <tr><td><b>负责人面</b></td><td>「这个方向半年内的目标是什么？怎么衡量成功？」<br>「团队现在几个人，分工怎么划？」<br>「如果我来了，第一阶段你会怎么判断我做得好不好？」</td><td>判断是否有明确目标，还是「先招个人试试」</td></tr>
+              <tr><td><b>HR 面</b></td><td>「这个岗位的晋升路径是什么？」<br>「团队过去一年有几个人内部转岗过来？」</td><td>判断转岗者是否被接纳（对你是关键信号）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>薪资：三个原则</h5>
+        <ol>
+          <li><b>不在第一轮主动报数字</b>。被问期望时说：「我更关心岗位和团队，薪资可以参考你们这个级别的区间。」如果必须给，给一个区间且下限是你的底线。</li>
+          <li><b>转岗不必然降薪</b>。你的十年工程经验是可迁移资产，不要因为「转行」自我压价。合理参照是「同级后端/全栈」而非「应届 AI」。</li>
+          <li><b>问清总包结构</b>：base / 奖金 / 期权（行权价、成熟期、回购条款）。期权在早期公司可能价值为零，别把它算进对比。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/questions-to-ask.md</code>：按轮次各 3 个问题</div>
+        <div class="verify"><b>验收</b>每个问题都能引出对方的实质回答（不是「挺好的」）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「不好意思问」</b>：不问才是损失。你在评估一个要待 2 年的地方，信息不对称的代价远大于尴尬。</li>
+            <li><b>「被压价」</b>：拿同级岗位的公开区间做参照，不要用「我原来多少」。如果对方坚持按转岗定级，问「多久能重新评估」。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W24 ============ -->
+    <h2 id="w24"><span class="num">W24</span>投递与迭代：用真实反馈校准</h2>
+    <p class="lead">04/05–04/11 · 投递不是「广撒网」，是<b>小批量 + 快速复盘 + 改材料</b>。</p>
+
+    <details class="task" open id="p6-6">
+      <summary>
+        <span class="tid">P6-6</span>
+        <span class="tname">三批投递法：先投「练手档」，别先投最想去的</span>
+        <span class="tmin">周日 2h + 后续</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：你只有一次「第一印象」。先投最想去的公司，你会用还没校准的材料去撞。先投 C 档练手，把话术和材料调到能用，再投 A 档。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>批次</th><th>投谁</th><th>数量</th><th>目的</th><th>结束后做什么</th></tr></thead>
+            <tbody>
+              <tr><td><b>第一批</b></td><td>C 档（练手）+ 有内推的 B 档</td><td>6–8 家</td><td>校准简历、练真实面试</td><td>复盘每场：哪题卡住、哪个项目被追问、材料哪里含糊</td></tr>
+              <tr><td><b>第二批</b></td><td>B 档主力</td><td>10 家</td><td>拿 offer 的主战场</td><td>按第一批反馈改简历与话术，再投</td></tr>
+              <tr><td><b>第三批</b></td><td>A 档（最想去）</td><td>4 家</td><td>冲刺</td><td>此时材料与话术已迭代 2 轮</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>投递记录表（字段就这些）</h5>
+<pre><code>| 日期 | 公司 | 档位 | 岗位 | 渠道 | 内推人 | 状态 | 下一步 | 反馈 |
+|------|------|------|------|------|--------|------|--------|------|
+| 04/06 | A公司 | B | AI应用 | 内推 | 张X | 一面 | 等结果 | 问了分块和评测 |
+| 04/07 | B公司 | C | Agent | 官网 | - | 已拒 | - | 简历关未过，可能项目不匹配 |</code></pre>
+
+        <p><b>关键指标</b>：投 20 家应该拿到 ≥3 个技术面（转化 15%）。低于这个数，问题在材料不在运气。</p>
+
+        <div class="callout warn">
+          <b>如果连续 10 家简历关都过不了</b>
+          <p>按这个顺序自查：<b>①</b> 岗位类型错配（投了算法岗？）<b>②</b> 简历里没有「AI 相关关键词」（ATS 筛不到）<b>③</b> 项目描述像教程复现（没有取舍和数字）<b>④</b> 内推渠道缺失（纯海投转化天然低）。<b>先改这四条，再谈「市场不好」。</b></p>
+        </div>
+
+        <div class="out"><b>产物</b><code>notes/applications.md</code>（记录表）+ 第一批 6–8 家已投</div>
+        <div class="verify"><b>验收</b>每家都有「下一步」和「反馈」两栏在更新；第一批结束后有一份复盘。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「没内推」</b>：翻通讯录、前同事、GitHub 上给你项目点过 star 的人、技术群。内推转化率通常是海投的 3–5 倍，值得花两天找。</li>
+            <li><b>「投了没回音」</b>：正常，多数公司不回复。按批次推进，别停下来等。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p6-7">
+      <summary>
+        <span class="tid">P6-7</span>
+        <span class="tname">每场面试后 20 分钟复盘（这是提升最快的一步）</span>
+        <span class="tmin">每场 20min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：面试的进步不来自「多面」，来自「每场都改一点」。没有复盘的十场面试，等于同一场面了十次。</div>
+
+        <h5>复盘表（当场记，回家补）</h5>
+<pre><code>## 2027-04-08 · A公司 · 技术二面
+
+**被问到的题**（记原话）：
+1. 「你的 recall@5 0.83 是在多少条上测的？为什么不再多标一些？」
+2. 「如果用户问题里有歧义，你怎么处理？」
+3. 「你说的三层兜底，第三层具体怎么触发？」
+
+**卡住的题**：
+- 第 2 题答得散（说了 query 改写但没讲清何时该反问用户）
+  → 补：把「歧义处理」加进 notes/interview-20.md，准备一个例子
+
+**被追问最多的项目**：RAG 项目（分块和评测）
+**对方明显不感兴趣的部分**：前端性能优化那段（讲太细了）
+
+**对方的关注点**（判断团队在做什么）：反复问线上失败和成本 → 可能正处于「demo 转生产」阶段
+
+**下次调整**：
+- 90 秒版里前端部分压到 10 秒
+- 分块部分多准备一个「如果重做」的答案</code></pre>
+
+        <h5>三个信号，用来判断「这地方要不要去」</h5>
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>信号</th><th>好</th><th>不好</th></tr></thead>
+            <tbody>
+              <tr><td>问的问题</td><td>问失败、问评测、问边界</td><td>只问「会不会用某框架」</td></tr>
+              <tr><td>对转岗的态度</td><td>问「你怎么补的」「你的前端经验怎么用上」</td><td>反复质疑「你没做过 AI」</td></tr>
+              <tr><td>岗位形状</td><td>能说清前三个月要解决什么</td><td>「先来再说，做什么看情况」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b><code>notes/interview-retros.md</code>：每场一段</div>
+        <div class="verify"><b>验收</b>每场复盘至少产出一条「下次调整」，且下次面试前真的改了。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「记不清被问了什么」</b>：面试时在纸上记关键词（这是允许的，且显得认真）。</li>
+            <li><b>「连续被拒，心态崩了」</b>：看数据不看情绪。10 家 1 面是正常分布；如果 20 家 0 面，是材料问题，回去改而不是放弃。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <h2 id="checklist"><span class="num">5</span>投递前检查清单</h2>
+    <p>每投一家之前过一遍。任何一项打不了勾，先修再投。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>项</th><th>判据</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>简历一页、PDF、命名规范</td><td><code>姓名-AI应用工程-2027.pdf</code></td></tr>
+          <tr><td>☐</td><td>三个链接都能打开</td><td>手机 4G 网络下测过</td></tr>
+          <tr><td>☐</td><td>demo 视频能播放</td><td>不用登录、不用下载客户端</td></tr>
+          <tr><td>☐</td><td>90 秒版能脱稿讲</td><td>录音过关</td></tr>
+          <tr><td>☐</td><td>8 个追问都有答案</td><td>每个项目</td></tr>
+          <tr><td>☐</td><td>20 题里至少 15 题能讲</td><td>随机抽测</td></tr>
+          <tr><td>☐</td><td>知道自己「缺什么」并且有说法</td><td>第 20 题</td></tr>
+          <tr><td>☐</td><td>反问清单准备好</td><td>按轮次各 3 个</td></tr>
+          <tr><td>☐</td><td>GitHub 主页有 profile README</td><td>一句话 + 置顶两个仓库</td></tr>
+          <tr><td>☐</td><td>岗位类型对得上</td><td>投的是应用/产品工程，不是算法研究</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="done"><span class="num">6</span>交付物清单</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>产物</th><th>路径</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>简历 v3</td><td><code>notes/resume-v3.md</code> + PDF</td></tr>
+          <tr><td>☐</td><td>作品集页</td><td>公开链接</td></tr>
+          <tr><td>☐</td><td>三个项目 90 秒稿</td><td><code>notes/pitch-*.md</code></td></tr>
+          <tr><td>☐</td><td>8 个追问 × 3 项目</td><td>同上</td></tr>
+          <tr><td>☐</td><td>20 题答案</td><td><code>notes/interview-20.md</code></td></tr>
+          <tr><td>☐</td><td>反问清单</td><td><code>notes/questions-to-ask.md</code></td></tr>
+          <tr><td>☐</td><td>投递记录</td><td><code>notes/applications.md</code></td></tr>
+          <tr><td>☐</td><td>面试复盘</td><td><code>notes/interview-retros.md</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <b>最后一句实话</b>
+      <p>这套计划不会让你「4 个月薪资翻倍」。它能让一个十年经验的工程师，在 6 个月后具备<b>拿到 AI 应用工程面试并讲得住项目</b>的能力。剩下的取决于市场、城市、以及你愿不愿意在第一批被拒后继续改材料。<br>
+      如果只能记住一件事：<b>面试官不关心你学了多少，只关心你判断过什么、量化过什么、踩过什么坑。</b>这三样东西，前 21 周都在为你生产。</p>
+    </div>
+
+    <div class="nextprev">
+      <a href="stage-p5.html"><span>返回</span>← P5 产品化与差异化</a>
+      <a href="resources.html"><span>附录</span>资源库（60+ 项）→</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · P6 求职冲刺 · W22–W24 · 03/22–04/11
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

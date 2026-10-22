@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="P0 定位与基线（W01）：扒 JD、能力六域自评、简历 v0、目标公司分层。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="P0 定位与基线（W01）：扒 JD、能力六域自评、简历 v0、目标公司分层。">
+<title>P0 · 定位与基线 · W01</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>P0 · W01</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html" class="on">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html">P2</a>
+      <a href="stage-p3.html">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html">P5</a>
+      <a href="stage-p6.html">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="txtbtn" id="expandAll" type="button" aria-expanded="false">全部展开</button>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html">总览与日历</a>
+      <a href="env.html">环境搭建（Day 0）</a>
+    </nav>
+    <h4>本阶段</h4>
+    <nav>
+      <a href="#goal" class="on">阶段目标</a>
+      <a href="#asset">先看清自己手上有什么</a>
+      <a href="#jdmap">JD 翻成考点（权重依据）</a>
+      <a href="#p0-1">P0-1 扒 5 份 JD</a>
+      <a href="#p0-2">P0-2 补到 20 份</a>
+      <a href="#p0-3">P0-3 频次归并</a>
+      <a href="#p0-4">P0-4 六域自评</a>
+      <a href="#p0-5">P0-5 简历 v0</a>
+      <a href="#p0-6">P0-6 目标公司清单</a>
+      <a href="#selftest">闭卷自测</a>
+      <a href="#done">交付物清单</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav>
+      <a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#glossary">术语表</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="phasehead">
+      <div class="ph-tag">P0 · Week 01 · 10/26–11/01</div>
+      <h2>定位与基线</h2>
+      <p><b>目标：</b>把「我想转 AI」变成「我知道投哪 20 家公司、我缺哪 5 项能力、我的简历现在差在哪」。</p>
+      <p>这一周几乎不写业务代码。但它决定后面 23 周的方向对不对——方向错了，后面全是沉没成本。</p>
+      <div class="deliv">
+        <span>JD 库（20 份，结构化）</span>
+        <span>能力频次表 + 缺口 5 项</span>
+        <span>简历 v0</span>
+        <span>目标公司 20 家</span>
+      </div>
+    </div>
+
+    <h2 id="goal"><span class="num">0</span>这一周的节奏</h2>
+
+    <div class="tw">
+      <table class="compact">
+        <thead><tr><th>时间</th><th>任务卡</th><th>时长</th></tr></thead>
+        <tbody>
+          <tr><td>周一晚</td><td><a href="#p0-1">P0-1 先扒 5 份 JD</a></td><td>40min</td></tr>
+          <tr><td>周二、周三晚</td><td><a href="#p0-2">P0-2 补到 20 份</a></td><td>2×40min</td></tr>
+          <tr><td>周四晚</td><td><a href="#p0-3">P0-3 频次归并（跑脚本）</a></td><td>40min</td></tr>
+          <tr><td>周六上午</td><td><a href="#p0-4">P0-4 六域自评</a></td><td>2h</td></tr>
+          <tr><td>周六下午</td><td><a href="#p0-5">P0-5 简历 v0</a></td><td>2h</td></tr>
+          <tr><td>周日</td><td><a href="#p0-6">P0-6 目标公司清单</a> + <a href="#selftest">闭卷自测</a></td><td>2h</td></tr>
+          <tr><td>（另找 1h）</td><td><a href="env.html">Day 0 环境搭建</a>——如果还没做</td><td>1h</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">开工前先花 10 分钟读下面两节：§1「先看清自己手上有什么」有两张表（你已经有什么 / 每一级能力长什么样），§2「JD 翻成考点」是这套计划的权重依据——扒完 JD 回来看它，才知道哪几项真的值得投入。</p>
+
+    <div class="callout warn">
+      <b>别跳过这周</b>
+      <p>最常见的跳过理由是「岗位要求我大概知道」。但「大概知道」和「20 份 JD 的真实频次」差很远——前者来自印象和少数几篇爆款文章，后者来自样本。用后者决定学什么，能省掉整月的弯路。</p>
+    </div>
+
+    <h2 id="asset"><span class="num">1</span>先看清自己手上有什么</h2>
+
+    <p class="lead">转型最贵的一步是「误以为自己从零开始」。先把能迁移的算清楚——P0-5 写简历，本质就是把左列翻译成右列。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:30%">你已有的（十年工程经验）</th><th>对应的 AI 工程能力</th><th style="width:19%">迁移强度</th></tr></thead>
+        <tbody>
+          <tr><td>TypeScript 类型 / Zod 校验</td><td>Python 类型注解 + Pydantic；LLM 结构化输出校验</td><td><span class="pill ok">直接迁移</span></td></tr>
+          <tr><td>async / await、Promise 链</td><td>Python asyncio、并发调用多个模型 / 工具</td><td><span class="pill ok">直接迁移</span></td></tr>
+          <tr><td>fetch / axios、接口容错</td><td>模型 SDK 调用、超时、重试、降级</td><td><span class="pill ok">直接迁移</span></td></tr>
+          <tr><td>SSE / ReadableStream / 流式渲染</td><td>token 流式输出、渐进式 UI</td><td><span class="pill ok">直接迁移</span></td></tr>
+          <tr><td>React 状态管理 / reducer</td><td>Agent 状态机、状态转移、checkpoint</td><td><span class="pill">强迁移</span></td></tr>
+          <tr><td>组件组合、模块拆分</td><td>流水线组合、工具拆分、子 agent 拆分</td><td><span class="pill">强迁移</span></td></tr>
+          <tr><td>Error Boundary / 降级 UI</td><td>fallback 链、熔断、部分失败呈现</td><td><span class="pill">部分迁移</span>（故障模式不同）</td></tr>
+          <tr><td>前端埋点 / 性能监控</td><td>LLM tracing、成本与延迟监控</td><td><span class="pill">强迁移</span></td></tr>
+          <tr><td>产品直觉、交互设计</td><td>对话流设计、错误可理解性、人在环上的介入点</td><td><span class="pill ok">强迁移且稀缺</span></td></tr>
+          <tr><td>工程纪律（测试、CI、Code Review）</td><td>eval 流水线、回归门禁</td><td><span class="pill">强迁移</span></td></tr>
+          <tr><td class="muted">基础语法 / Git / 调 API 本身</td><td class="muted">—</td><td class="muted">不用学，别浪费时间</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>三个真实优势（面试里要主动讲）</h3>
+
+    <div class="grid c3">
+      <div class="card">
+        <div class="tag">优势一</div>
+        <h4>全栈闭环</h4>
+        <ul>
+          <li>大部分 AI 工程师做不出像样的界面，得找前端合作</li>
+          <li>你能一个人从模型调用做到界面上线</li>
+          <li>在小团队 / 创业公司，这是「招来就能干活」的信号</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">优势二</div>
+        <h4>延迟与不确定性的体验设计</h4>
+        <ul>
+          <li>LLM 输出天然慢、天然不确定</li>
+          <li>你做过骨架屏、乐观更新、渐进披露、流式渲染</li>
+          <li>LLM 产品的成败常在「等的那三秒怎么呈现」</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="tag">优势三</div>
+        <h4>产品判断力</h4>
+        <ul>
+          <li>Agent 失败案例里，技术不行只占一部分</li>
+          <li>更常见的是：对话流不自然、错误提示看不懂、用户不知道怎么纠偏</li>
+          <li>这种直觉很难速成，而你已经练了十年</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <b>但必须承认的短板：后端与数据</b>
+      <p>你常年「调 API」，但很少自己扛 QPS、做队列、设计库表权限。而 RAG 本质是数据工程：入库、增量、删除、权限过滤。面试会问多租户隔离、并发、限流——这块在 P2（权限过滤）和 P5（限额与多租户）专门补，别指望临场糊过去。</p>
+    </div>
+
+    <h3>能力地图：六个域、四个等级，每一级具体要会什么</h3>
+
+    <p>这张表是 P0-4 自评的<b>尺子</b>：先看清「每一级长什么样」，再回去给自己打分。P0-4 用 0–3 打分，L1–L4 是同一把尺子的另一种叫法——<b>L1≈1 分（看得懂）、L2≈2 分（独立做过）、L3≈3 分（踩过坑能设计）</b>，而 L4 是 3 分之上还有一层：能反向判断「这件事该不该做」。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:14%">能力域</th><th>L1 知道</th><th>L2 会做</th><th>L3 会设计</th><th>L4 会权衡</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>模型层</b></td>
+            <td>token / 采样 / 幻觉成因</td>
+            <td>写出稳定的结构化输出</td>
+            <td>设计压缩与记忆策略</td>
+            <td>判断该用长上下文、检索还是微调</td>
+          </tr>
+          <tr>
+            <td><b>检索层</b></td>
+            <td>embedding / 向量库基本概念</td>
+            <td>跑通一个带引用的问答</td>
+            <td>混合检索 + 重排 + 权限过滤 + 增量更新</td>
+            <td>判断何时该上图检索 / agentic 检索、何时是过度设计</td>
+          </tr>
+          <tr>
+            <td><b>运行时</b></td>
+            <td>loop / 工具调用 / ReAct</td>
+            <td>写出带工具、停止条件、错误回灌的 agent</td>
+            <td>状态持久化、中断恢复、人在环上</td>
+            <td>判断该用 workflow 还是 agent；该拆几个子 agent</td>
+          </tr>
+          <tr>
+            <td><b>评测层</b></td>
+            <td>trace / token / p95 概念</td>
+            <td>能定位一次失败的具体步骤</td>
+            <td>建 eval + 回归门禁 + 熔断重试</td>
+            <td>用数据决定要不要上线、要不要回滚</td>
+          </tr>
+          <tr>
+            <td><b>工程层</b></td>
+            <td>Python / 异步 / 容器化的基本概念</td>
+            <td>写最小权限工具集，把服务部署出去</td>
+            <td>隔离不可信内容、危险动作双确认、审计、限流与幂等</td>
+            <td>权衡自主度与风险，定人机分界线</td>
+          </tr>
+          <tr>
+            <td><b>产品层</b></td>
+            <td>流式 UX / 成本模型</td>
+            <td>把 demo 部署成可访问的链接</td>
+            <td>多租户、限额、灰度、运营监控</td>
+            <td>判断这个需求到底该不该用 AI / agent</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <b>怎么用这张图</b>
+      <p>每 4 周给自己打一次分。<b>目标不是每格都到 L4</b>，而是：六域的门槛都到 L3，产品层到 L3，工程层到 L2–L3。<b>任何一格停在 L1 都会成为面试的漏洞</b>——因为面试官只挑你写的项目里涉及的那几格追问。W16 复盘时会重打一次，两次分数直接对比就是你的进度。</p>
+    </div>
+
+    <h2 id="jdmap"><span class="num">2</span>招聘方在筛什么：把 JD 翻成考点</h2>
+
+    <p class="lead">下面这张表是<b>整套计划的权重依据</b>。左边是 JD 里反复出现的词，中间是面试官真正想听的，右边是你要拿出的证据。<b>你的学习时间应该按这张表分配，而不是按教程的目录顺序。</b></p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:12%">能力</th><th style="width:18%">JD 里的说法</th><th style="width:33%">面试实际在问</th><th>你要拿出的证据</th></tr></thead>
+        <tbody>
+          <tr><td><b>评测</b><br><span class="pill warn">权重最高</span></td><td>「建立评估体系」「回归测试」</td><td>「你怎么知道它变好了？改完 prompt 怎么证明没变差？」</td><td>20–30 条 golden set + 自动评分 + 每次改动跑回归的 CI（P1-12、P2-12）</td></tr>
+          <tr><td><b>Agent 编排</b></td><td>「多步工作流编排」</td><td>「Agent 老选错工具，你先改什么？」</td><td>能讲清「先改工具粒度 / 命名 / 描述 / schema，再考虑换模型」（P1-9）</td></tr>
+          <tr><td><b>上下文工程</b></td><td>「上下文管理」「长会话」</td><td>「会话变长 prompt 爆了怎么办？」</td><td>write / select / compress / isolate 四招 + 具体阈值 + 缓存前缀设计（P3-6、P4-10）</td></tr>
+          <tr><td><b>RAG</b></td><td>「知识库」「检索增强」</td><td>「检索到了正确文档但答案还是错，怎么定位？」</td><td>把检索质量和生成质量分开测；recall@k / 引用命中率（P2-5、P2-13）</td></tr>
+          <tr><td><b>失败工程</b></td><td>「稳定性」「兜底」</td><td>「调三个工具进死循环，怎么兜底？」</td><td>最大步数 + 循环检测 + 幂等 + 超时 + blast radius 收敛（P4-1、P4-2、P4-3）</td></tr>
+          <tr><td><b>可观测性</b></td><td>「链路追踪」「监控」</td><td>「线上偶发卡住，普通日志看不出，补什么？」</td><td>trace 粒度到每一步工具调用、token / 成本、p95 而非均值（P3-11、P4-11）</td></tr>
+          <tr><td><b>安全</b></td><td>「防注入」「权限」</td><td>「prompt injection 和用户提坏需求有什么区别？」</td><td>权限先于检索；不可信内容隔离标记；危险动作走代码不靠 prompt（P3-8、P4-4、P4-5）</td></tr>
+          <tr><td><b>成本 / 延迟</b></td><td>「降本」「响应速度」</td><td>「延迟翻倍，怎么排？」</td><td>模型路由、前缀缓存、并行工具、流式、分级模型（P4-8~P4-11）</td></tr>
+          <tr><td class="muted"><b>框架</b><br>权重最低</td><td class="muted">「熟悉 LangGraph / …」</td><td class="muted">「为什么用 X 不用 Y？」</td><td class="muted">讲取舍（状态模型、持久化、语言栈、厂商绑定），不讲 API</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <b>一个反直觉的结论</b>
+      <p>招聘方几乎不问「你会不会用某个框架」。他们问的是<b>「出问题时你怎么定位」</b>和<b>「你怎么证明改了之后更好」</b>。所以「学 3 个框架」的收益，远低于「把 1 个框架 + 1 套评测做透」。这也是为什么这套计划把评测做成贯穿 5 个阶段的线，而不是某一周的课题。</p>
+    </div>
+
+    <h2 id="tasks"><span class="num">3</span>任务卡</h2>
+
+    <details class="task" id="p0-1" open>
+      <summary>
+        <span class="tid">P0-1</span>
+        <span class="tname">先扒 5 份 JD，建立「招聘方在要什么」的真实感</span>
+        <span class="tmin">40min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：不要一上来就扒 20 份。先 5 份，你会立刻发现两件事——（1）岗位名字五花八门但要求高度重叠；（2）你以为的必备项（比如微调）出现率其实很低。这个反差会校正你后面的学习优先级。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li><b>在三个渠道各搜一轮</b>，用下面这组关键词（别只搜「AI 工程师」）：
+            <div class="tw" style="margin:8px 0">
+              <table class="compact">
+                <thead><tr><th>渠道</th><th>搜索词</th><th>为什么用这个渠道</th></tr></thead>
+                <tbody>
+                  <tr><td>Boss 直聘</td><td><code>AI 应用开发</code>、<code>Agent 开发</code>、<code>大模型应用</code>、<code>AI 产品工程师</code></td><td>中文岗位样本最多，JD 写得最细</td></tr>
+                  <tr><td>拉勾 / 猎聘</td><td><code>LLM 应用</code>、<code>智能体</code>、<code>AI 全栈</code></td><td>中小公司和创业公司多，要求更实在</td></tr>
+                  <tr><td>公司官网 careers</td><td>直接进字节 / 阿里 / 腾讯 / 美团 / 小红书 / 月之暗面 / 智谱 的招聘页搜 <code>Agent</code></td><td>官网 JD 质量最高，且能看出团队在做什么</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li><b>只挑三类岗位</b>，其余忽略：<span class="pill a">AI 应用 / Agent 开发</span> <span class="pill a">AI 产品工程师 / AI 全栈</span> <span class="pill">Agent 平台 / 基础设施</span>。明确不看的：算法研究员、CV/NLP 算法、推荐算法、数据标注。</li>
+          <li><b>存原文</b>：每份 JD 全文复制到 <code>notes/jd/raw/公司-岗位.md</code>。别只存链接，链接会失效，而且你后面要全文检索关键词。</li>
+          <li><b>填结构化表</b>，字段就这 8 个，不要加：
+<pre><code>id,company,role,type,must_1,must_2,must_3,my_score,evidence
+1,某公司,AI应用开发工程师,AI应用,"熟悉RAG与向量检索","Python工程能力","有LLM应用落地经验",1,"做过ES检索但没做过语义检索"</code></pre>
+            <code>my_score</code> 用 0/1/2：0 完全没有、1 沾过边、2 能拿出来讲。<code>evidence</code> 必须写具体事实，写「了解」等于没写。</li>
+          <li><b>写三句观察</b>到底部。格式：「5 份里出现最多的是 X（N 次）；最意外的是 Y；最一致的门槛是 Z」。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/jd/raw/*.md</code>（5 份原文）+ <code>notes/jd/jd.csv</code>（5 行）+ 三句观察</div>
+
+        <div class="verify"><b>验收</b>
+          5 份 JD 分属至少 3 家公司、覆盖至少 2 类岗位；<code>my_score</code> 里至少有 3 个 0 分（如果全是 1 分以上，说明你在自我美化）。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「搜不到这些岗位」</b>：换搜索词，用「大模型」「LLM」「智能体」「知识库」再搜一轮；或直接搜技能词「RAG」「LangChain」「MCP」。</li>
+            <li><b>「JD 写得很虚，看不出要求」</b>：只看「任职要求」和「加分项」两段，忽略职责描述。职责是给 HR 看的，要求才是给你的。</li>
+            <li><b>「不知道 my_score 怎么打」</b>：问自己一句话——如果面试官现在问「你做过 RAG 吗」，我能不能讲 2 分钟不重复？能=2，能讲但没做过=1，讲不出=0。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p0-2">
+      <summary>
+        <span class="tid">P0-2</span>
+        <span class="tname">补到 20 份，并区分两类公司</span>
+        <span class="tmin">2×40min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：20 份才够做频次统计（5 份的偶然性太大）。而且要刻意让样本里有<b>两类完全不同的公司</b>——它们的考点不一样，混在一起统计会失真。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li>按这个配额补到 20 份：<span class="pill a">A 类：产品公司自建 AI 能力 12 份</span> <span class="pill">B 类：AI 公司/AI 交付 6 份</span> <span class="pill">C 类：Agent 平台/基础设施 2 份</span>。</li>
+          <li>在 CSV 的 <code>type</code> 列区分清楚：<code>AI应用</code> / <code>AI产品</code> / <code>Agent平台</code>。</li>
+          <li><b>不要只挑大厂</b>。20 份里至少 6 份来自 50–500 人的公司——你更可能去那里，而且它们的 JD 更接近「你来了要干什么」。</li>
+          <li>顺手记一个额外字段（写在 note 里，不进 CSV）：<b>这个岗位的团队有几个人、汇报给谁</b>。JD 里通常有「负责 0→1 搭建」「带 3 人小组」这类描述，能反推岗位真实形状。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/jd/jd.csv</code> 20 行 + 每行的 my_score/evidence 齐全</div>
+
+        <div class="verify"><b>验收</b>
+          20 行、3 类岗位都有、至少 6 家是小公司；抽查任意 3 行，<code>evidence</code> 列写的是具体事实而不是「了解/熟悉」。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「凑不到 20 份」</b>：把「Agent 开发」放宽到「大模型应用开发」「AI 后端」「智能客服/知识库方向的后端」。样本可以宽，统计时用 type 列区分。</li>
+            <li><b>「同一家公司有 5 个类似岗位」</b>：只留 1–2 个最有代表性的，其余弃掉，避免单家公司权重过高。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p0-3">
+      <summary>
+        <span class="tid">P0-3</span>
+        <span class="tname">跑脚本做频次归并，得出「最该学的 5 项」</span>
+        <span class="tmin">40min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：手工数 20 份 JD 的关键词既慢又主观。用固定词表 + 脚本匹配，得到的是可复现的数字——这个数字后面会写进你的简历策略和面试话术（「我扫了 20 份 JD，评测出现率超过一半」）。数出来的频次往哪张表里对，看 §2 的<a href="#jdmap">JD 翻成考点</a>。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li>存成 <code>scripts/jd_scan.py</code>。它做三件事：读 CSV → 用词表匹配每一行的三条要求 → 输出频次和你的平均分。
+<pre><code>from __future__ import annotations
+
+import csv
+import re
+from collections import Counter, defaultdict
+from pathlib import Path
+
+CSV_PATH = Path("notes/jd/jd.csv")
+
+<span class="cmt"># 20 个能力项 + 同义词。加词比改脚本便宜，先尽量长。</span>
+TAXONOMY: dict[str, list[str]] = {
+    "LLM API / Prompt": ["prompt", "提示词", "llm", "大模型", "api 调用", "上下文工程"],
+    "RAG / 检索增强": ["rag", "检索增强", "知识库", "召回", "向量检索"],
+    "Agent / 工具调用": ["agent", "智能体", "function call", "tool call", "工具调用", "mcp"],
+    "评测 / Eval": ["评测", "评估", "eval", "benchmark", "准确率", "效果调优"],
+    "向量数据库": ["向量数据库", "milvus", "qdrant", "pgvector", "faiss", "weaviate", "chroma"],
+    "微调 / 训练": ["微调", "fine-tun", "sft", "lora", "训练"],
+    "多智能体": ["多智能体", "multi-agent", "多 agent", "编排"],
+    "可观测 / 监控": ["可观测", "trace", "链路", "监控", "langfuse", "langsmith"],
+    "工程化 / 部署": ["部署", "工程化", "服务化", "docker", "k8s", "上线", "高可用"],
+    "Python": ["python"],
+    "TypeScript / 前端": ["typescript", "react", "next", "前端", "vue"],
+    "成本优化": ["成本", "token 消耗", "算力成本", "降本"],
+    "安全 / 合规": ["安全", "合规", "风控", "隐私", "脱敏"],
+    "数据 / 文档解析": ["数据清洗", "文档解析", "etl", "语料", "标注"],
+    "性能 / 推理优化": ["推理优化", "延迟", "并发", "性能优化", "vllm"],
+    "产品思维": ["产品", "需求", "用户体验", "交互"],
+    "业务领域": ["金融", "客服", "教育", "医疗", "电商", "法律", "saas"],
+    "SQL / 数据": ["sql", "mysql", "数据分析", "数仓"],
+    "分布式 / 高并发": ["分布式", "高并发", "微服务", "消息队列"],
+    "算法基础": ["算法", "数据结构", "leetcode", "手撕"],
+}
+
+
+def hits(text: str) -&gt; set[str]:
+    low = text.lower()
+    out = set()
+    for item, words in TAXONOMY.items():
+        if any(w in low for w in words):
+            out.add(item)
+    return out
+
+
+def main() -&gt; None:
+    rows = list(csv.DictReader(CSV_PATH.open(encoding="utf-8")))
+    total = len(rows)
+    if not total:
+        raise SystemExit("jd.csv 是空的")
+
+    counter: Counter[str] = Counter()
+    scores: dict[str, list[int]] = defaultdict(list)
+    by_type: dict[str, Counter[str]] = defaultdict(Counter)
+
+    for row in rows:
+        text = " ".join(
+            [row.get(k, "") for k in ("role", "must_1", "must_2", "must_3")]
+        )
+        found = hits(text)
+        counter.update(found)
+        by_type[row.get("type", "?")].update(found)
+        for item in found:
+            try:
+                scores[item].append(int(row.get("my_score") or 0))
+            except ValueError:
+                scores[item].append(0)
+
+    print(f"\n样本 {total} 份\n")
+    print(f"{'能力项':&lt;20}{'出现':&gt;4}{'占比':&gt;8}{'我的均分':&gt;10}")
+    print("-" * 44)
+    for item, n in counter.most_common():
+        avg = sum(scores[item]) / len(scores[item]) if scores[item] else 0
+        print(f"{item:&lt;20}{n:&gt;4}{n / total:&gt;7.0%}{avg:&gt;9.2f}")
+
+    print("\n按岗位类型拆分（Top5）")
+    for t, c in by_type.items():
+        top = "、".join(f"{k}({v})" for k, v in c.most_common(5))
+        print(f"  {t}: {top}")
+
+    print("\n=== 缺口排序（出现率高 × 我分数低）===")
+    gaps = []
+    for item, n in counter.items():
+        if n &lt; max(2, total * 0.2):
+            continue
+        avg = sum(scores[item]) / len(scores[item])
+        gaps.append((n / total * (3 - avg), item, n, avg))
+    for weight, item, n, avg in sorted(gaps, reverse=True)[:8]:
+        print(f"  {item:&lt;20} 出现{n:&gt;3} 均分{avg:.2f} 缺口权重{weight:.2f}")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+            <span class="muted">依赖 <code>csv</code> / <code>collections</code>，标准库自带，不用装东西。</span>
+          </li>
+          <li>跑：<code>uv run python scripts/jd_scan.py</code>。如果某些高频要求没被词表捕获（看输出里明显缺项），就往 <code>TAXONOMY</code> 加词重跑，别改统计逻辑。</li>
+          <li><b>人工复核一遍</b>：脚本会误判（比如「算法」匹配到了「推荐算法」）。用 10 分钟扫一遍原文，把明显错配的用手工修正写在 <code>notes/jd/notes.md</code> 里。<b>脚本给方向，你给判断</b>。</li>
+          <li>写下结论三行：<b>最高频的 5 项</b>、<b>我全缺的 3 项</b>、<b>我原以为重要但频次很低的一项</b>。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>scripts/jd_scan.py</code> + 一次完整输出的文本（存 <code>notes/jd/scan-output.txt</code>）+ 结论三行</div>
+
+        <div class="verify"><b>验收</b>
+          能报出「Top5 高频能力及各自出现率」；能指着一项说「这个我原以为必学，其实只有 3/20 家提到」。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「所有项都命中，看不出差异」</b>：词表太宽（比如 <code>llm</code> 几乎每份都有）。把泛词从词表里删掉，只留区分度高的词。</li>
+            <li><b>「CSV 读出来是乱码」</b>：Excel 存的 CSV 可能是 GBK。用 <code>encoding="gb18030"</code> 读，或另存为 UTF-8。</li>
+            <li><b>「某列有逗号导致串列」</b>：用 Excel/Numbers 正常存 CSV 会自动加引号，但手工写的没有。字段里有逗号就整段用双引号包起来。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p0-4">
+      <summary>
+        <span class="tid">P0-4</span>
+        <span class="tname">六域自评：把「我缺什么」变成可打分的表</span>
+        <span class="tmin">2h（周六上午）</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：你已有十年工程经验，很多能力是「有但没意识到」，也有很多是「以为自己有其实没有」。评分表的作用是逼你给每条找证据——找不到证据的，就是 0 分。<b>打分前先看 <a href="#asset">能力地图</a></b>，那里写清了每一级具体长什么样。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li>用这张表给自己打分。评分标准必须严格按下面四级，不要自定义：
+            <div class="tw" style="margin:8px 0">
+              <table class="compact">
+                <thead><tr><th>分</th><th>含义</th><th>判据（必须能给出其中一条）</th></tr></thead>
+                <tbody>
+                  <tr><td><b>0</b></td><td>没接触</td><td>说不出这个术语在解决什么问题</td></tr>
+                  <tr><td><b>1</b></td><td>看得懂</td><td>能跟着教程跑通，但换一个场景就不会</td></tr>
+                  <tr><td><b>2</b></td><td>独立做过</td><td>自己从零搭过一次，能讲清 2 个以上的取舍</td></tr>
+                  <tr><td><b>3</b></td><td>踩过坑能设计</td><td>遇到过失败并定位到根因，能设计替代方案并解释为什么</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li>六个域，每域 4–6 项，逐项打分并写一句话证据：
+            <div class="tw" style="margin:8px 0">
+              <table class="compact">
+                <thead><tr><th style="width:80px">域</th><th>要评的项</th></tr></thead>
+                <tbody>
+                  <tr><td><b>模型层</b></td><td>API 调用与参数、流式、结构化输出、tool calling、上下文窗口管理、prompt 结构设计</td></tr>
+                  <tr><td><b>检索层</b></td><td>文档解析、分块策略、embedding 选型、向量库、混合检索、重排、引用与溯源</td></tr>
+                  <tr><td><b>运行时</b></td><td>agent loop、工具设计、状态持久化、中断恢复、权限与审批、子 agent</td></tr>
+                  <tr><td><b>评测层</b></td><td>测试集构造、自动判分、LLM-as-judge、检索指标、回归对比、线上监控</td></tr>
+                  <tr><td><b>工程层</b></td><td>Python、异步、容器化、可观测性、限流与幂等、成本核算、多租户</td></tr>
+                  <tr><td><b>产品层</b></td><td>流式交互、错误可读性、生成式 UI、需求拆解、把不确定讲给非技术听</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li><b>交叉校验</b>：拿 P0-3 的缺口排序和这张表对照。如果某能力「JD 出现率高 + 我打 0 分」，它就是你这 24 周的第一优先级；如果「出现率高 + 我打 2 分」，那它是你的<b>可迁移优势</b>，要写进简历。</li>
+          <li>输出一张 <code>notes/self-assessment.md</code>，最后写一句总结：<b>「我的 5 个缺口是 ___，我的 3 个优势是 ___」</b>。</li>
+        </ol>
+
+        <div class="callout">
+          <b>前端背景具体强在哪，打分时别自我压低</b>
+          <p>「产品层」这一域你大概率能打到 2–3：流式交互、错误可读性、状态管理、组件化——这些是 AI 工程师普遍最弱的地方。面试时这是加分项，但前提是你能把「我做过流式渲染」翻译成「我处理过 token 级增量更新下的 UI 一致性问题」。翻译这件事 P6 会专项练，现在先在表里如实打高分。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>notes/self-assessment.md</code>（六域 × 24 项，带证据 + 总结句）</div>
+
+        <div class="verify"><b>验收</b>
+          每项都有证据或明确写 0；缺口项 ≤ 6 个（超过 6 个说明你打分过严，收敛一下——你不可能同时补 15 个短板）。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「每项都像 1 分」</b>：1 分的判据是「换场景就不会」。问自己：给我一个和教程不同的需求，我能不能不查资料做出来？不能就是 1。</li>
+            <li><b>「评不下去了，太耗时间」</b>：先只评 12 项（每域 2 项最关键的），2 小时必须结束。这张表在 P4 末会重评一次，那时你自然会更准。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p0-5">
+      <summary>
+        <span class="tid">P0-5</span>
+        <span class="tname">简历 v0：把十年经验翻译成 AI 语言</span>
+        <span class="tmin">2h（周六下午）</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：v0 不是终稿（P6 会重写），它的作用是<b>逼你把已有经历讲成「和 AI 系统相关」</b>。这个过程会暴露一个事实：你的很多经验其实高度相关，只是从来没有用对方的语言说过。</div>
+
+        <h5>三条改写原则</h5>
+        <ol>
+          <li><b>只写结果和数字，不写职责。</b>「负责前端开发」是职责；「把首屏从 3.2s 降到 1.1s，转化率提升 4%」是结果。</li>
+          <li><b>每条都回答「你消除了什么不确定性」。</b>AI 系统的核心成本是不确定性，所以最值钱的描述是「我怎么让它变得可预测」——比如「把线上报错归因从人工看日志改成按错误码分层，定位时间从 40 分钟降到 5 分钟」。</li>
+          <li><b>不出现「转型 / 学习中 / 零基础 / 对 AI 感兴趣」。</b>这些词直接告诉对方「我还没有能力」。用事实说话，不用态度说话。</li>
+        </ol>
+
+        <h5>把已有经验做「AI 语言翻译」</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:32%">你原来的写法</th><th>问题</th><th style="width:38%">改成</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>「负责公司管理后台前端架构，使用 Vue3 + TypeScript」</td>
+                <td>只说了技术栈，没有结果，也没和 AI 产生关联</td>
+                <td>「重构管理后台数据层，把 12 个页面的重复请求合并为统一缓存层，接口调用量降 60%；该层后来被复用于内部 AI 助手的会话状态管理」</td>
+              </tr>
+              <tr>
+                <td>「有良好的沟通能力和团队协作精神」</td>
+                <td>零信息量</td>
+                <td>删掉。换成：「主导 3 个团队的接口契约评审，把联调返工从平均 2 轮降到 0.5 轮」</td>
+              </tr>
+              <tr>
+                <td>「了解大模型，熟悉 Prompt 工程」</td>
+                <td>「了解」在筛简历时按 0 分处理</td>
+                <td>放进项目里说：「用结构化输出 + 校验重试把信息抽取的格式错误率从 18% 降到 2%（50 条样本）」</td>
+              </tr>
+              <tr>
+                <td>「持续学习 AI 新技术，关注 Agent 发展」</td>
+                <td>态度不能替代能力</td>
+                <td>删掉。换成 GitHub 仓库链接 + 一句「手写 agent loop 与 eval，见 github.com/xxx/agentlab」</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>怎么做（具体动作）</h5>
+        <ol>
+          <li>先把现有简历里<b>所有职责句和形容词句删掉</b>，只留含数字的句子。你会发现剩下的不多——这就是你真实的可量化产出。</li>
+          <li>对每条剩下的，按「背景 → 动作 → 结果 → 可迁移性」四段重写。可迁移性是最后一句，点明它和 AI 系统的关系（不要硬拗，拗不出来说明这条不相关，删掉）。</li>
+          <li>加一个 <b>「项目」区块</b>放 <code>agentlab</code> 仓库。现在它只有环境自检脚本，先如实写「进行中：agent loop + eval 基础设施」，P1 结束后更新为真实数据。<b>不做假，但可以把在建的东西写清楚在建。</b></li>
+          <li>结构按这个顺序（中文简历）：一句话定位 → 技能（按域分，不按熟练度打分）→ 工作经历（倒序，每条 3–4 个 bullet）→ 项目 → 教育。</li>
+          <li>一句话定位模板：<code>10 年前端工程经验，专注复杂交互与性能优化；近 6 个月转向 LLM 应用工程，手写 agent runtime 与评测体系。</code>——注意它同时给了「旧优势」和「新动作」。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/resume-v0.md</code>（纯文本版即可，排版留到 P6）</div>
+
+        <div class="verify"><b>验收</b>
+          ① 全文出现至少 3 个量化结果；② 没有「转型/学习/了解/熟悉」这类词（<code>grep -E "转型|学习中|零基础|了解|熟悉" notes/resume-v0.md</code> 应无输出）；③ 任一 bullet 你能对着讲 2 分钟且不重复。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「我的工作没有数字」</b>：几乎所有工程工作都有。想想：几个页面/几个接口/多少 QPS/多少用户/多长时间/几个人/几次返工/多少 bug。没有精确值就用范围（「约」「×量级」），别编。</li>
+            <li><b>「硬拗不到 AI 上」</b>：那就别拗。简历里 2–3 条 AI 相关 + 5 条扎实的工程结果，比 8 条都硬扯 AI 强得多——后者一眼就能看出在凑。</li>
+            <li><b>「写出来像流水账」</b>：每条 bullet 检查一遍：有没有「因为…所以选了…」的因果？没有因果就是流水账。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p0-6">
+      <summary>
+        <span class="tid">P0-6</span>
+        <span class="tname">目标公司清单：20 家，按「能否被内推」排序</span>
+        <span class="tmin">2h（周日）</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：投递阶段最大的浪费是把简历投进没人看的池子。现在建清单，是为了在 P6 之前有 24 周时间去「养关系」——关注对方团队的技术分享、给开源仓库提 issue、找前同事牵线。这些动作越早开始越有效。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li>建 <code>notes/targets.md</code>，20 家分三档：
+            <div class="tw" style="margin:8px 0">
+              <table class="compact">
+                <thead><tr><th>档</th><th>定义</th><th>数量</th><th>你要做什么</th></tr></thead>
+                <tbody>
+                  <tr><td><b>A 冲</b></td><td>要求高但方向最匹配，你只有 30% 把握</td><td>4 家</td><td>现在开始找内推、关注团队动态</td></tr>
+                  <tr><td><b>B 稳</b></td><td>要求匹配，你有 60% 把握</td><td>10 家</td><td>正常准备，P6 主投</td></tr>
+                  <tr><td><b>C 练</b></td><td>你大概率不会去，但面试流程规范、能练手</td><td>6 家</td><td>P6 先投这几家，用真实面试校准</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li>每家记 5 个字段：公司 / 档位 / 岗位链接 / <b>团队在做什么</b>（一句话，从官网/技术博客/公众号看）/ <b>认识谁能内推</b>。</li>
+          <li>最后一条字段是重点。把「不认识」也如实写下来——这周的任务不是解决它，是<b>让缺口可见</b>。</li>
+        </ol>
+
+        <div class="out"><b>产物</b><code>notes/targets.md</code>（20 家 × 5 字段）</div>
+
+        <div class="verify"><b>验收</b>
+          20 家里至少 5 家你能写出「团队在做什么」的具体描述（不是「做 AI 相关业务」这种废话）。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「不知道团队在做什么」</b>：看三处——公司技术博客、团队负责人的公开分享/播客、招聘 JD 里「你将负责」那段。三个都没有，就换一家，说明这家不透明。</li>
+            <li><b>「C 类不知道该放谁」</b>：优先放「面试流程公开、有多轮技术面、但业务你不太感兴趣」的公司。别放明显不招人的。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <h2 id="selftest"><span class="num">4</span>闭卷自测</h2>
+    <p>周日晚上合上所有材料，口述回答。答不出来的回对应任务卡重做。</p>
+
+    <details class="task" id="selftest-card">
+      <summary>
+        <span class="tid">Q1–Q5</span>
+        <span class="tname">本周自测题（点开看答案要点）</span>
+        <span class="tmin">20min</span>
+      </summary>
+      <div class="task-body">
+        <h5>Q1 你 20 份 JD 里出现率最高的 5 项能力是什么？各自出现率是多少？</h5>
+        <p class="muted">要点：能报出具体数字（如「评测 11/20」）。报不出说明 P0-3 没真跑。这个数字后面会在面试里用到，必须记牢。</p>
+
+        <h5>Q2 A 类（产品公司自建）和 B 类（AI 公司交付）的要求，差异在哪三条？</h5>
+        <p class="muted">要点：A 类更看「业务理解 + 工程落地 + 和现有系统集成」，B 类更看「快速交付 + 方案通用性 + 客户沟通」。两类对「评测」的要求也不同：A 类关心线上效果稳定，B 类关心交付验收。</p>
+
+        <h5>Q3 你的 5 个缺口分别是什么？为什么是这 5 个而不是别的？</h5>
+        <p class="muted">要点：必须能说出筛选逻辑——「出现率高 × 我分数低」。如果只是「我觉得该学」，说明还在凭感觉。</p>
+
+        <h5>Q4 你原以为必学、但频次很低的一项是什么？</h5>
+        <p class="muted">要点：多数人的答案是「微调 / 训练」。这项在应用岗出现率通常远低于 RAG 和评测。能说出这个反差，说明你真的看了数据而不是看文章。</p>
+
+        <h5>Q5 你的简历里，哪一句最能让面试官想追问？</h5>
+        <p class="muted">要点：好的答案是「有数字且有因果」的那句。如果一句都挑不出来，简历 v0 需要重写——简历的目的不是罗列，是制造追问。</p>
+      </div>
+    </details>
+
+    <h2 id="done"><span class="num">5</span>交付物清单</h2>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>产物</th><th>路径</th><th>验收</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>JD 原文库</td><td><code>notes/jd/raw/*.md</code></td><td>20 份，能全文搜索</td></tr>
+          <tr><td>☐</td><td>JD 结构化表</td><td><code>notes/jd/jd.csv</code></td><td>20 行，字段齐全</td></tr>
+          <tr><td>☐</td><td>频次脚本 + 输出</td><td><code>scripts/jd_scan.py</code>、<code>notes/jd/scan-output.txt</code></td><td>可重跑，结果一致</td></tr>
+          <tr><td>☐</td><td>六域自评</td><td><code>notes/self-assessment.md</code></td><td>每项有证据，缺口 ≤ 6</td></tr>
+          <tr><td>☐</td><td>简历 v0</td><td><code>notes/resume-v0.md</code></td><td>≥3 个量化结果，无「了解/熟悉」</td></tr>
+          <tr><td>☐</td><td>目标公司</td><td><code>notes/targets.md</code></td><td>20 家分三档</td></tr>
+          <tr><td>☐</td><td>环境自检</td><td><code>notes/day0-env.md</code></td><td>6/6 通过（见 <a href="env.html">Day 0</a>）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <b>进入 P1 的条件</b>
+      <p>不是「全部打勾」，而是<b>能不看材料说出「我缺什么、为什么是这几项」</b>。P1 会开始真正的代码训练，方向必须已经确定。如果自评做完你发现缺口超过 6 个，别急着往下走——先收敛到 5 个，剩下 3 个明确记为「这轮不补」。</p>
+    </div>
+
+    <div class="nextprev">
+      <a href="env.html"><span>返回</span>← Day 0 环境搭建</a>
+      <a href="stage-p1.html"><span>下一步</span>P1 地基：Python + agent loop →</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · P0 定位与基线 · W01 · 10/26–11/01
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="从「前端」到「AI / Agent 工程师」的 24 周可执行计划：75 张任务卡，每张都带命令、产物和验收标准。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="从「前端」到「AI / Agent 工程师」的 24 周可执行计划：75 张任务卡，每张都带命令、产物和验收标准。">
+<title>AI Engineer 转型实操手册 · 总览</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>2026-10-26 → 2027-04-11</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html">P2</a>
+      <a href="stage-p3.html">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html">P5</a>
+      <a href="stage-p6.html">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html#how" class="on">怎么用这份手册</a>
+      <a href="index.html#target">先选靶心（岗位细分）</a>
+      <a href="index.html#portfolio">你要交付的三个作品</a>
+      <a href="index.html#calendar">24 周日历</a>
+      <a href="index.html#budget">时间预算与换算</a>
+      <a href="index.html#milestone">四个里程碑</a>
+      <a href="index.html#daily">每日执行模板</a>
+      <a href="index.html#pitfalls">七个坑</a>
+      <a href="env.html">环境搭建（Day 0）</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav>
+      <a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#skip">明确不要碰的东西</a>
+      <a href="resources.html#glossary">术语表</a>
+    </nav>
+  </aside>
+
+  <main>
+    <h1>从「每周一行任务」到「每天知道敲什么」</h1>
+    <p class="subtitle">从「知道该学什么」到「今晚敲哪条命令」。三件事按顺序做：<b>先选靶心</b>（打哪两个岗）、<b>再看三个作品要长什么样</b>、然后照日历一周一周往下走。每一步都给出命令、产物和验收判据。</p>
+
+    <div class="callout">
+      <b>先明确一件事</b>
+      <p>24 周只是<b>默认值</b>，不是承诺。它按每周 10–12 小时算（工作日 4 天 × 30–45 分钟 + 周六 4–5 小时 + 周日 2 小时）。你实际能给多少时间，用下面的<a href="#budget">换算表</a>调整，别硬撑——把阶段拉长一倍，也比压缩内容学个大概强。</p>
+    </div>
+
+    <h2 id="how"><span class="num">1</span>怎么用这份手册</h2>
+
+    <p class="lead">规则只有三条，但违反任何一条这套计划就失效。</p>
+
+    <div class="grid c3">
+      <div class="card">
+        <div class="tag">规则一</div>
+        <h4>一次只开一张任务卡</h4>
+        <p>每张卡标注了预计时长（30 分钟到 5 小时）。开始前只展开这一张，别把整页摊开读——读完全部会产生「我已经学会了」的错觉，而实际上一行代码没写。</p>
+      </div>
+      <div class="card">
+        <div class="tag">规则二</div>
+        <h4>每张卡必须留下产物</h4>
+        <p>每张卡都有「产物」一栏。没有产物 = 没做。产物是文件、是命令输出、是一段能贴进 README 的结论。计划里所有验收都检查产物，不检查你「感觉懂了」。</p>
+      </div>
+      <div class="card">
+        <div class="tag">规则三</div>
+        <h4>卡住先看「卡住怎么办」</h4>
+        <p>每张卡最后一段是我预判你会撞上的坑。先照那三条排查；还不行，把报错原文 + 你已排除的可能贴给 AI——这比问「为什么不工作」快十倍。</p>
+      </div>
+    </div>
+
+    <h3>一张任务卡的信息结构</h3>
+    <p>所有阶段页的任务卡都是同一套结构，看到就懂：</p>
+
+    <div class="tw">
+      <table class="compact">
+        <thead><tr><th style="width:110px">区块</th><th>含义</th><th style="width:34%">怎么用</th></tr></thead>
+        <tbody>
+          <tr><td><b>为什么</b></td><td>这一步在整个岗位能力里的位置，以及不做它会缺什么</td><td>30 秒读完，决定要不要认真做</td></tr>
+          <tr><td><b>怎么做</b></td><td>有序步骤，带命令、代码骨架、参数选择理由</td><td>照着敲，命令可直接复制</td></tr>
+          <tr><td><b>产物</b></td><td>落在哪个文件 / 哪个表 / 哪个仓库</td><td>做完立刻确认文件存在</td></tr>
+          <tr><td><b>验收</b></td><td>可执行的检查，不是主观判断</td><td>不过验收就别进下一张卡</td></tr>
+          <tr><td><b>卡住怎么办</b></td><td>最常见的 3 个失败点 + 排查顺序</td><td>先自查，再问 AI</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <b>为什么代码都给了还要自己敲</b>
+      <p>你已经有十年工程经验，看得懂代码。但「读懂」和「能改」是两件事。这些骨架故意留了不完整的地方（比如 agent loop 的停止条件只写了一个、eval 的 judge 只给了 prompt 没给解析），因为面试追问的正是这些空白处。抄完能跑不算过，能回答「如果我把这里改成 X 会怎样」才算过。</p>
+    </div>
+
+    <h2 id="target"><span class="num">2</span>先选靶心：这行有 7 种岗，你打哪两个</h2>
+
+    <p class="lead">「Agent 工程师」不是一种岗，是一类岗。同一个你，投不同细分，匹配度能差一档以上。这一步只花 10 分钟，但它决定后面 24 周的内容优先级会不会来回摇摆。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:17%">细分方向</th><th>典型工作 / 日常产出</th><th style="width:76px">前端匹配</th><th style="width:92px">要训练吗</th><th style="width:27%">建议</th></tr></thead>
+        <tbody>
+          <tr><td><b>AI 产品工程师 / AI 全栈</b></td><td>从模型调用、检索、后端到流式界面全包，一个人交付一个 AI 功能</td><td><b>★★★★★</b></td><td>不要</td><td><b>首选靶心。</b>现有能力可直接复用 60% 以上，且<b>供给最少</b></td></tr>
+          <tr><td><b>AI 应用工程师</b></td><td>做具体 AI 功能：客服、文档问答、内容生成、数据助手</td><td><b>★★★★★</b></td><td>几乎不要</td><td><b>并行靶心。</b><b>岗位量最多</b>，第一站最容易进</td></tr>
+          <tr><td><b>Agent 应用开发</b></td><td>多步自主、工具、状态；生产级 agent 系统（能跑长任务、能兜底）</td><td><b>★★★★</b></td><td>几乎不要</td><td>主攻方向之一，需要补状态机与失败工程；<b>增长最快</b></td></tr>
+          <tr><td><b>Agent 平台 / 基础设施</b></td><td>做 agent 运行时、网关、工具市场、沙箱</td><td><b>★★★★</b></td><td>不要</td><td>后端要求高，但你已有的 harness 源码经验是加分</td></tr>
+          <tr><td><b>FDE / 交付工程师</b></td><td>客户现场需求 → 方案 → 落地 → 培训，让 agent 在客户的脏系统里跑起来</td><td><b>★★★★</b></td><td>不要</td><td>需要沟通与出差意愿，工程门槛略低、业务门槛更高</td></tr>
+          <tr><td><b>LLM 工程师 / 微调</b></td><td>模型层：prompt / 检索 / 后训练 / 推理优化；管的是模型行为质量</td><td><b>★★★</b></td><td>要一些</td><td>不建议作为第一站，可作为第二年纵深</td></tr>
+          <tr><td class="muted">算法 / 研究</td><td class="muted">训练、调优、发论文，做的是模型本身</td><td class="muted">★★</td><td class="muted">要很深</td><td class="muted">直接放弃。需要 PhD 级训练，投入产出比不成立</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <b>选靶心的结论</b>
+      <p><b>主攻「AI 产品工程师 / AI 全栈」，并行「AI 应用工程师」，用「Agent 工程」的深度做面试差异化。</b>逻辑是：前者让你的前端经验变成溢价而不是负债，后者保证岗位池足够大、不至于卡死在一个细分上。这三类正好对应 P0-1 让你只挑的三类岗位——不是随便挑的，是匹配度算出来的。</p>
+    </div>
+
+    <h3>一句话定义你的工作</h3>
+
+    <p><b>「模型是一个有怪脾气的依赖，你的工作是围绕它做工程。」</b>它不确定、按 token 收费、延迟以秒计、会自信地编造。所以真正难的部分全是你熟悉的东西：设计接口、管理状态、处理部分失败、控制成本、把评测嵌进流水线、调试分布式行为。区别只有一条——<b>控制流由模型决定，而不是由你的代码决定</b>。这也是为什么可观测性在这个岗位不是加分项，而是基础设施。</p>
+
+    <h3>市场侧的四个事实（都是 2026 上半年的口径）</h3>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:30%">事实</th><th>对你意味着什么</th></tr></thead>
+        <tbody>
+          <tr><td><b>需求在涨，但涨的是「有落地经验的人」</b><br><span class="muted">招聘方认的是「5–9 年生产工程经验 + 1–2 年已上线的 LLM / agent 工作」，不是「N 年 agent 经验」——后者市场根本给不出来</span></td><td>你的十年经验是<b>资产不是负债</b>。要补的是「已上线」那部分证据，也就是三个作品</td></tr>
+          <tr><td><b>供给主要来自后端 / 平台 / 全栈工程师</b><br><span class="muted">不是有 agent 头衔的人</span></td><td>这些人简历上写「后端工程师」，面试里是「Agent 工程师」。<b>你不必先换个头衔才能被看见</b></td></tr>
+          <tr><td><b>多模型是常态</b><br><span class="muted">69% 的公司同时用 3 个以上模型；agent 框架采用率一年内从 9% 翻到 18%</span></td><td>只学一个厂商的 SDK 是明显的能力缺口。P1-5 的 <code>llm.py</code> 之所以做成双 provider，就是为了这个</td></tr>
+          <tr><td><b>运维复杂度已超过模型能力，成为主要瓶颈</b><br><span class="muted">69% 的公司认为运维复杂度而非模型智能是可靠性的主要障碍</span></td><td><b>会做可观测、会做失败兜底的工程师，比会调 prompt 的更值钱。</b>这也是 P4 权重不低的原因</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">薪资溢价确实存在，但地区 / 层级差异极大，公开口径披露率低、样本有限（2026 上半年中国一线大致：Agent 应用开发 3–5 年 20–40K×15，Agent 架构师 5–10 年 40–70K×15）。<b>只作方向参考，不要当报价</b>。为什么这类数字要打折看，见<a href="resources.html#caliber">资源库的口径说明</a>。</p>
+
+    <h2 id="portfolio"><span class="num">3</span>你要交付的三个作品</h2>
+
+    <p class="lead">招聘方读的是代码，不是你的简历。一个干净 README + 一套评测 + 一个能点的 demo，胜过十个「跑通过的 notebook」。<b>2–3 个做透的项目，永远大于 10 个表面项目。</b></p>
+
+    <div class="callout danger">
+      <b>先说不做什么</b>
+      <p>不要做「10 个教程 demo」，也不要用「上传 PDF 问问题」这种通用主题——看不出你的领域判断，面试官已经看过几百个了。三个项目分别对应 P2、P3、P5，做完就是一套完整的证据链。</p>
+    </div>
+
+    <div class="grid c3">
+      <div class="card">
+        <div class="tag">PROJECT 01 · P2（3–4 周）</div>
+        <h4>带评测的领域问答系统</h4>
+        <p class="muted">要证明：RAG 工程能力 + 评测纪律。这是「入场券」项目，没有它后面的项目不成立。</p>
+        <p style="margin-top:10px"><b>硬性要求</b></p>
+        <ul>
+          <li>真实语料 ≥ 500 页，别用玩具数据，带权限或租户维度</li>
+          <li>混合检索 + 重排 + 引用（每条答案能点回原文段落）</li>
+          <li>30 条以上测试集，分「检索组」「生成组」，出一张指标表</li>
+          <li>一次「优化前后」对比：改了什么、指标怎么动、代价是什么</li>
+          <li>一条命令跑评测并输出报告</li>
+        </ul>
+        <p style="margin-top:10px"><b>不要做</b>：只报一个总分（必须分组）、用通用 PDF 问答当主题。</p>
+      </div>
+      <div class="card">
+        <div class="tag">PROJECT 02 · P3（4 周）</div>
+        <h4>可复用的 Agent Harness</h4>
+        <p class="muted">要证明：运行时理解 + 失败工程。在本地 <code>learn-claude-code</code> / <code>claw0</code> 基础上改造，不要从零抄。</p>
+        <p style="margin-top:10px"><b>硬性要求</b></p>
+        <ul>
+          <li>会话与任务状态可持久化，支持中断 / 恢复</li>
+          <li>权限分层 + 危险动作审批（用代码强制，不靠 prompt）</li>
+          <li>上下文压缩策略，且能说清「什么必须保留」</li>
+          <li>完整 trace：每步工具调用的输入、输出、耗时、token</li>
+          <li>一份故障注入报告：5 类故障的复现、表现、修复</li>
+          <li>至少一个 MCP server 作为外部工具接入</li>
+        </ul>
+        <p style="margin-top:10px"><b>关键动作</b>：读完源码后<b>删掉一半</b>，写下为什么删——「为什么删」比代码本身更能证明你懂了。</p>
+      </div>
+      <div class="card">
+        <div class="tag">PROJECT 03 · P5（3–4 周）</div>
+        <h4>全栈 AI 产品（差异化杀手锏）</h4>
+        <p class="muted">要证明：产品化 + 前端优势 + 交付能力。这个项目决定你能进什么档次的团队。</p>
+        <p style="margin-top:10px"><b>硬性要求</b></p>
+        <ul>
+          <li>公开可访问的链接，不需要别人本地跑</li>
+          <li>流式输出 + 工具过程可见 + 可中断 + 可重试</li>
+          <li>至少一个生成式 UI 场景：模型返回结构，界面动态渲染</li>
+          <li>成本看板：每次请求的 token 与费用，日 / 周汇总</li>
+          <li>失败率与 p95 延迟可见</li>
+          <li>限额与滥用保护（否则别人一点就烧你的钱）</li>
+        </ul>
+        <p style="margin-top:10px"><b>选题</b>：选你自己真的会用的东西——真实使用会产生真实 bad case，而 bad case 是面试里最好的素材。</p>
+      </div>
+    </div>
+
+    <p class="muted">三个仓库的 README 统一按「六块结构」写（一句话 / 在线地址 / 关键数字 / 架构图 / 取舍说明 / 诚实局限），模板和示例数字见 <a href="stage-p5.html#p5-11">P5-11</a>。</p>
+
+    <h2 id="calendar"><span class="num">4</span>24 周日历</h2>
+    <p>每周一行的主任务。点进阶段页看这一周拆成了哪几张卡。</p>
+
+    <div class="tw wide">
+      <table class="compact">
+        <thead>
+          <tr><th>周</th><th>日期</th><th>阶段</th><th>本周主任务</th><th>周交付物</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>W01</td><td>10/26–11/01</td><td><span class="pill a">P0</span></td><td>扒 JD、归并能力项、环境跑通、简历 v0</td><td>能力频次表 + 简历 v0 + 环境自检通过</td></tr>
+          <tr><td>W02</td><td>11/02–11/08</td><td><span class="pill a">P1</span></td><td>Python 速通（只学 AI 生态要用的那部分）</td><td>一个 Python 版的旧工具 + ruff/mypy 全绿</td></tr>
+          <tr><td>W03</td><td>11/09–11/15</td><td><span class="pill a">P1</span></td><td>模型 API 深度：流式、结构化输出、tool use、错误码</td><td><code>llm.py</code> 四个能力 + 10 次连续 schema 通过</td></tr>
+          <tr><td>W04</td><td>11/16–11/22</td><td><span class="pill a">P1</span></td><td>手写 agent loop（不用任何框架）</td><td>60–150 行 <code>loop.py</code>，3 个任务选对工具</td></tr>
+          <tr><td>W05</td><td>11/23–11/29</td><td><span class="pill a">P1</span></td><td>eval v1：10 条测试集 + 一条命令跑通过率</td><td><code>evals/v1.jsonl</code> + <code>run_eval.py</code></td></tr>
+          <tr><td>W06</td><td>11/30–12/06</td><td><span class="pill a">P2</span></td><td>解析、分块、embedding、入库（pgvector）</td><td>三种分块的 recall@5 对比表</td></tr>
+          <tr><td>W07</td><td>12/07–12/13</td><td><span class="pill a">P2</span></td><td>混合检索 + RRF + 交叉编码器重排</td><td>recall 提升数据 + 延迟代价</td></tr>
+          <tr><td>W08</td><td>12/14–12/20</td><td><span class="pill a">P2</span></td><td>引用、拒答、元数据与权限过滤</td><td>20 条抽样引用全对得上原文</td></tr>
+          <tr><td>W09</td><td>12/21–12/27</td><td><span class="pill a">P2</span></td><td>eval v2：扩到 30 条，检索/生成分组</td><td>5 个指标分别报数</td></tr>
+          <tr><td>W10</td><td>12/28–01/03</td><td><span class="pill a">P3</span></td><td>精读 harness s01–s06（loop/权限/hooks/todo/subagent）</td><td>6 节对比笔记 + 调用图</td></tr>
+          <tr><td>W11</td><td>01/04–01/10</td><td><span class="pill a">P3</span></td><td>精读 s07–s12（skill/compact/memory/错误恢复）</td><td>压缩策略对照表</td></tr>
+          <tr><td>W12</td><td>01/11–01/17</td><td><span class="pill a">P3</span></td><td>状态持久化、中断恢复、人工审批点</td><td>kill -9 后能接着跑</td></tr>
+          <tr><td>W13</td><td>01/18–01/24</td><td><span class="pill a">P3</span></td><td>写一个 MCP server + 全链路 trace</td><td>inspector 可调 + trace 有每步</td></tr>
+          <tr><td>W14</td><td>01/25–01/31</td><td><span class="pill a">P4</span></td><td>五类故障注入 + 兜底分层</td><td>故障报告（复现步骤 + 定位层）</td></tr>
+          <tr><td>W15</td><td>02/01–02/07</td><td><span class="pill a">P4</span></td><td>安全：最小权限、不可信内容隔离、审计</td><td>攻击清单 + 对策 + 残留风险</td></tr>
+          <tr><td>W16</td><td>02/08–02/14</td><td><span class="pill a">P4</span></td><td>春节缓冲：只复盘、只补欠账</td><td>错题本 + 前 5 阶段自测重做</td></tr>
+          <tr><td>W17</td><td>02/15–02/21</td><td><span class="pill a">P4</span></td><td>成本与延迟：路由、缓存、并行</td><td>成本降 30% + p50/p95 对比</td></tr>
+          <tr><td>W18</td><td>02/22–02/28</td><td><span class="pill a">P5</span></td><td>流式体验、工具过程可视化、可中断</td><td>首字 &lt; 2s 的实测截图</td></tr>
+          <tr><td>W19</td><td>03/01–03/07</td><td><span class="pill a">P5</span></td><td>生成式 UI：模型决定渲染什么</td><td>一个场景的非固定模板渲染</td></tr>
+          <tr><td>W20</td><td>03/08–03/14</td><td><span class="pill a">P5</span></td><td>部署、限额、多租户、成本看板</td><td>公开链接 + 看板截图</td></tr>
+          <tr><td>W21</td><td>03/15–03/21</td><td><span class="pill a">P5</span></td><td>三件套 README + 60 秒 demo</td><td>3 个仓库可被陌生人读懂</td></tr>
+          <tr><td>W22</td><td>03/22–03/28</td><td><span class="pill a">P6</span></td><td>简历 v3 + 作品集页</td><td>2 个业内人看过并复述得出</td></tr>
+          <tr><td>W23</td><td>03/29–04/04</td><td><span class="pill a">P6</span></td><td>20 题脱稿 + 每项目 8 个追问</td><td>录音回听无卡壳</td></tr>
+          <tr><td>W24</td><td>04/05–04/11</td><td><span class="pill a">P6</span></td><td>投递、记录、按反馈改材料</td><td>投递记录表 + 第一轮复盘</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="budget"><span class="num">5</span>时间预算与换算</h2>
+
+    <p>先算你真实能给的时间，再决定用哪一档。不要用「理想情况」估——按你过去一个月实际能挤出的时长算。</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>每周可投入</th><th>总周期</th><th>每周拆法</th><th>要做的取舍</th></tr></thead>
+        <tbody>
+          <tr><td><b>12–14h</b></td><td>24 周（默认）</td><td>工作日 5×45min + 周六 5h + 周日 2h</td><td>不用取舍，但周六不能断</td></tr>
+          <tr><td><b>8–10h</b></td><td>约 30 周</td><td>工作日 4×40min + 周六 3.5h + 周日 1.5h</td><td>P5 生成式 UI 降级为「只做流式 + 一个动态组件」</td></tr>
+          <tr><td><b>5–6h</b></td><td>约 40 周</td><td>周三晚 2h + 周六 3h</td><td>砍掉 P5 的部署运营（保留本地可跑），作品集从 3 个减到 2 个</td></tr>
+          <tr><td><b>&lt; 4h</b></td><td>不建议排计划</td><td>—</td><td>先只做 P0 + P1，把「能写 agent loop + 能写 eval」这两件事做实，其余等有整块时间再说</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <b>压缩时先砍什么</b>
+      <p>顺序是：<b>P5 的生成式 UI → P5 的部署运营 → P4 的成本优化 → P3 的 MCP</b>。<b>绝对不砍</b>：P1 的手写 loop、任何阶段的 eval、P4 的故障注入。因为面试筛的就是这三样，砍掉等于没学。</p>
+    </div>
+
+    <h2 id="milestone"><span class="num">6</span>四个里程碑</h2>
+    <p>每到一个节点做一次硬检查。不过关就不往前推——带病前进会在 P4 集中爆发。</p>
+
+    <div class="milestone">
+      <div class="mnum">1</div>
+      <div class="mbody">
+        <b>W05 末 · 能证明「我的 agent 变好了」</b>
+        <span>判据：改一句 prompt，eval 通过率从 X% 变成 Y%，你能解释哪几条 case 翻转了、为什么。做不到说明 eval 是假的（测的是格式不是能力）。</span>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="mnum">2</div>
+      <div class="mbody">
+        <b>W09 末 · 能分开报「检索错」和「生成错」</b>
+        <span>判据：随便给一条失败 case，你能在 5 分钟内判定是没检索到、检索到了但排序靠后、还是检索对了但模型没用。三种情况对应三种修法，判错就会改错地方。</span>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="mnum">3</div>
+      <div class="mbody">
+        <b>W17 末 · 敢让别人用</b>
+        <span>判据：拔网线、限流、返回脏数据、进程被杀，四种情况系统都不静默失败，且报错信息能让人知道下一步做什么。加上一份能算出钱的花费表。</span>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="mnum">4</div>
+      <div class="mbody">
+        <b>W24 末 · 材料能换到面试</b>
+        <span>判据：投 20 家拿到 ≥3 个技术面。拿不到不是运气问题，是简历/作品集的问题，回 W22 重做而不是加大投递量。</span>
+      </div>
+    </div>
+
+    <h2 id="daily"><span class="num">7</span>每日执行模板</h2>
+    <p>把下面这段贴在你的笔记工具顶部，每天开工前选一格。</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>时段</th><th>时长</th><th>干什么</th><th>结束时的状态</th></tr></thead>
+        <tbody>
+          <tr><td>工作日 晚</td><td>30–45min</td><td>只做「不需要整块思考」的动作：读一节文档、跑一个脚本、补一个测试用例、写 5 行笔记</td><td>关电脑时有一个小 commit 或一条笔记</td></tr>
+          <tr><td>周六 上午</td><td>3–5h</td><td>整块攻坚：写代码、调通链路、做实验对比。手机放另一个房间</td><td>有一个能跑的产物，哪怕粗糙</td></tr>
+          <tr><td>周日 下午</td><td>1.5–2h</td><td>收尾 + 验收：跑验收命令、补 README、把本周学到的写进 <code>notes/</code></td><td>本周任务卡全部打勾或明确记为欠账</td></tr>
+          <tr><td>周日 晚</td><td>15min</td><td>回答「本周五问」（见下方），决定下周是否调整</td><td>下周的三张卡已经选好</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>每周五问</h3>
+    <ol>
+      <li>这周我产出的东西里，哪一件能贴到 GitHub 上让别人看懂？</li>
+      <li>哪个概念我能在不看笔记的情况下讲 2 分钟？哪个讲不出来？</li>
+      <li>我这周有多少时间花在「看教程」而不是「写代码 / 跑实验」？超过 40% 就说明在逃避。</li>
+      <li>有没有一件事我拖了两周还没做？它通常是最难但最重要那件（比如写 eval）。</li>
+      <li>如果下周只做一件事，是哪件？</li>
+    </ol>
+
+    <h2 id="pitfalls"><span class="num">8</span>七个坑（都会真实发生）</h2>
+
+    <p class="lead">这七条不是抽象警告，是这类转型里反复出现的具体失败方式。卡住的时候回来看一眼，比继续硬撑有用。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead><tr><th style="width:44px">#</th><th style="width:19%">坑</th><th>表现</th><th style="width:32%">怎么破</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><b>把 demo 当作品</b></td><td>拖拽平台搭个问答，页面能跑就以为会了。面试一问「多轮去重、任务拆失败重试、会话切换状态丢失」当场失语</td><td>每个项目必须能回答「它在什么情况下会坏」</td></tr>
+          <tr><td>2</td><td><b>框架观光</b></td><td>LangChain / LangGraph / CrewAI / AutoGen 都跑过 hello world，一个都讲不清取舍</td><td>深 1 个 + 能对比 3 个的适用边界，比 6 个都会强。<b>想先看清全景再挑，读 <a href="resources.html#frameworks">Harness 与框架地图</a></b></td></tr>
+          <tr><td>3</td><td><b>躲 Python</b></td><td>只用 TS，读不了源码，只能看二手文章</td><td>逼自己用 Python 重写一遍核心项目。痛苦两周，之后看什么都通（见 P1）</td></tr>
+          <tr><td>4</td><td><b>简历自我降级</b></td><td>写「转型」「零基础」「自学中」</td><td>翻译经验，不否定经验——P6-1 有专门的翻译对照表</td></tr>
+          <tr><td>5</td><td><b>不做评测</b> <span class="pill warn">最致命</span></td><td>「感觉比之前好多了」——没有任何数字</td><td>哪怕 10 条测试集也比 0 条强；这是唯一能证明你「像工程师而不像玩家」的东西</td></tr>
+          <tr><td>6</td><td><b>只学不做</b></td><td>看了 40 小时课程，一行代码没提交</td><td>每周必须有 commit：每天交出一个能留下痕迹的东西</td></tr>
+          <tr><td>7</td><td><b>无视后端短板</b></td><td>并发、限流、多租户、库表设计一问就虚</td><td>在 P5 专门补，并且把「多租户 + 限额」真做进项目里</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="start"><span class="num">9</span>从哪开始</h2>
+
+    <div class="grid c2">
+      <div class="card">
+        <div class="tag">今晚（30 分钟）</div>
+        <h4>只做一件事：把环境跑通</h4>
+        <p>打开 <a href="env.html">环境搭建（Day 0）</a>，照着一路敲到「自检脚本输出 5 个 OK」。这一步做完，后面 24 周才有地基。别在这一步就开始看 agent 教程。</p>
+        <p style="margin-top:10px"><a class="cta" href="env.html">开始 Day 0 →</a></p>
+      </div>
+      <div class="card">
+        <div class="tag">明晚（40 分钟）</div>
+        <h4>第二件事：扒 5 份 JD</h4>
+        <p>进 <a href="stage-p0.html">P0</a> 的第一张卡。不用一次扒 20 份，先扒 5 份感受一下招聘方到底在要什么，剩下的周六补。这一步会改变你对「该学什么」的判断。</p>
+        <p style="margin-top:10px"><a href="stage-p0.html">进入 P0 →</a></p>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <b>唯一会让你失败的坑</b>
+      <p>不是难度，是<b>顺序</b>。绝大多数人从「看 LangGraph 教程 / 看 LangChain 文档」开始，两周后能跑 demo 但说不清任何一层为什么这么设计，然后卡在原地。这份计划的顺序是反的：<b>先手写，再用框架；先有 eval，再调 prompt；先能复现故障，再谈优化</b>。按顺序走，慢就是快。</p>
+    </div>
+
+    <div class="callout">
+      <b>想知道行业里现在有哪些 harness？可以先看，但别急着装</b>
+      <p>资源库 §5 <a href="resources.html#frameworks">Harness 与框架地图</a>把 2026 年活跃的十几套 harness、三档 SDK、五个协议理成了一张可对照的表，每条都标了「你的哪一周碰它」。<b>先看不会害你，先装会</b>——P1 的纪律是：手写 loop 之前，一个框架都别引入。</p>
+    </div>
+
+    <div class="nextprev">
+      <a href="env.html"><span>下一步</span>环境搭建 Day 0 →</a>
+      <a href="resources.html"><span>随时查</span>资源库（60+ 项） →</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · 24 周版 · 起算日 2026-10-26 · 所有时间估算按每周 10–12 小时假设
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>

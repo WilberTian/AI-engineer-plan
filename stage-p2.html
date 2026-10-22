@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="P2 检索与上下文（W06–W09）：解析、三种分块、pgvector、召回率、BM25+RRF、rerank、拒答与引用。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#4c4ddc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141c" media="(prefers-color-scheme: dark)">
+<meta property="og:type" content="article">
+<meta property="og:description" content="P2 检索与上下文（W06–W09）：解析、三种分块、pgvector、召回率、BM25+RRF、rerank、拒答与引用。">
+<title>P2 · 检索与上下文 · W06–W09</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%234c4ddc'/%3E%3Cpath d='M20 46 32 18l12 28' stroke='white' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">AI Engineer 转型实操<span>P2 · W06–W09</span></div>
+    <nav class="topnav">
+      <a href="stage-p0.html">P0</a>
+      <a href="stage-p1.html">P1</a>
+      <a href="stage-p2.html" class="on">P2</a>
+      <a href="stage-p3.html">P3</a>
+      <a href="stage-p4.html">P4</a>
+      <a href="stage-p5.html">P5</a>
+      <a href="stage-p6.html">P6</a>
+      <a href="resources.html#frameworks">Harness</a>
+      <a href="resources.html">资源库</a>
+    </nav>
+    <button class="txtbtn" id="expandAll" type="button" aria-expanded="false">全部展开</button>
+    <button class="iconbtn menubtn" id="menuBtn" type="button" title="目录">☰</button>
+    <button class="iconbtn" id="themeBtn" type="button" title="切换主题">☾</button>
+  </div>
+  <div class="progress"><i id="pbar"></i></div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <h4>概览</h4>
+    <nav>
+      <a href="index.html">总览与日历</a>
+      <a href="stage-p1.html">← P1 地基</a>
+    </nav>
+    <h4>W06 · 解析与入库</h4>
+    <nav>
+      <a href="#w6" class="on">本周目标</a>
+      <a href="#p2-1">1 选语料</a>
+      <a href="#p2-2">2 解析 PDF/HTML</a>
+      <a href="#p2-3">3 三种分块对比</a>
+      <a href="#p2-4">4 pgvector 入库</a>
+      <a href="#p2-5">5 先测 recall@5</a>
+    </nav>
+    <h4>W07 · 混合检索</h4>
+    <nav>
+      <a href="#w7">本周目标</a>
+      <a href="#p2-6">6 关键词检索</a>
+      <a href="#p2-7">7 RRF 融合</a>
+      <a href="#p2-8">8 交叉编码器重排</a>
+    </nav>
+    <h4>W08 · 生成侧</h4>
+    <nav>
+      <a href="#w8">本周目标</a>
+      <a href="#p2-9">9 引用机制</a>
+      <a href="#p2-10">10 拒答判据</a>
+      <a href="#p2-11">11 权限过滤</a>
+    </nav>
+    <h4>W09 · eval v2</h4>
+    <nav>
+      <a href="#w9">本周目标</a>
+      <a href="#p2-12">12 30 条测试集</a>
+      <a href="#p2-13">13 两组指标</a>
+      <a href="#p2-14">14 分层诊断</a>
+    </nav>
+    <nav style="margin-top:14px">
+      <a href="#selftest">闭卷自测</a>
+      <a href="#done">交付物清单</a>
+    </nav>
+    <h4>七个阶段</h4>
+    <nav>
+      <a href="stage-p0.html">P0 定位与基线</a>
+      <a href="stage-p1.html">P1 地基：Python + loop</a>
+      <a href="stage-p2.html">P2 检索与上下文</a>
+      <a href="stage-p3.html">P3 Agent 运行时</a>
+      <a href="stage-p4.html">P4 可靠性与成本</a>
+      <a href="stage-p5.html">P5 产品化与差异化</a>
+      <a href="stage-p6.html">P6 求职冲刺</a>
+    </nav>
+    <h4>附录</h4>
+    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
+  </aside>
+
+  <main>
+    <div class="phasehead">
+      <div class="ph-tag">P2 · Week 06–09 · 11/30–12/27</div>
+      <h2>检索与上下文：让答案有依据、可溯源、可评测</h2>
+      <p><b>目标：</b>做一个「每个答案都有引用、没依据会说不知道」的问答系统，并且能分别报出<b>检索质量</b>和<b>生成质量</b>。</p>
+      <p>这四周的隐含主题是：<b>先把尺子造出来，再改东西</b>。顺序反了你会一直在盲调。</p>
+      <div class="deliv">
+        <span>200–500 页语料的索引</span>
+        <span>三种分块的 recall@5 对比</span>
+        <span>带引用的问答接口</span>
+        <span>30 条 eval + 分组指标</span>
+      </div>
+    </div>
+
+    <div class="callout danger">
+      <b>RAG 最贵的错误：先调 prompt</b>
+      <p>90% 的人遇到「答得不对」就开始改 prompt、换模型。而真实原因分布大概是：<b>切分边界错 40%、元数据缺失 20%、检索召回不足 20%、排序差 10%、prompt 问题 10%</b>。改 prompt 最多碰到最后那 10%。所以本周第一件事不是写检索，是造一把能区分这五种的尺子。</p>
+    </div>
+
+    <!-- ============ W06 ============ -->
+    <h2 id="w6"><span class="num">W06</span>解析、分块、入库</h2>
+    <p class="lead">11/30–12/06 · 这一周决定天花板。切分做错了，后面怎么优化都补不回来。</p>
+
+    <details class="task" open id="p2-1">
+      <summary>
+        <span class="tid">P2-1</span>
+        <span class="tname">选一份你真会去查的语料（200–500 页）</span>
+        <span class="tmin">40min</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：语料选错，整个 P2 会变成「玩具」。选你真会查的，你才有能力判断答案对不对——这是评测的前提。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:26%">候选</th><th>优点</th><th>缺点</th><th>适合谁</th></tr></thead>
+            <tbody>
+              <tr><td><b>你所在公司的技术文档 / 内部 wiki</b></td><td>你懂业务，能判断答案对错；结构真实（含表格、层级）</td><td>可能涉密，需脱敏到本地不上传</td><td>首选</td></tr>
+              <tr><td><b>某个开源项目的完整文档</b>（如 Postgres、Kubernetes、Vercel、某 SDK）</td><td>公开、结构好、有官方答案可对照</td><td>别人也能做，作品集区分度低</td><td>次选</td></tr>
+              <tr><td><b>一个垂直领域的规范/标准</b>（税务、医疗指南、建筑规范、教材）</td><td>专业性强，能体现「领域问答」的作品集价值</td><td>PDF 解析难度高（表格、公式）</td><td>想做差异化时</td></tr>
+              <tr><td><b>你自己的笔记 / 读书笔记</b></td><td>完全懂、有长期价值</td><td>太短、结构松散、重复多</td><td>只作补充</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>把语料放好</h5>
+<pre><code>agentlab/
+└── data/
+    ├── raw/              <span class="cmt"># 原始文件，不进 git</span>
+    │   ├── doc-001.pdf
+    │   └── doc-002.html
+    └── corpus/           <span class="cmt"># 解析后的 markdown，也基本不进 git</span>
+        ├── doc-001.md
+        └── doc-002.md</code></pre>
+
+        <div class="out"><b>产物</b><code>data/raw/</code> 里 10–40 个文件，合计 200–500 页</div>
+        <div class="verify"><b>验收</b>能说出「这份语料里，我最常问的 5 个问题是什么」——说不出来说明它不适合。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「公司文档不能用」</b>：用脱敏后的片段，或换成公开的同类文档。作品集里只放公开语料。</li>
+            <li><b>「文件太多太大」</b>：先只处理 10 个文件跑通全流程，跑通后再批量。别一上来处理 500 份。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-2">
+      <summary>
+        <span class="tid">P2-2</span>
+        <span class="tname">用 Docling 解析，保留结构（这是 key）</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：用 <code>pypdf.extract_text()</code> 你只会得到一坨没有标题层级的文本——标题和正文连在一起，表格变成乱序数字。后面按标题分块、按章节过滤全部做不了。<b>解析决定结构，结构决定分块，分块决定召回。</b></div>
+
+        <h5>装并跑</h5>
+<pre><code>uv add docling
+
+<span class="cmt"># 最简单的用法</span>
+uv run python -c "
+from docling.document_converter import DocumentConverter
+conv = DocumentConverter()
+r = conv.convert('data/raw/doc-001.pdf')
+open('data/corpus/doc-001.md','w').write(r.document.export_to_markdown())
+print('done')
+"</code></pre>
+
+        <h5>批处理脚本（带失败回退）</h5>
+<pre><code><span class="str">"""scripts/parse_docs.py — PDF/HTML → markdown，失败回退纯文本"""</span>
+from __future__ import annotations
+
+import json
+import time
+from pathlib import Path
+
+from docling.document_converter import DocumentConverter
+
+RAW = Path("data/raw")
+OUT = Path("data/corpus")
+REPORT = Path("data/parse_report.json")
+
+
+def main() -&gt; None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    conv = DocumentConverter()
+    report = []
+
+    for src in sorted(RAW.iterdir()):
+        if src.suffix.lower() not in {".pdf", ".html", ".htm", ".docx"}:
+            continue
+        t0 = time.perf_counter()
+        entry = {"file": src.name, "ok": False, "chars": 0, "ms": 0, "backend": "docling"}
+        try:
+            result = conv.convert(str(src))
+            md = result.document.export_to_markdown()
+            <span class="cmt"># 关键：加一行元信息头，后面分块时能带上来源</span>
+            md = f"&lt;!-- source: {src.name} --&gt;\n\n{md}"
+            (OUT / f"{src.stem}.md").write_text(md, encoding="utf-8")
+            entry.update(ok=True, chars=len(md))
+        except Exception as exc:  <span class="cmt"># noqa: BLE001</span>
+            <span class="cmt"># 回退：至少把文本捞出来，别整个流程卡住</span>
+            try:
+                if src.suffix.lower() == ".pdf":
+                    from pypdf import PdfReader
+
+                    text = "\n\n".join(p.extract_text() or "" for p in PdfReader(src).pages)
+                    (OUT / f"{src.stem}.md").write_text(
+                        f"&lt;!-- source: {src.name} (fallback) --&gt;\n\n{text}", encoding="utf-8")
+                    entry.update(ok=True, chars=len(text), backend="pypdf")
+                else:
+                    entry["error"] = f"{type(exc).__name__}: {exc}"
+            except Exception as exc2:  # noqa: BLE001
+                entry["error"] = f"docling: {exc}; fallback: {exc2}"
+        entry["ms"] = round((time.perf_counter() - t0) * 1000)
+        report.append(entry)
+        print(f"{'OK ' if entry['ok'] else 'ERR'} {src.name:&lt;32} {entry['chars']:&gt;7} chars  {entry['ms']:&gt;6}ms  {entry['backend']}")
+
+    REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    ok = sum(1 for r in report if r["ok"])
+    print(f"\n{ok}/{len(report)} 成功")
+    print(f"平均 {sum(r['chars'] for r in report) // max(ok,1)} 字符/文件")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+        <p class="muted">需要 <code>pypdf</code> 作回退：<code>uv add pypdf</code>。</p>
+
+        <div class="callout">
+          <b>解析完要做的检查（很多人跳过，然后吃亏）</b>
+          <p>随便打开 3 个解析后的 md，检查四件事：<b>①</b> 标题层级还在吗（<code>#</code>/<code>##</code>）？<b>②</b> 表格是 markdown 表格还是散落的数字？<b>③</b> 页眉页脚/页码有没有混进正文？<b>④</b> 跨页的段落有没有被硬切开？这四项直接决定分块质量。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>data/corpus/*.md</code> + <code>data/parse_report.json</code>（每文件字符数/耗时/后端）</div>
+        <div class="verify"><b>验收</b>成功率 ≥80%；随机 3 个文件人工检查四项结构，至少 2 个过关（表格丢失可以接受，标题层级丢失不行）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>Docling 装不上 / 首次运行下载模型很慢</b>：它首次会拉版面模型。耐心等一次；国内网络可在 <code>~/.cache</code> 手动放模型，或改用 <code>unstructured</code>、<code>markitdown</code>。</li>
+            <li><b>扫描版 PDF 解析出来是空的</b>：那是图片 PDF，需要 OCR。先用 <code>pdftotext</code> 验证是否有文字层；没有就换文件或接 OCR（P2 阶段先跳过）。</li>
+            <li><b>解析很慢（每页 1–2 秒）</b>：正常。40 个文件先批量跑一次放着，别反复重跑；加个「已存在就跳过」的判断。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-3">
+      <summary>
+        <span class="tid">P2-3</span>
+        <span class="tname">三种分块策略对比（用同一套 query 量出来）</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是 P2 最有面试价值的一张卡。别人说「我用了语义分块」，你说「我对比了三种，在 20 条 query 上 recall@5 分别是 0.55 / 0.70 / 0.65，结构感知最好但不是因为它更聪明，是因为它保留了标题上下文」——这是两个层级的回答。</div>
+
+        <h5>三种策略，固定变量</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>策略</th><th>实现</th><th>预期优</th><th>预期劣</th></tr></thead>
+            <tbody>
+              <tr><td><b>固定长度</b></td><td>每 400 token 一块，重叠 15%</td><td>块大小均匀，embedding 输入稳定</td><td>切断句子、丢掉标题、表格被拆散</td></tr>
+              <tr><td><b>递归字符</b></td><td>按 <code>\n\n</code> → <code>\n</code> → 句号 → 空格 逐级切，到上限停</td><td>不切断段落，实现简单</td><td>长章节内仍然会盲目切</td></tr>
+              <tr><td><b>结构感知</b></td><td>按 markdown 标题切，超长再按 token 二次切，<b>并把标题路径拼进块文本</b></td><td>每块自带上下文，符合人类查阅习惯</td><td>依赖解析质量；块大小差异大</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>用 chonkie 实现前两种，第三种自己写（只要 30 行）：</p>
+<pre><code>uv add chonkie semantic-text-splitter tiktoken</code></pre>
+
+<pre><code><span class="str">"""src/agentlab/rag/chunk.py"""</span>
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+from chonkie import RecursiveChunker, TokenChunker
+
+
+@dataclass
+class Chunk:
+    id: str
+    text: str
+    source: str
+    section: str = ""
+    strategy: str = ""
+
+
+def fixed(path: Path, size: int = 400, overlap: int = 64) -&gt; list[Chunk]:
+    chunker = TokenChunker(chunk_size=size, chunk_overlap=overlap)
+    return [
+        Chunk(id=f"{path.stem}#f{i}", text=c.text, source=path.name, strategy="fixed")
+        for i, c in enumerate(chunker.chunk(path.read_text(encoding="utf-8")))
+    ]
+
+
+def recursive(path: Path) -&gt; list[Chunk]:
+    chunker = RecursiveChunker(chunk_size=400)
+    return [
+        Chunk(id=f"{path.stem}#r{i}", text=c.text, source=path.name, strategy="recursive")
+        for i, c in enumerate(chunker.chunk(path.read_text(encoding="utf-8")))
+    ]
+
+
+H2 = re.compile(r"^(#{1,4})\s+(.+)$", re.M)
+
+
+def structural(path: Path, max_tokens: int = 400) -&gt; list[Chunk]:
+    <span class="str">"""按标题切，超长再用段落二次切。关键：块文本前面拼上标题路径。"""</span>
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    sections: list[tuple[list[str], list[str]]] = []  <span class="cmt"># (标题路径, 正文行)</span>
+    stack: list[tuple[int, str]] = []
+    buf: list[str] = []
+
+    def flush() -&gt; None:
+        if buf and any(l.strip() for l in buf):
+            sections.append(([t for _, t in stack], buf.copy()))
+        buf.clear()
+
+    for line in lines:
+        m = H2.match(line)
+        if m:
+            flush()
+            level = len(m.group(1))
+            while stack and stack[-1][0] &gt;= level:
+                stack.pop()
+            stack.append((level, m.group(2).strip()))
+        else:
+            buf.append(line)
+    flush()
+
+    out: list[Chunk] = []
+    for path_titles, body in sections:
+        prefix = " &gt; ".join(path_titles)
+        body_text = "\n".join(body).strip()
+        if not body_text:
+            continue
+        <span class="cmt"># 粗略按 1 token ≈ 1.6 中文字符 估算，超长就按段落再切</span>
+        pieces = (
+            [body_text]
+            if len(body_text) &lt;= int(max_tokens * 1.6)
+            else _split_paragraph(body_text, int(max_tokens * 1.6))
+        )
+        for j, piece in enumerate(pieces):
+            out.append(Chunk(
+                id=f"{path.stem}#s{len(out)}",
+                text=f"【{prefix}】\n{piece}" if prefix else piece,
+                source=path.name,
+                section=prefix,
+                strategy="structural",
+            ))
+    return out
+
+
+def _split_paragraph(text: str, limit: int) -&gt; list[str]:
+    paras = [p for p in text.split("\n\n") if p.strip()]
+    out: list[str] = []
+    cur = ""
+    for p in paras:
+        if len(cur) + len(p) &lt;= limit:
+            cur += ("\n\n" if cur else "") + p
+        else:
+            if cur:
+                out.append(cur)
+            cur = p[:limit]
+    if cur:
+        out.append(cur)
+    return out</code></pre>
+
+        <div class="out"><b>产物</b><code>src/agentlab/rag/chunk.py</code> + 一份对比表（chunk 数 / 平均字符 / 后续填 recall）</div>
+        <div class="verify"><b>验收</b>三种策略各自的 chunk 数、平均长度打印出来；<code>structural</code> 的每条 chunk 文本开头能看到 <code>【标题 &gt; 子标题】</code>。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>chonkie API 名字对不上</b>：它的 API 在不同版本有调整（<code>TokenChunker</code>/<code>RecursiveChunker</code> 的参数名）。先 <code>python -c "import chonkie; help(chonkie.TokenChunker)"</code> 看签名，别照抄旧文档。</li>
+            <li><b>structural 切出来块数比另外两种多一倍</b>：正常，很多小节很短。后面入库时可以把 &lt;80 字符的块合并到上一块。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p2-4">
+      <summary>
+        <span class="tid">P2-4</span>
+        <span class="tname">pgvector 入库：schema 比代码重要</span>
+        <span class="tmin">周六 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：选 pgvector 不是因为最强，是因为你已经有 Postgres 的心智模型，而且<b>元数据过滤、事务、迁移</b>这些你熟。等真的撞上性能天花板再换 Qdrant，那时你能说清为什么换。</div>
+
+        <h5>起库</h5>
+<pre><code><span class="cmt"># docker-compose.yml</span>
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: agentlab
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:</code></pre>
+
+<pre><code>docker compose up -d
+uv add psycopg[binary] pgvector</code></pre>
+
+        <h5>schema（照抄，注释别删）</h5>
+<pre><code>CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE chunks (
+  id           text PRIMARY KEY,
+  doc_id       text NOT NULL,
+  doc_title    text NOT NULL,
+  section      text,
+  strategy     text NOT NULL,
+  tenant_id    text NOT NULL DEFAULT 'demo',   <span class="cmt">-- 权限过滤靠它，别省</span>
+  content      text NOT NULL,
+  embedding    vector(1024) NOT NULL,          <span class="cmt">-- 维度必须和 embedding 模型一致</span>
+  tsv          tsvector GENERATED ALWAYS AS (to_tsvector('simple', content)) STORED,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+<span class="cmt">-- 向量索引：批量导入完成后再建，先建会拖慢插入</span>
+CREATE INDEX chunks_emb_idx ON chunks
+  USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+
+<span class="cmt">-- 关键词索引：给中文用 simple 配置 + bigram 才有效，见下</span>
+CREATE INDEX chunks_tsv_idx ON chunks USING gin (tsv);
+CREATE INDEX chunks_filter_idx ON chunks (tenant_id, doc_id);</code></pre>
+
+        <div class="callout warn">
+          <b>两个中文特有的坑</b>
+          <p><b>（1）<code>to_tsvector('chinese', ...)</code> 不存在。</b> Postgres 内置没有中文分词器。要么装 <code>zhparser</code>/<code>pg_bigm</code> 扩展，要么改用「bigram 切分」——把中文按两字一组塞进 tsv。<b>（2）</b> 更省事的做法：<b>关键词检索放到 Python 端</b>（<code>rank_bm25</code> + <code>jieba</code>），Postgres 只管向量。P2 阶段推荐后者，能少踩一周的坑。</p>
+        </div>
+
+        <h5>入库脚本</h5>
+<pre><code><span class="str">"""scripts/ingest.py — 分块 → embedding → 入库"""</span>
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import psycopg
+from pgvector.psycopg import register_vector
+from sentence_transformers import SentenceTransformer
+
+from agentlab.rag.chunk import chunk_file
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+MODEL = "BAAI/bge-m3"          <span class="cmt"># 1024 维，中英都行</span>
+STRATEGY = sys.argv[1] if len(sys.argv) &gt; 1 else "structural"
+
+
+def main() -&gt; None:
+    model = SentenceTransformer(MODEL)
+    files = sorted(Path("data/corpus").glob("*.md"))
+    print(f"{len(files)} 个文件，策略 {STRATEGY}，模型 {MODEL}")
+
+    with psycopg.connect(DSN) as conn:
+        register_vector(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM chunks WHERE strategy = %s", (STRATEGY,))
+            for f in files:
+                chunks = chunk_file(f, STRATEGY)
+                if not chunks:
+                    continue
+                <span class="cmt"># 批量 embedding：一次 32 条，比逐条快一个量级</span>
+                vecs = model.encode(
+                    [c.text for c in chunks],
+                    batch_size=32, normalize_embeddings=True, show_progress_bar=False,
+                )
+                cur.executemany(
+                    """INSERT INTO chunks (id, doc_id, doc_title, section, strategy,
+                                           content, embedding)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s)""",
+                    [
+                        (c.id, f.stem, f.stem, c.section, STRATEGY, c.text, v)
+                        for c, v in zip(chunks, vecs, strict=True)
+                    ],
+                )
+                print(f"  {f.name:&lt;28} {len(chunks):&gt;4} chunks")
+        conn.commit()
+
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute("SELECT strategy, count(*) FROM chunks GROUP BY 1 ORDER BY 1")
+        for row in cur.fetchall():
+            print("  ", row)
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+
+        <h5>跑三次</h5>
+<pre><code>uv run python scripts/ingest.py fixed
+uv run python scripts/ingest.py recursive
+uv run python scripts/ingest.py structural</code></pre>
+
+        <div class="out"><b>产物</b>三种策略的 chunk 全部入库（同一张表用 <code>strategy</code> 列区分）+ 每组 chunk 数</div>
+        <div class="verify"><b>验收</b><code>SELECT strategy, count(*), avg(length(content)) FROM chunks GROUP BY 1;</code> 三行都有数据，且平均长度能解释得通。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b><code>type "vector" does not exist</code></b>：没执行 <code>CREATE EXTENSION vector;</code>，或用错了数据库。确认连的是 <code>agentlab</code> 不是 <code>postgres</code>。</li>
+            <li><b><code>dimension mismatch</code></b>：schema 的 <code>vector(1024)</code> 和模型输出维度不一致。bge-m3 是 1024；换成 <code>text-embedding-3-small</code> 要改 1536。</li>
+            <li><b>embedding 太慢（CPU 上 1 小时）</b>：先用 5 个文件跑通流程，全量放着过夜跑；或改用 API embedding（快但花钱，且中文效果要自己验）。</li>
+            <li><b>插入时报 <code>can't adapt type 'numpy.float32'</code></b>：<code>register_vector(conn)</code> 要在拿 cursor 之前调用。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p2-5">
+      <summary>
+        <span class="tid">P2-5</span>
+        <span class="tname">造 20 条 query 标注答案，量出 recall@5（本阶段最重要的一步）</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：没有这个数字，后面 W07 的混合检索、W08 的重排，你都无法证明「变好了」。这是整个 P2 的尺子，也是面试里最有说服力的材料。</div>
+
+        <h5>怎么做</h5>
+        <ol>
+          <li>从语料里挑 20 个问题，分三类：<b>12 条</b>答案明确在某一段（事实型）、<b>5 条</b>需要跨两段拼（多跳）、<b>3 条</b>语料里根本没有（应该在 W08 被拒答）。</li>
+          <li>为每条标注「正确答案所在的 chunk 内容片段」（不用标 id，标一段 20–50 字的原文即可，后面用字符串匹配定位）。</li>
+          <li>存成 <code>evals/retrieval_v1.json</code>：
+<pre><code>[
+  {
+    "qid": "r01",
+    "query": "分块大小设多少比较合适",
+    "gold_snippet": "起始接近 400 token，重叠 15%",
+    "type": "fact"
+  },
+  {
+    "qid": "r13",
+    "query": "如果语料里同时有中文和英文，embedding 该怎么选",
+    "gold_snippet": null,
+    "type": "unanswerable"
+  }
+]</code></pre>
+          </li>
+          <li>写测量脚本：
+<pre><code><span class="str">"""scripts/measure_recall.py — 对三种策略各算 recall@k 和 MRR"""</span>
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import psycopg
+from pgvector.psycopg import register_vector
+from sentence_transformers import SentenceTransformer
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+K = 5
+
+
+def main() -&gt; None:
+    cases = json.loads(Path("evals/retrieval_v1.json").read_text(encoding="utf-8"))
+    answerable = [c for c in cases if c["gold_snippet"]]
+    model = SentenceTransformer("BAAI/bge-m3")
+
+    with psycopg.connect(DSN) as conn:
+        register_vector(conn)
+        with conn.cursor() as cur:
+            for strategy in ("fixed", "recursive", "structural"):
+                hits, rr = 0, 0.0
+                for c in answerable:
+                    qv = model.encode(c["query"], normalize_embeddings=True)
+                    cur.execute(
+                        """SELECT content FROM chunks
+                           WHERE strategy = %s
+                           ORDER BY embedding &lt;=&gt; %s LIMIT %s""",
+                        (strategy, qv, K),
+                    )
+                    docs = [r[0] for r in cur.fetchall()]
+                    rank = next(
+                        (i + 1 for i, d in enumerate(docs) if c["gold_snippet"] in d), None
+                    )
+                    if rank:
+                        hits += 1
+                        rr += 1 / rank
+                n = len(answerable)
+                print(f"{strategy:&lt;12} recall@{K}={hits}/{n}={hits/n:.2f}  MRR={rr/n:.3f}")
+
+
+if __name__ == "__main__":
+    main()</code></pre>
+          </li>
+        </ol>
+
+        <div class="callout">
+          <b>recall@k 和 MRR 分别说明什么</b>
+          <p><b>recall@5</b>：正确片段有没有进前 5。它衡量「检索有没有找到」——这是生成质量的上限，找不到就一定答不对。<b>MRR</b>：正确片段排在第几位的倒数平均。它衡量「排序好不好」——排第 1 得 1 分，第 5 得 0.2 分。两个都低说明检索烂；recall 高但 MRR 低说明「找到了但没排前面」，这时候加<b>重排</b>最有效。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>evals/retrieval_v1.json</code>（20 条）+ <code>scripts/measure_recall.py</code> + 一张三行对比表</div>
+        <div class="verify"><b>验收</b>
+          能报出三种策略的 recall@5 和 MRR；能解释「为什么 structural 更好/更差」，理由是结构性的（比如「它保留了标题，所以跨段的多跳问题命中率更高」）。
+        </div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「gold_snippet 匹配不上」</b>：解析后的文本可能改了空格/标点。标注时从 <code>data/corpus/</code> 里直接复制原文，别手打。</li>
+            <li><b>「三种策略结果差不多」</b>：很可能你的语料结构太简单（纯段落、没有标题）。换一份有清晰层级的文档，或把 K 降到 3 让差异显现。</li>
+            <li><b>「不知道怎么选 gold」</b>：先自己回答这个问题，然后全文搜索你答案里的关键短语，定位到那一段——那一段就是 gold。找不到就说明这条该归为 unanswerable。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W07 ============ -->
+    <h2 id="w7"><span class="num">W07</span>混合检索 + 融合 + 重排</h2>
+    <p class="lead">12/07–12/13 · 三件套的标准形状：<b>召回要宽（多路并行）、融合要稳（RRF）、排序要准（cross-encoder）</b>。</p>
+
+    <details class="task" id="p2-6">
+      <summary>
+        <span class="tid">P2-6</span>
+        <span class="tname">关键词检索：为什么向量检索一定会漏掉专有名词</span>
+        <span class="tmin">周六 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：embedding 把语义压成向量，副作用是<b>罕见字符串被平滑掉</b>。产品型号「XR-2000B」、函数名「useSyncExternalStore」、错误码「E1024」，向量检索经常找不准；而这些恰恰是用户最常精确查的东西。</div>
+
+        <h5>用 jieba + rank_bm25（避开 Postgres 中文分词）</h5>
+<pre><code>uv add rank-bm25 jieba</code></pre>
+
+<pre><code><span class="str">"""src/agentlab/rag/bm25.py"""</span>
+from __future__ import annotations
+
+import pickle
+from pathlib import Path
+
+import jieba
+from rank_bm25 import BM25Okapi
+
+IDX = Path("data/bm25.pkl")
+
+
+def tokenize(text: str) -&gt; list[str]:
+    <span class="cmt"># 中文用 jieba 切，英文/数字保留原样并小写。混合语料必须都处理。</span>
+    out: list[str] = []
+    for tok in jieba.lcut(text.lower()):
+        tok = tok.strip()
+        if tok and tok not in {"，", "。", "、", "；", "：", "（", "）", "\n", " "}:
+            out.append(tok)
+    return out
+
+
+def build(strategy: str = "structural") -&gt; None:
+    import psycopg
+
+    with psycopg.connect("postgresql://postgres:devpass@localhost:5432/agentlab") as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, content FROM chunks WHERE strategy = %s ORDER BY id", (strategy,)
+            )
+            rows = cur.fetchall()
+    ids = [r[0] for r in rows]
+    corpus = [tokenize(r[1]) for r in rows]
+    bm25 = BM25Okapi(corpus)
+    IDX.write_bytes(pickle.dumps({"ids": ids, "bm25": bm25}, protocol=5))
+    print(f"索引 {len(ids)} 条")
+
+
+def search(query: str, k: int = 20) -&gt; list[tuple[str, float]]:
+    data = pickle.loads(IDX.read_bytes())
+    scores = data["bm25"].get_scores(tokenize(query))
+    order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+    return [(data["ids"][i], float(scores[i])) for i in order]</code></pre>
+
+        <h5>做一个能证明差异的实验</h5>
+        <p>在语料里找一个<b>专有名词或错误码</b>，用纯向量检索和纯 BM25 分别查，对比前 5 名里有没有命中。把两条结果并排贴进笔记。</p>
+
+        <div class="out"><b>产物</b><code>src/agentlab/rag/bm25.py</code> + <code>data/bm25.pkl</code> + 一组专有名词的对比结果</div>
+        <div class="verify"><b>验收</b>能举出一个「向量查不到、BM25 查得到」的具体例子，并说明原因（罕见 token 在 embedding 里被稀释）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>jieba 把专有名词切碎了</b>：加自定义词典 <code>jieba.load_userdict("data/dict.txt")</code>，一行一个词。这个细节面试可以讲。</li>
+            <li><b>BM25 分数没有可比性</b>：它和向量相似度不是一个量纲，所以不能直接加权相加——下一张卡的 RRF 就是为解这个问题。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-7">
+      <summary>
+        <span class="tid">P2-7</span>
+        <span class="tname">RRF 融合：为什么不用加权平均</span>
+        <span class="tmin">周六 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：加权平均需要把两路分数归一化，而归一化方式会随分布变化失真（这次除 10、换个语料就要除 100）。RRF 只用<b>排名</b>，天然免疫量纲问题，几乎不需要调参——这就是它成为默认做法的原因。</div>
+
+<pre><code><span class="str">"""src/agentlab/rag/fusion.py"""</span>
+from __future__ import annotations
+
+
+def rrf(
+    rankings: list[list[str]],
+    k: int = 60,
+    weights: list[float] | None = None,
+) -&gt; list[tuple[str, float]]:
+    <span class="str">"""Reciprocal Rank Fusion。
+
+    score(d) = Σ weight_i / (k + rank_i(d))，rank 从 1 开始。
+    k 的作用是压低「第 1 名」的绝对优势：k 越大，排名差异被抹得越平。
+    60 是原论文的经验值，一般不用改。
+    """
+</span>
+    if weights is None:
+        weights = [1.0] * len(rankings)
+    scores: dict[str, float] = {}
+    for ranking, w in zip(rankings, weights, strict=True):
+        for rank, doc_id in enumerate(ranking, start=1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + w / (k + rank)
+    return sorted(scores.items(), key=lambda x: x[1], reverse=True)</code></pre>
+
+        <h5>接上两路，量一次提升</h5>
+<pre><code><span class="str">"""scripts/hybrid_search.py"""</span>
+from __future__ import annotations
+
+import psycopg
+from pgvector.psycopg import register_vector
+from sentence_transformers import SentenceTransformer
+
+from agentlab.rag import bm25
+from agentlab.rag.fusion import rrf
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+_model = SentenceTransformer("BAAI/bge-m3")
+
+
+def vector_search(query: str, k: int = 30, strategy: str = "structural") -&gt; list[str]:
+    qv = _model.encode(query, normalize_embeddings=True)
+    with psycopg.connect(DSN) as conn:
+        register_vector(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT id FROM chunks WHERE strategy = %s
+                   ORDER BY embedding &lt;=&gt; %s LIMIT %s""",
+                (strategy, qv, k),
+            )
+            return [r[0] for r in cur.fetchall()]
+
+
+def hybrid(query: str, k: int = 30, fetch_content: bool = False):
+    v = vector_search(query, k)
+    b = [doc_id for doc_id, _ in bm25.search(query, k)]
+    fused = rrf([v, b])
+    return fused[:10]
+
+
+if __name__ == "__main__":
+    for q in ["XR-2000B 的默认端口是多少", "分块大小怎么定"]:
+        print(f"\n{q}")
+        for i, (doc_id, score) in enumerate(hybrid(q), 1):
+            print(f"  {i}. {doc_id}  {score:.4f}")</code></pre>
+
+        <p>然后改 <code>measure_recall.py</code>，把 <code>vector_search</code> 换成 <code>hybrid</code>，再跑一次三种策略的 recall。记下提升幅度。</p>
+
+        <div class="out"><b>产物</b><code>fusion.py</code> + <code>hybrid_search.py</code> + recall 前后对比（纯向量 vs 混合）</div>
+        <div class="verify"><b>验收</b>混合后 recall@5 至少不比纯向量差；对专有名词类 query 有明显提升。如果整体下降，先检查 bm25 索引和向量索引是不是同一个 <code>strategy</code>。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>两路返回的 id 空间不一致</b>：bm25 的 id 必须和数据库 chunk id 完全一致。重建 bm25 索引时确认用了同一个 strategy。</li>
+            <li><b>融合后反而变差</b>：说明其中一路质量很差。分别量一下「纯向量 recall」和「纯 BM25 recall」，把差的那路权重调到 0.3 试试——但更该做的是先修它。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-8">
+      <summary>
+        <span class="tid">P2-8</span>
+        <span class="tname">交叉编码器重排：算清它值不值这个延迟</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：重排是「双塔（快但粗）→ 交叉编码器（慢但准）」的标准组合。它<b>不能提高召回</b>——只重排已经找到的候选。这个边界必须说清楚，否则你会以为它能救低召回。</div>
+
+<pre><code><span class="str">"""src/agentlab/rag/rerank.py"""</span>
+from __future__ import annotations
+
+import time
+
+import psycopg
+from sentence_transformers import CrossEncoder
+
+_model: CrossEncoder | None = None
+
+
+def get_model() -&gt; CrossEncoder:
+    global _model
+    if _model is None:
+        <span class="cmt"># 中文/多语用 bge-reranker-v2-m3；英文可用 ms-marco-MiniLM-L-6-v2（更快）</span>
+        _model = CrossEncoder("BAAI/bge-reranker-v2-m3", max_length=512)
+    return _model
+
+
+def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
+    <span class="str">"""candidates: [(chunk_id, 融合分)] → 返回重排后的 [(id, score)] + 耗时"""</span>
+    if not candidates:
+        return [], 0.0
+    ids = [c[0] for c in candidates]
+    with psycopg.connect("postgresql://postgres:devpass@localhost:5432/agentlab") as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, content FROM chunks WHERE id = ANY(%s)", (ids,))
+            content = dict(cur.fetchall())
+    pairs = [(query, content[i][:1200]) for i in ids if i in content]
+
+    t0 = time.perf_counter()
+    scores = get_model().predict(pairs)
+    ms = (time.perf_counter() - t0) * 1000
+
+    ranked = sorted(zip([i for i in ids if i in content], scores),
+                    key=lambda x: float(x[1]), reverse=True)
+    return [(i, float(s)) for i, s in ranked[:top_k]], ms</code></pre>
+
+        <h5>必须量三个数（不是两个）</h5>
+        <div class="tw">
+          <table>
+            <thead><tr><th>指标</th><th>怎么测</th><th>期望</th></tr></thead>
+            <tbody>
+              <tr><td>recall@5（重排前 vs 后）</td><td>重排只改顺序不改集合，所以<b>recall@5 可能变低</b>（原本第 5 的被挤出）</td><td>重点看 <b>MRR</b> 是否上升</td></tr>
+              <tr><td>MRR</td><td>同上脚本换成重排后的顺序</td><td>应该明显上升（0.45 → 0.65 量级）</td></tr>
+              <tr><td>P95 延迟</td><td>对 20 条 query 记 20 次耗时，取 P95</td><td>CPU 上重排 30 条候选约 200–800ms</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>什么情况下不该加重排</b>
+          <p>① <b>召回本来就低</b>——重排救不了没检索到的东西，先修分块。<br>
+          ② <b>对话场景且预算紧</b>——用户能感知 300ms 以上的额外等待，而 MRR 提升可能只体现在少数问题上。<br>
+          ③ <b>候选只有 5 条</b>——重排的收益来自「从 30 条里挑 5 条」，候选太少就没得挑。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>rerank.py</code> + 一张三列对比表（纯向量 / 混合 / 混合+重排，各自 recall@5、MRR、P95 延迟）</div>
+        <div class="verify"><b>验收</b>能回答「重排让 MRR 从多少到多少，代价是多少毫秒」；能说清为什么 recall 可能下降。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>bge-reranker 太大跑不动</b>：换 <code>BAAI/bge-reranker-base</code>，或 <code>cross-encoder/ms-marco-MiniLM-L-6-v2</code>。效果差一点但能跑起来，先把链路跑通。</li>
+            <li><b>predict 很慢（几秒）</b>：候选太多（>50）或 CPU 太弱。把候选降到 20，且 <code>max_length</code> 设 512 以内。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W08 ============ -->
+    <h2 id="w8"><span class="num">W08</span>生成侧：引用、拒答、权限</h2>
+    <p class="lead">12/14–12/20 · 检索解决「找到」，这一周解决「用得对」。三件事做到，系统就从「demo」变成「可以给人看」。</p>
+
+    <details class="task" id="p2-9">
+      <summary>
+        <span class="tid">P2-9</span>
+        <span class="tname">引用机制：让每句话都能点回原文</span>
+        <span class="tmin">周六 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：引用不只是体验，它是<b>唯一能让用户自己验证的系统设计</b>。有引用，用户能发现你错了；没引用，用户只能信任或怀疑。企业客户几乎都会问这一条。</div>
+
+        <h5>prompt 里必须写死的四件事</h5>
+<pre><code>SYSTEM = """你是一个严格基于资料回答的助手。
+
+规则：
+1. 只能使用【资料】中的内容回答。资料里没有的，直接说「资料中没有相关信息」。
+2. 每句结论后面用 [编号] 标注来源，编号对应资料块序号。
+3. 不允许把资料里的内容改写成更绝对的说法（例如把「通常」改成「一定」）。
+4. 如果多个资料冲突，指出冲突并分别标注来源，不要自行裁决。
+"""
+
+USER_TMPL = """【资料】
+{context}
+
+【问题】
+{question}
+"""
+
+<span class="cmt"># context 的构造方式（编号必须和引用对得上）</span>
+def build_context(chunks: list[tuple[str, str]]) -&gt; str:
+    return "\n\n".join(f"[{i}] ({src}) {text}" for i, (src, text) in enumerate(chunks, 1))</code></pre>
+
+        <h5>解析引用并校验（这一步最关键）</h5>
+<pre><code><span class="str">"""src/agentlab/rag/cite.py"""</span>
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+
+CITE = re.compile(r"\[(\d+)\]")
+
+
+@dataclass
+class CiteCheck:
+    cited: list[int]
+    invalid: list[int]            <span class="cmt"># 引用了不存在的编号</span>
+    uncited_sentences: list[str]  <span class="cmt"># 有结论但没标来源</span>
+
+    @property
+    def ok(self) -&gt; bool:
+        return not self.invalid and len(self.uncited_sentences) &lt;= 1
+
+
+def check(answer: str, n_chunks: int) -&gt; CiteCheck:
+    cited = sorted({int(m) for m in CITE.findall(answer)})
+    invalid = [c for c in cited if c &lt; 1 or c &gt; n_chunks]
+    <span class="cmt"># 粗粒度：按句号/换行切，看哪些句子没带引用也不像「拒答」</span>
+    sentences = [s.strip() for s in re.split(r"[。\n]", answer) if len(s.strip()) &gt; 15]
+    uncited = [s for s in sentences if not CITE.search(s) and "资料中没有" not in s]
+    return CiteCheck(cited=cited, invalid=invalid, uncited_sentences=uncited)</code></pre>
+
+        <div class="out"><b>产物</b>带引用的 <code>generate.py</code> + <code>cite.py</code> 校验器</div>
+        <div class="verify"><b>验收</b>随机抽 20 条回答，<code>invalid</code> 为空，<code>uncited_sentences</code> ≤1；人工核对 5 条，引用编号指向的块确实包含该结论。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>模型不标编号</b>：先说「编号必须对应资料块序号」还不够，加一个 few-shot 例子（一条带 [1][2] 的示范）。示例比规则有效。</li>
+            <li><b>编造编号（引 [7] 但只有 5 块）</b>：这就是 <code>invalid</code> 检测存在的意义。检出后两种处理：重试一次；或把该回答降级为「部分内容无依据，请核实」。</li>
+            <li><b>一句话里塞了三个引用</b>：可以接受，但更该验证的是「这三个引用是否都真的支持这句话」——这是 W09 忠实度指标要量的。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-10">
+      <summary>
+        <span class="tid">P2-10</span>
+        <span class="tname">拒答判据：阈值 + 指令，两层都要有</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：RAG 最危险的失败不是「答不出」，是<b>自信地答错</b>。而只靠 prompt 说「不知道就说不知道」是不够的——模型倾向于「尽力回答」。必须加一层基于分数的硬门槛。</div>
+
+        <h5>两层判据</h5>
+<pre><code><span class="str">"""src/agentlab/rag/answer.py（节选）"""</span>
+REFUSE = "资料中没有相关信息，无法回答这个问题。"
+
+
+def answer(question: str, top_score: float, chunks: list) -&gt; tuple[str, str]:
+    <span class="cmt"># 第一层：硬门槛。分数太低说明根本没检索到相关内容，别让模型自由发挥。</span>
+    if not chunks or top_score &lt; 0.35:      <span class="cmt"># 阈值要靠 W09 的 unanswerable 集来定</span>
+        return REFUSE, "refused_low_score"
+
+    <span class="cmt"># 第二层：让模型自己判断，但给出明确出口</span>
+    raw = llm.chat([
+        {"role": "system", "content": SYSTEM_WITH_REFUSE_RULE},
+        {"role": "user", "content": USER_TMPL.format(context=ctx, question=question)},
+    ])
+    if "资料中没有" in raw or "无法回答" in raw:
+        return REFUSE, "refused_by_model"
+    return raw, "answered"</code></pre>
+
+        <h5>阈值不能拍脑袋，要这样定</h5>
+        <ol>
+          <li>用 W09 的 3 条 unanswerable + 12 条 answerable，各跑一遍，记下每题的最高检索分。</li>
+          <li>画一个简单分布：能答的分数区间 vs 不能答的分数区间。<b>阈值取两者之间</b>。</li>
+          <li>如果两个区间重叠严重（说明分数不可分），那说明<b>检索质量还不到能拒答的程度</b>——回去修分块，别硬调阈值。</li>
+        </ol>
+
+        <div class="callout warn">
+          <b>拒答的两个反向错误</b>
+          <p><b>过度拒答</b>：阈值太高，能答的也被拒。用户体感是「这系统什么都不知道」。<b>拒答不足</b>：阈值太低，什么都敢答。体感是「它偶尔瞎说」。<b>生产上更怕后者</b>，所以宁可阈值偏高、再配合「你可以换个问法」的引导。</p>
+        </div>
+
+        <div class="out"><b>产物</b>两层拒答实现 + 一张分数分布表（12 条可答 / 3 条不可答各自的 top_score）</div>
+        <div class="verify"><b>验收</b>3 条 unanswerable 全部被拒；12 条 answerable 至少 10 条正常回答（拒答率 ≤17%）。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>分数完全重叠，无法设阈值</b>：改用「重排分」而不是「向量分」做门槛，交叉编码器的分数区分度通常更好。</li>
+            <li><b>模型把「资料没有」当成口头禅</b>：在 prompt 里加一句「只有在资料确实缺少关键信息时才拒答；资料部分相关时，回答已知部分并说明缺什么」。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-11">
+      <summary>
+        <span class="tid">P2-11</span>
+        <span class="tname">权限过滤：必须在检索前做，不能在生成后做</span>
+        <span class="tmin">周六 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是企业 RAG 的第一道红线。很多人写成「先检索出 10 条，再过滤掉用户没权限的」——结果是<b>有权限的文档可能一条都没进前 10</b>，用户看到「没找到」，但真正的问题是过滤发生在太后面。更糟的是：如果过滤后的上下文里残留了无权限内容，模型可能把它说出来。</div>
+
+        <h5>正确做法：过滤条件进 SQL</h5>
+<pre><code><span class="cmt">-- 错：先取 10 条再在应用层过滤</span>
+SELECT id, content FROM chunks ORDER BY embedding &lt;=&gt; %s LIMIT 10;
+
+<span class="cmt">-- 对：tenant_id / 可见范围作为 WHERE 条件，参与查询</span>
+SELECT id, content FROM chunks
+WHERE tenant_id = ANY(%s)              <span class="cmt">-- 用户可访问的租户/项目</span>
+  AND (visibility IS NULL OR visibility = 'public' OR owner_id = %s)
+ORDER BY embedding &lt;=&gt; %s
+LIMIT 10;</code></pre>
+
+        <h5>三个必须写进代码的规则</h5>
+        <ol>
+          <li><b>权限参数不能来自模型。</b>它必须来自已认证的用户上下文（session），工具签名里不接受「tenant_id」这类由模型填的参数。</li>
+          <li><b>审计日志记「检索范围」而不只是「结果」。</b>出问题时你要能回答「这次查询扫了哪些文档」。</li>
+          <li><b>做一次越权测试</b>：用 A 租户的身份，问一个只有 B 租户文档能回答的问题，期望结果是拒答，而不是答出来。</li>
+        </ol>
+
+        <div class="out"><b>产物</b>带 <code>tenant_id</code> 过滤的检索函数 + 一次越权测试记录</div>
+        <div class="verify"><b>验收</b>越权测试返回「资料中没有相关信息」；日志里能看到过滤条件。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>只有一份语料，没法测越权</b>：造两个 tenant，各放 3 个文件，A 问只有 B 有的内容。</li>
+            <li><b>过滤后结果太少</b>：正常。这时应该提高 <code>LIMIT</code>（因为过滤会砍掉一部分），而不是放宽权限。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <!-- ============ W09 ============ -->
+    <h2 id="w9"><span class="num">W09</span>eval v2：把「答得对不对」拆成五个数</h2>
+    <p class="lead">12/21–12/27 · 这一周结束时，你要能做到：给任意一条失败回答，5 分钟内判定问题出在检索还是生成。</p>
+
+    <details class="task" open id="p2-12">
+      <summary>
+        <span class="tid">P2-12</span>
+        <span class="tname">30 条测试集：分类型、标 gold、含 6 条不可答</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：30 条是「能看出趋势」的最小规模。太少（10 条）一次翻转就占 10%，波动掩盖信号；太多（100 条）维护成本高且你会懒得跑。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th>类型</th><th>数量</th><th>测什么</th><th>例子</th></tr></thead>
+            <tbody>
+              <tr><td><code>fact</code> 事实型</td><td>12</td><td>单点检索 + 准确复述</td><td>「默认端口是多少」</td></tr>
+              <tr><td><code>multi_hop</code> 多跳</td><td>6</td><td>跨段拼接、不遗漏条件</td><td>「A 和 B 两个配置能同时开吗」</td></tr>
+              <tr><td><code>precise</code> 精确串</td><td>4</td><td>专有名词 / 错误码 / 版本号</td><td>「XR-2000B 支持哪些协议」</td></tr>
+              <tr><td><code>unanswerable</code> 不可答</td><td>6</td><td>拒答正确性</td><td>「这个产品明年会涨价吗」</td></tr>
+              <tr><td><code>injection</code> 注入</td><td>2</td><td>是否被文档内容劫持</td><td>语料里若含「忽略指令」，会不会被带走</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>格式在 v1 基础上加三个字段：</p>
+<pre><code>{"id":"v2-07","type":"multi_hop","question":"...","gold_answer":"...","gold_snippets":["...","..."],"must_refuse":false}</code></pre>
+
+        <div class="out"><b>产物</b><code>evals/rag_v2.jsonl</code>（30 行）</div>
+        <div class="verify"><b>验收</b>五类都有；每条 <code>gold_answer</code> 是你从语料里抄的、不是自己编的。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「凑不出 6 条不可答」</b>：问「未来预测」「语料没覆盖的相邻领域」「需要实时数据」「关于内部人员」。这四类各来一两条就够。</li>
+            <li><b>「gold_answer 写不精确」</b>：直接复制原文片段，别改写。改写会让判分变模糊。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" open id="p2-13">
+      <summary>
+        <span class="tid">P2-13</span>
+        <span class="tname">五个指标：检索两个、生成三个</span>
+        <span class="tmin">周六 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：把指标分组是为了<b>定位</b>。混成一个「准确率」你只知道变差了，不知道变在哪。</div>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:66px">组</th><th>指标</th><th>定义</th><th>怎么算（不依赖框架）</th></tr></thead>
+            <tbody>
+              <tr><td rowspan="2"><b>检索</b></td><td>recall@5</td><td>gold_snippet 是否进前 5</td><td>字符串包含匹配（P2-5 已有）</td></tr>
+              <tr><td>MRR</td><td>gold 排名的倒数平均</td><td>1/rank，未命中记 0</td></tr>
+              <tr><td rowspan="3"><b>生成</b></td><td>引用命中率</td><td>引用的编号确实包含该结论</td><td>对每条引用，检查编号对应块是否含 <code>gold_snippet</code> 的关键词</td></tr>
+              <tr><td>忠实度</td><td>回答里的每个结论都能在引用块里找到依据</td><td>LLM judge：给「回答 + 引用块」，问「有无超出资料的陈述」</td></tr>
+              <tr><td>答案正确性</td><td>与 gold_answer 语义一致</td><td>LLM judge 对比，输出 pass/fail + 理由</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+<pre><code><span class="str">"""evals/judge_rag.py — 两个 judge，分开用"""</span>
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+from agentlab.llm import LLM
+
+
+class Faithful(BaseModel):
+    grounded: bool = Field(description="回答是否完全基于给定的引用块")
+    unsupported: list[str] = Field(
+        default_factory=list, description="超出资料的陈述，逐条摘出原文，没有则空"
+    )
+
+
+class Correct(BaseModel):
+    passed: bool
+    reason: str = Field(max_length=200)
+
+
+def faithfulness(llm: LLM, answer: str, contexts: list[str]) -&gt; Faithful:
+    ctx = "\n\n".join(f"[{i}] {c}" for i, c in enumerate(contexts, 1))
+    return llm.structured([{"role": "user", "content": f"""资料：
+{ctx}
+
+回答：
+{answer}
+
+判断：回答里的每个事实性陈述，是否都能在资料中找到依据？
+只评判依据，不评判语气、长度、是否好读。"""}, ], Faithful)
+
+
+def correctness(llm: LLM, question: str, gold: str, answer: str) -&gt; Correct:
+    return llm.structured([{"role": "user", "content": f"""问题：{question}
+标准答案：{gold}
+系统回答：{answer}
+
+判断系统回答与标准答案在事实上是否一致。表述方式不同不算错。
+关键条件缺失、数值错误、因果关系反了，算错。"""}, ], Correct)</code></pre>
+
+        <div class="callout">
+          <b>为什么忠实度和正确性要分开</b>
+          <p>一条回答可以<b>完全忠于资料但答错了问题</b>（资料本身过期），也可以<b>答对了但与资料无关</b>（模型本来就知道）。前者是数据问题，后者是幻觉风险。<b>只有两个数分开看，才知道该修数据还是修 prompt。</b></p>
+        </div>
+
+        <div class="out"><b>产物</b><code>evals/judge_rag.py</code> + 一次完整报告：五个指标 + 分组（按 type）</div>
+        <div class="verify"><b>验收</b>能报出「recall@5=0.72 / MRR=0.58 / 引用命中 0.85 / 忠实度 0.90 / 正确性 0.70」，并按类型分组看到哪类最差。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>judge 太慢/太贵</b>：只对「正确性」用 judge，忠实度用规则近似（回答里的数字/专有名词必须出现在引用块里）。</li>
+            <li><b>正确性判分和人工差很多</b>：把 gold_answer 也喂给 judge 时，明确「允许表述不同」。判分标准写成 3 条硬规则，别写「是否准确」这种模糊要求。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-14">
+      <summary>
+        <span class="tid">P2-14</span>
+        <span class="tname">分层诊断：一个失败 case，5 分钟定位到哪一层</span>
+        <span class="tmin">周日 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是 W09 的真正交付物。面试里「RAG 答错了你怎么排查」几乎必问，而大多数人答不出结构化流程。</div>
+
+        <h5>固定五步排查（照这个顺序，不要跳）</h5>
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:44px">步</th><th>检查什么</th><th>怎么查</th><th>如果不对，修哪里</th></tr></thead>
+            <tbody>
+              <tr><td><b>1</b></td><td>语料里到底有没有这个答案？</td><td>直接 <code>grep -r "关键词" data/corpus/</code></td><td>没有 → 数据缺失，不是 RAG 的问题。补语料或明确拒答</td></tr>
+              <tr><td><b>2</b></td><td>答案所在的那一段，被切成了什么样？</td><td>在数据库里查 <code>content LIKE '%关键词%'</code>，看整块内容</td><td>切碎了/丢了标题 → 改分块策略（P2-3）</td></tr>
+              <tr><td><b>3</b></td><td>这块进前 5 了吗？排名第几？</td><td>跑 <code>measure_recall.py</code> 单条版，打印前 10</td><td>没进 → 检索问题（换 embedding / 加关键词路）</td></tr>
+              <tr><td><b>4</b></td><td>进了但排后面？</td><td>看混合前后、重排前后的排名变化</td><td>加/调重排；或调 RRF 权重</td></tr>
+              <tr><td><b>5</b></td><td>上下文给对了，答案还是错？</td><td>把最终 prompt 完整打印出来，人工读一遍</td><td>生成问题：prompt 指令、上下文被截断、引用编号错位</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h5>做成一个可复用的诊断脚本</h5>
+<pre><code><span class="str">"""scripts/diagnose.py — 用法：uv run python scripts/diagnose.py "问题" 关键短语"""</span>
+import sys
+
+from agentlab.rag import bm25
+from scripts.hybrid_search import hybrid, vector_search
+
+q, gold = sys.argv[1], sys.argv[2]
+
+print(f"Q: {q}\nGOLD: {gold}\n")
+print("--- 1. 语料里有没有 ---")
+import subprocess
+print(subprocess.run(["grep", "-rl", gold, "data/corpus/"], capture_output=True, text=True).stdout or "  未找到！")
+
+print("--- 2/3. 纯向量前 10 ---")
+for i, cid in enumerate(vector_search(q, 10), 1):
+    print(f"  {i}. {cid}")
+
+print("--- 3. 混合 + RRF 前 10 ---")
+for i, (cid, s) in enumerate(hybrid(q, 20), 1):
+    print(f"  {i}. {cid}  {s:.4f}")
+
+print("--- 4. 关键词路前 10 ---")
+for i, (cid, s) in enumerate(bm25.search(q, 10), 1):
+    print(f"  {i}. {cid}  {s:.2f}")</code></pre>
+
+        <div class="out"><b>产物</b><code>scripts/diagnose.py</code> + <code>notes/rag-diagnosis.md</code>：拿 5 条真实失败 case 走一遍五步，每条写「卡在第几步 + 怎么修的」</div>
+        <div class="verify"><b>验收</b>5 条里有至少 3 条定位到具体层（不是「大概是检索问题」）；每条都写了修法。</div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>五个 case 都卡在第 2 步</b>：说明分块是主要瓶颈。这是好消息——改一处就能提升整体，比到处调参强。</li>
+            <li><b>grep 找不到但你知道语料里有</b>：解析时丢了内容，或关键词被空格/换行打断。用更短的短语再试。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
+
+    <details class="task" id="selftest-card">
+      <summary>
+        <span class="tid">Q1–Q7</span>
+        <span class="tname">P2 阶段验收自测（点开看答题要点）</span>
+        <span class="tmin">30min</span>
+      </summary>
+      <div class="task-body">
+        <h5>Q1 「检索到了正确文档，但答案还是错」——按什么顺序排查？至少说出 4 个检查点。</h5>
+        <p class="muted">要点：语料是否有 → 切分是否完整 → 是否进前 5 → 排名是否靠后 → 上下文是否被截断 → prompt 是否允许它自由发挥。按这个顺序，因为前面的成本低且影响面大。</p>
+
+        <h5>Q2 什么时候该用纯关键词检索？什么时候纯向量就够？</h5>
+        <p class="muted">要点：查专有名词、错误码、版本号、人名、精确短语时关键词不可替代；查「概念解释」「同义改写」类问题时向量更强。多数系统要混合，但只有 20 条测试集时你会发现混合的收益集中在少数精确查询上。</p>
+
+        <h5>Q3 重排一定能提升质量吗？代价是什么？什么情况下不该加？</h5>
+        <p class="muted">要点：只改顺序不改集合，所以 recall 可能下降、MRR 通常上升。代价是 200–800ms 延迟和一次模型推理成本。召回本身低的时候不该加（救不了），候选太少时不该加（没得挑）。</p>
+
+        <h5>Q4 上下文腐化是什么？为什么「窗口有 1M 就能塞 1M」是错的？</h5>
+        <p class="muted">要点：塞得越多，关键信息被淹没的概率越高（lost in the middle），且成本随长度线性上升、延迟上升。更关键的是：无关内容会诱导模型答非所问。正确做法是「少而准」，不是「多而全」。</p>
+
+        <h5>Q5 压缩历史时，什么东西绝对不能丢？</h5>
+        <p class="muted">要点：① 用户明确的约束（不做 X、必须用 Y）；② 已经确认的事实/结论（避免重复查）；③ 未完成的待办；④ 出错过的路径（避免重犯）。可以丢：冗长的工具原始输出、已解决的中间推理。</p>
+
+        <h5>Q6 你的 30 条测试集里，哪一类最差？为什么？</h5>
+        <p class="muted">要点：要能具体到类型（通常 multi_hop 最差，因为需要跨段拼接，单块检索天然吃亏）。加分项：说清「多跳问题该怎么改」——查询分解（query decomposition）或先检索再二次检索。</p>
+
+        <h5>Q7 如果老板要求「回答准确率到 95%」，你怎么回应？</h5>
+        <p class="muted">要点：先问「哪一类问题的 95%」——事实型可以做到，多跳和开放问题做不到。再问「错了的代价是什么」——客服场景需要兜底转人工，内部工具可以接受。最后给出方案：分层承诺（可答/需人工/拒答）+ 置信度阈值。<b>不承诺一个笼统的 95%。</b></p>
+      </div>
+    </details>
+
+    <div class="callout danger">
+      <b>阶段通关条件</b>
+      <p>① 五种指标能同时报数并按类型分组；② 拿一条失败 case 能在 5 分钟内定位到具体层；③ 能解释「为什么混合检索比纯向量好」以及「它为什么不能解决所有问题」；④ Q1–Q7 至少答对 5 题。</p>
+    </div>
+
+    <h2 id="done"><span class="num">6</span>交付物清单</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th style="width:44px">✓</th><th>产物</th><th>路径</th><th>面试时怎么用</th></tr></thead>
+        <tbody>
+          <tr><td>☐</td><td>解析流水线</td><td><code>scripts/parse_docs.py</code></td><td>「我做了失败回退，成功率 92%」</td></tr>
+          <tr><td>☐</td><td>三种分块</td><td><code>src/agentlab/rag/chunk.py</code></td><td>「对比了三种，结构感知的 recall 高 15 个点」</td></tr>
+          <tr><td>☐</td><td>检索标注集</td><td><code>evals/retrieval_v1.json</code></td><td>「20 条，含 3 条不可答」</td></tr>
+          <tr><td>☐</td><td>混合检索</td><td><code>rag/bm25.py</code> + <code>rag/fusion.py</code></td><td>「RRF 不用归一化，所以比加权平均稳」</td></tr>
+          <tr><td>☐</td><td>重排</td><td><code>rag/rerank.py</code></td><td>「MRR 0.45→0.65，代价 300ms」</td></tr>
+          <tr><td>☐</td><td>引用校验</td><td><code>rag/cite.py</code></td><td>「不是让模型自己保证，是代码校验编号」</td></tr>
+          <tr><td>☐</td><td>拒答</td><td><code>rag/answer.py</code></td><td>「阈值不是拍的，是从分数分布定的」</td></tr>
+          <tr><td>☐</td><td>30 条 eval</td><td><code>evals/rag_v2.jsonl</code></td><td>「五类问题，含 6 条不可答」</td></tr>
+          <tr><td>☐</td><td>诊断脚本</td><td><code>scripts/diagnose.py</code></td><td>「五步定位法，3 分钟能判断是检索还是生成」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="nextprev">
+      <a href="stage-p1.html"><span>返回</span>← P1 地基</a>
+      <a href="stage-p3.html"><span>下一步</span>P3 Agent 运行时 →</a>
+    </div>
+  </main>
+</div>
+
+<footer>
+  AI Engineer 转型实操手册 · P2 检索与上下文 · W06–W09 · 11/30–12/27
+</footer>
+<script src="assets/app.js"></script>
+</body>
+</html>
