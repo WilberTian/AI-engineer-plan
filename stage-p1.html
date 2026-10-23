@@ -39,7 +39,7 @@
   <aside class="sidebar" id="sidebar">
     <h4>概览</h4>
     <nav>
-      <a href="index.html">总览与日历</a>
+      <a href="index.html">总览与节奏表</a>
       <a href="env.html">环境搭建（Day 0）</a>
     </nav>
     <h4>W02 · Python 速通</h4>
@@ -92,7 +92,7 @@
 
   <main>
     <div class="phasehead">
-      <div class="ph-tag">P1 · Week 02–05 · 11/02–11/29</div>
+      <div class="ph-tag">P1 · Week 02–05</div>
       <h2>地基：Python + 一个真正能用的 agent loop</h2>
       <p><b>目标：</b>写出一个「会选工具、会从错误里恢复、有测试集」的最小 agent。阶段结束时你必须能解释：<b>为什么裸 loop 不够用</b>。</p>
       <p>这四周决定后面 19 周的成败。跳过手写、直接上框架的人，P3 会全程懵。</p>
@@ -111,7 +111,7 @@
 
     <!-- ============ W02 ============ -->
     <h2 id="w2"><span class="num">W02</span>Python 速通：只学 AI 生态要用的部分</h2>
-    <p class="lead">11/02–11/08 · 目标不是学会 Python，是<b>能用 Python 写出和 TS 一样质量的代码</b>。你有十年编程经验，语法不是问题，问题在三个「看起来一样但行为不同」的地方：类型系统、异步模型、环境管理。</p>
+    <p class="lead">第 2 周 · 目标不是学会 Python，是<b>能用 Python 写出和 TS 一样质量的代码</b>。你有十年编程经验，语法不是问题，问题在三个「看起来一样但行为不同」的地方：类型系统、异步模型、环境管理。</p>
 
     <details class="task" id="p1-1" open>
       <summary>
@@ -466,7 +466,7 @@ if __name__ == "__main__":
 
     <!-- ============ W03 ============ -->
     <h2 id="w3"><span class="num">W03</span>模型 API 深度：四种能力 + 一条错误处理线</h2>
-    <p class="lead">11/09–11/15 · 目标是把「调模型」这件事做到没有黑箱。做完这周，你看到任何 agent 框架源码都知道它在哪一层做了什么。</p>
+    <p class="lead">第 3 周 · 目标是把「调模型」这件事做到没有黑箱。做完这周，你看到任何 agent 框架源码都知道它在哪一层做了什么。</p>
 
     <details class="task" id="p1-5">
       <summary>
@@ -776,7 +776,7 @@ probe("max_tokens 负数", messages=[{"role": "user", "content": "hi"}], max_tok
 
     <!-- ============ W04 ============ -->
     <h2 id="w4"><span class="num">W04</span>手写 agent loop：这一阶段的核心</h2>
-    <p class="lead">11/16–11/22 · 60–150 行，不用框架。做完你会有一种「原来就这么点东西」的释然——以及随之而来的困惑「那为什么框架那么复杂」。后者正是 P3 要回答的。</p>
+    <p class="lead">第 4 周 · 60–150 行，不用框架。做完你会有一种「原来就这么点东西」的释然——以及随之而来的困惑「那为什么框架那么复杂」。后者正是 P3 要回答的。</p>
 
     <details class="task" id="p1-9" open>
       <summary>
@@ -1186,7 +1186,7 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
 
     <!-- ============ W05 ============ -->
     <h2 id="w5"><span class="num">W05</span>eval v1：把「感觉变好了」变成数字</h2>
-    <p class="lead">11/23–11/29 · 这一周产出的东西，比前面三周的代码更能决定你能不能拿到 offer。因为面试里唯一无法被别人背稿覆盖的问题就是：「你怎么证明改了之后更好？」</p>
+    <p class="lead">第 5 周 · 这一周产出的东西，比前面三周的代码更能决定你能不能拿到 offer。因为面试里唯一无法被别人背稿覆盖的问题就是：「你怎么证明改了之后更好？」</p>
 
     <details class="task" id="p1-12" open>
       <summary>
@@ -1433,7 +1433,7 @@ def judge_with_llm(llm: LLM, task: str, answer: str) -&gt; Verdict:
     </details>
 
     <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
-    <p>11/29 周日晚上，合上所有代码，口述回答。任何一题卡住超过 30 秒，回对应卡片重做。</p>
+    <p>本周日晚上，合上所有代码，口述回答。任何一题卡住超过 30 秒，回对应卡片重做。</p>
 
     <details class="task" id="selftest-card">
       <summary>
@@ -1498,7 +1498,7 @@ def judge_with_llm(llm: LLM, task: str, answer: str) -&gt; Verdict:
 </div>
 
 <footer>
-  AI Engineer 转型实操手册 · P1 地基 · W02–W05 · 11/02–11/29
+  AI Engineer 转型实操手册 · P1 地基 · W02–W05
 </footer>
 <script src="assets/app.js"></script>
 </body>

@@ -39,7 +39,7 @@
   <aside class="sidebar" id="sidebar">
     <h4>概览</h4>
     <nav>
-      <a href="index.html">总览与日历</a>
+      <a href="index.html">总览与节奏表</a>
       <a href="stage-p1.html">← P1 地基</a>
     </nav>
     <h4>W06 · 解析与入库</h4>
@@ -92,7 +92,7 @@
 
   <main>
     <div class="phasehead">
-      <div class="ph-tag">P2 · Week 06–09 · 11/30–12/27</div>
+      <div class="ph-tag">P2 · Week 06–09</div>
       <h2>检索与上下文：让答案有依据、可溯源、可评测</h2>
       <p><b>目标：</b>做一个「每个答案都有引用、没依据会说不知道」的问答系统，并且能分别报出<b>检索质量</b>和<b>生成质量</b>。</p>
       <p>这四周的隐含主题是：<b>先把尺子造出来，再改东西</b>。顺序反了你会一直在盲调。</p>
@@ -111,7 +111,7 @@
 
     <!-- ============ W06 ============ -->
     <h2 id="w6"><span class="num">W06</span>解析、分块、入库</h2>
-    <p class="lead">11/30–12/06 · 这一周决定天花板。切分做错了，后面怎么优化都补不回来。</p>
+    <p class="lead">第 6 周 · 这一周决定天花板。切分做错了，后面怎么优化都补不回来。</p>
 
     <details class="task" open id="p2-1">
       <summary>
@@ -621,7 +621,7 @@ if __name__ == "__main__":
 
     <!-- ============ W07 ============ -->
     <h2 id="w7"><span class="num">W07</span>混合检索 + 融合 + 重排</h2>
-    <p class="lead">12/07–12/13 · 三件套的标准形状：<b>召回要宽（多路并行）、融合要稳（RRF）、排序要准（cross-encoder）</b>。</p>
+    <p class="lead">第 7 周 · 三件套的标准形状：<b>召回要宽（多路并行）、融合要稳（RRF）、排序要准（cross-encoder）</b>。</p>
 
     <details class="task" id="p2-6">
       <summary>
@@ -859,7 +859,7 @@ def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
 
     <!-- ============ W08 ============ -->
     <h2 id="w8"><span class="num">W08</span>生成侧：引用、拒答、权限</h2>
-    <p class="lead">12/14–12/20 · 检索解决「找到」，这一周解决「用得对」。三件事做到，系统就从「demo」变成「可以给人看」。</p>
+    <p class="lead">第 8 周 · 检索解决「找到」，这一周解决「用得对」。三件事做到，系统就从「demo」变成「可以给人看」。</p>
 
     <details class="task" id="p2-9">
       <summary>
@@ -1023,7 +1023,7 @@ LIMIT 10;</code></pre>
 
     <!-- ============ W09 ============ -->
     <h2 id="w9"><span class="num">W09</span>eval v2：把「答得对不对」拆成五个数</h2>
-    <p class="lead">12/21–12/27 · 这一周结束时，你要能做到：给任意一条失败回答，5 分钟内判定问题出在检索还是生成。</p>
+    <p class="lead">第 9 周 · 这一周结束时，你要能做到：给任意一条失败回答，5 分钟内判定问题出在检索还是生成。</p>
 
     <details class="task" open id="p2-12">
       <summary>
@@ -1262,7 +1262,7 @@ for i, (cid, s) in enumerate(bm25.search(q, 10), 1):
 </div>
 
 <footer>
-  AI Engineer 转型实操手册 · P2 检索与上下文 · W06–W09 · 11/30–12/27
+  AI Engineer 转型实操手册 · P2 检索与上下文 · W06–W09
 </footer>
 <script src="assets/app.js"></script>
 </body>

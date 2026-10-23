@@ -39,7 +39,7 @@
   <aside class="sidebar" id="sidebar">
     <h4>概览</h4>
     <nav>
-      <a href="index.html">总览与日历</a>
+      <a href="index.html">总览与节奏表</a>
       <a href="stage-p3.html">← P3 Agent 运行时</a>
     </nav>
     <h4>W14 · 失败工程</h4>
@@ -89,7 +89,7 @@
 
   <main>
     <div class="phasehead">
-      <div class="ph-tag">P4 · Week 14–17 · 01/25–02/21</div>
+      <div class="ph-tag">P4 · Week 14–17</div>
       <h2>可靠性、安全与成本：从「能做」到「敢用」</h2>
       <p><b>目标：</b>主动把系统打坏五次、写出一份攻击清单、把单任务成本降 30% 并用 eval 证明质量没掉。</p>
       <p>这一阶段的产出是面试里最能证明你「像资深」的部分——因为它证明的不是你会写功能，而是你知道<b>功能会在哪里坏</b>。</p>
@@ -103,7 +103,7 @@
 
     <!-- ============ W14 ============ -->
     <h2 id="w14"><span class="num">W14</span>失败工程：主动把系统打坏</h2>
-    <p class="lead">01/25–01/31 · 这一周不许写新功能。只做一件事：用五种方式把现有系统搞坏，看它怎么死。</p>
+    <p class="lead">第 14 周 · 这一周不许写新功能。只做一件事：用五种方式把现有系统搞坏，看它怎么死。</p>
 
     <details class="task" open id="p4-1">
       <summary>
@@ -383,7 +383,7 @@ def backoff_delay(attempt: int, base: float = 1.0, cap: float = 20.0) -&gt; floa
 
     <!-- ============ W15 ============ -->
     <h2 id="w15"><span class="num">W15</span>安全：把「不可信」当作默认假设</h2>
-    <p class="lead">02/01–02/07 · 核心心法一句话：<b>模型产生的任何东西都是不可信的，检索到的任何内容都是不可信的，工具返回的任何内容都是不可信的。</b></p>
+    <p class="lead">第 15 周 · 核心心法一句话：<b>模型产生的任何东西都是不可信的，检索到的任何内容都是不可信的，工具返回的任何内容都是不可信的。</b></p>
 
     <details class="task" open id="p4-4">
       <summary>
@@ -578,8 +578,8 @@ CREATE TRIGGER audit_no_update BEFORE UPDATE OR DELETE ON audit_log
     </details>
 
     <!-- ============ W16 ============ -->
-    <h2 id="w16"><span class="num">W16</span>春节缓冲：只复盘，不学新东西</h2>
-    <p class="lead">02/08–02/14 · 这一周的产出一行代码都不该是新的。它的作用是<b>把前 15 周的欠账补上，别让 P5 建立在漏洞上</b>。</p>
+    <h2 id="w16"><span class="num">W16</span>缓冲周：只复盘，不学新东西</h2>
+    <p class="lead">第 16 周 · 这一周的产出一行代码都不该是新的。它的作用是<b>把前 15 周的欠账补上，别让 P5 建立在漏洞上</b>。</p>
 
     <details class="task" open id="p4-7">
       <summary>
@@ -622,7 +622,7 @@ CREATE TRIGGER audit_no_update BEFORE UPDATE OR DELETE ON audit_log
 
     <!-- ============ W17 ============ -->
     <h2 id="w17"><span class="num">W17</span>成本与延迟：能算出钱，才能说服人</h2>
-    <p class="lead">02/15–02/21 · 这一阶段的输出要能被一个不懂技术的老板看懂：<b>「原来每个任务 3 毛，现在 2 毛 1，质量没掉。」</b></p>
+    <p class="lead">第 17 周 · 这一阶段的输出要能被一个不懂技术的老板看懂：<b>「原来每个任务 3 毛，现在 2 毛 1，质量没掉。」</b></p>
 
     <details class="task" open id="p4-8">
       <summary>
@@ -941,7 +941,7 @@ def percentile(values: list[float], p: float) -&gt; float:
 </div>
 
 <footer>
-  AI Engineer 转型实操手册 · P4 可靠性与成本 · W14–W17 · 01/25–02/21
+  AI Engineer 转型实操手册 · P4 可靠性与成本 · W14–W17
 </footer>
 <script src="assets/app.js"></script>
 </body>

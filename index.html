@@ -16,7 +16,7 @@
 <body>
 <div class="topbar">
   <div class="topbar-in">
-    <div class="brand">AI Engineer 转型实操<span>2026-10-26 → 2027-04-11</span></div>
+    <div class="brand">AI Engineer 转型实操<span>24 周滚动计划</span></div>
     <nav class="topnav">
       <a href="stage-p0.html">P0</a>
       <a href="stage-p1.html">P1</a>
@@ -41,7 +41,7 @@
       <a href="index.html#how" class="on">怎么用这份手册</a>
       <a href="index.html#target">先选靶心（岗位细分）</a>
       <a href="index.html#portfolio">你要交付的三个作品</a>
-      <a href="index.html#calendar">24 周日历</a>
+      <a href="index.html#calendar">24 周节奏表</a>
       <a href="index.html#budget">时间预算与换算</a>
       <a href="index.html#milestone">四个里程碑</a>
       <a href="index.html#daily">每日执行模板</a>
@@ -68,7 +68,7 @@
 
   <main>
     <h1>从「每周一行任务」到「每天知道敲什么」</h1>
-    <p class="subtitle">从「知道该学什么」到「今晚敲哪条命令」。三件事按顺序做：<b>先选靶心</b>（打哪两个岗）、<b>再看三个作品要长什么样</b>、然后照日历一周一周往下走。每一步都给出命令、产物和验收判据。</p>
+    <p class="subtitle">从「知道该学什么」到「今晚敲哪条命令」。三件事按顺序做：<b>先选靶心</b>（打哪两个岗）、<b>再看三个作品要长什么样</b>、然后照节奏表一周一周往下走。每一步都给出命令、产物和验收判据。</p>
 
     <div class="callout">
       <b>先明确一件事</b>
@@ -220,39 +220,39 @@
 
     <p class="muted">三个仓库的 README 统一按「六块结构」写（一句话 / 在线地址 / 关键数字 / 架构图 / 取舍说明 / 诚实局限），模板和示例数字见 <a href="stage-p5.html#p5-11">P5-11</a>。</p>
 
-    <h2 id="calendar"><span class="num">4</span>24 周日历</h2>
-    <p>每周一行的主任务。点进阶段页看这一周拆成了哪几张卡。</p>
+    <h2 id="calendar"><span class="num">4</span>24 周节奏表</h2>
+    <p>一周一行，写清本周主任务和周交付物。点进阶段页看这一周拆成了哪几张卡。</p>
 
     <div class="tw wide">
       <table class="compact">
         <thead>
-          <tr><th>周</th><th>日期</th><th>阶段</th><th>本周主任务</th><th>周交付物</th></tr>
+          <tr><th>周</th><th>阶段</th><th>本周主任务</th><th>周交付物</th></tr>
         </thead>
         <tbody>
-          <tr><td>W01</td><td>10/26–11/01</td><td><span class="pill a">P0</span></td><td>扒 JD、归并能力项、环境跑通、简历 v0</td><td>能力频次表 + 简历 v0 + 环境自检通过</td></tr>
-          <tr><td>W02</td><td>11/02–11/08</td><td><span class="pill a">P1</span></td><td>Python 速通（只学 AI 生态要用的那部分）</td><td>一个 Python 版的旧工具 + ruff/mypy 全绿</td></tr>
-          <tr><td>W03</td><td>11/09–11/15</td><td><span class="pill a">P1</span></td><td>模型 API 深度：流式、结构化输出、tool use、错误码</td><td><code>llm.py</code> 四个能力 + 10 次连续 schema 通过</td></tr>
-          <tr><td>W04</td><td>11/16–11/22</td><td><span class="pill a">P1</span></td><td>手写 agent loop（不用任何框架）</td><td>60–150 行 <code>loop.py</code>，3 个任务选对工具</td></tr>
-          <tr><td>W05</td><td>11/23–11/29</td><td><span class="pill a">P1</span></td><td>eval v1：10 条测试集 + 一条命令跑通过率</td><td><code>evals/v1.jsonl</code> + <code>run_eval.py</code></td></tr>
-          <tr><td>W06</td><td>11/30–12/06</td><td><span class="pill a">P2</span></td><td>解析、分块、embedding、入库（pgvector）</td><td>三种分块的 recall@5 对比表</td></tr>
-          <tr><td>W07</td><td>12/07–12/13</td><td><span class="pill a">P2</span></td><td>混合检索 + RRF + 交叉编码器重排</td><td>recall 提升数据 + 延迟代价</td></tr>
-          <tr><td>W08</td><td>12/14–12/20</td><td><span class="pill a">P2</span></td><td>引用、拒答、元数据与权限过滤</td><td>20 条抽样引用全对得上原文</td></tr>
-          <tr><td>W09</td><td>12/21–12/27</td><td><span class="pill a">P2</span></td><td>eval v2：扩到 30 条，检索/生成分组</td><td>5 个指标分别报数</td></tr>
-          <tr><td>W10</td><td>12/28–01/03</td><td><span class="pill a">P3</span></td><td>精读 harness s01–s06（loop/权限/hooks/todo/subagent）</td><td>6 节对比笔记 + 调用图</td></tr>
-          <tr><td>W11</td><td>01/04–01/10</td><td><span class="pill a">P3</span></td><td>精读 s07–s12（skill/compact/memory/错误恢复）</td><td>压缩策略对照表</td></tr>
-          <tr><td>W12</td><td>01/11–01/17</td><td><span class="pill a">P3</span></td><td>状态持久化、中断恢复、人工审批点</td><td>kill -9 后能接着跑</td></tr>
-          <tr><td>W13</td><td>01/18–01/24</td><td><span class="pill a">P3</span></td><td>写一个 MCP server + 全链路 trace</td><td>inspector 可调 + trace 有每步</td></tr>
-          <tr><td>W14</td><td>01/25–01/31</td><td><span class="pill a">P4</span></td><td>五类故障注入 + 兜底分层</td><td>故障报告（复现步骤 + 定位层）</td></tr>
-          <tr><td>W15</td><td>02/01–02/07</td><td><span class="pill a">P4</span></td><td>安全：最小权限、不可信内容隔离、审计</td><td>攻击清单 + 对策 + 残留风险</td></tr>
-          <tr><td>W16</td><td>02/08–02/14</td><td><span class="pill a">P4</span></td><td>春节缓冲：只复盘、只补欠账</td><td>错题本 + 前 5 阶段自测重做</td></tr>
-          <tr><td>W17</td><td>02/15–02/21</td><td><span class="pill a">P4</span></td><td>成本与延迟：路由、缓存、并行</td><td>成本降 30% + p50/p95 对比</td></tr>
-          <tr><td>W18</td><td>02/22–02/28</td><td><span class="pill a">P5</span></td><td>流式体验、工具过程可视化、可中断</td><td>首字 &lt; 2s 的实测截图</td></tr>
-          <tr><td>W19</td><td>03/01–03/07</td><td><span class="pill a">P5</span></td><td>生成式 UI：模型决定渲染什么</td><td>一个场景的非固定模板渲染</td></tr>
-          <tr><td>W20</td><td>03/08–03/14</td><td><span class="pill a">P5</span></td><td>部署、限额、多租户、成本看板</td><td>公开链接 + 看板截图</td></tr>
-          <tr><td>W21</td><td>03/15–03/21</td><td><span class="pill a">P5</span></td><td>三件套 README + 60 秒 demo</td><td>3 个仓库可被陌生人读懂</td></tr>
-          <tr><td>W22</td><td>03/22–03/28</td><td><span class="pill a">P6</span></td><td>简历 v3 + 作品集页</td><td>2 个业内人看过并复述得出</td></tr>
-          <tr><td>W23</td><td>03/29–04/04</td><td><span class="pill a">P6</span></td><td>20 题脱稿 + 每项目 8 个追问</td><td>录音回听无卡壳</td></tr>
-          <tr><td>W24</td><td>04/05–04/11</td><td><span class="pill a">P6</span></td><td>投递、记录、按反馈改材料</td><td>投递记录表 + 第一轮复盘</td></tr>
+          <tr><td>W01</td><td><span class="pill a">P0</span></td><td>扒 JD、归并能力项、环境跑通、简历 v0</td><td>能力频次表 + 简历 v0 + 环境自检通过</td></tr>
+          <tr><td>W02</td><td><span class="pill a">P1</span></td><td>Python 速通（只学 AI 生态要用的那部分）</td><td>一个 Python 版的旧工具 + ruff/mypy 全绿</td></tr>
+          <tr><td>W03</td><td><span class="pill a">P1</span></td><td>模型 API 深度：流式、结构化输出、tool use、错误码</td><td><code>llm.py</code> 四个能力 + 10 次连续 schema 通过</td></tr>
+          <tr><td>W04</td><td><span class="pill a">P1</span></td><td>手写 agent loop（不用任何框架）</td><td>60–150 行 <code>loop.py</code>，3 个任务选对工具</td></tr>
+          <tr><td>W05</td><td><span class="pill a">P1</span></td><td>eval v1：10 条测试集 + 一条命令跑通过率</td><td><code>evals/v1.jsonl</code> + <code>run_eval.py</code></td></tr>
+          <tr><td>W06</td><td><span class="pill a">P2</span></td><td>解析、分块、embedding、入库（pgvector）</td><td>三种分块的 recall@5 对比表</td></tr>
+          <tr><td>W07</td><td><span class="pill a">P2</span></td><td>混合检索 + RRF + 交叉编码器重排</td><td>recall 提升数据 + 延迟代价</td></tr>
+          <tr><td>W08</td><td><span class="pill a">P2</span></td><td>引用、拒答、元数据与权限过滤</td><td>20 条抽样引用全对得上原文</td></tr>
+          <tr><td>W09</td><td><span class="pill a">P2</span></td><td>eval v2：扩到 30 条，检索/生成分组</td><td>5 个指标分别报数</td></tr>
+          <tr><td>W10</td><td><span class="pill a">P3</span></td><td>精读 harness s01–s06（loop/权限/hooks/todo/subagent）</td><td>6 节对比笔记 + 调用图</td></tr>
+          <tr><td>W11</td><td><span class="pill a">P3</span></td><td>精读 s07–s12（skill/compact/memory/错误恢复）</td><td>压缩策略对照表</td></tr>
+          <tr><td>W12</td><td><span class="pill a">P3</span></td><td>状态持久化、中断恢复、人工审批点</td><td>kill -9 后能接着跑</td></tr>
+          <tr><td>W13</td><td><span class="pill a">P3</span></td><td>写一个 MCP server + 全链路 trace</td><td>inspector 可调 + trace 有每步</td></tr>
+          <tr><td>W14</td><td><span class="pill a">P4</span></td><td>五类故障注入 + 兜底分层</td><td>故障报告（复现步骤 + 定位层）</td></tr>
+          <tr><td>W15</td><td><span class="pill a">P4</span></td><td>安全：最小权限、不可信内容隔离、审计</td><td>攻击清单 + 对策 + 残留风险</td></tr>
+          <tr><td>W16</td><td><span class="pill a">P4</span></td><td>缓冲周：只复盘、只补欠账</td><td>错题本 + 前 5 阶段自测重做</td></tr>
+          <tr><td>W17</td><td><span class="pill a">P4</span></td><td>成本与延迟：路由、缓存、并行</td><td>成本降 30% + p50/p95 对比</td></tr>
+          <tr><td>W18</td><td><span class="pill a">P5</span></td><td>流式体验、工具过程可视化、可中断</td><td>首字 &lt; 2s 的实测截图</td></tr>
+          <tr><td>W19</td><td><span class="pill a">P5</span></td><td>生成式 UI：模型决定渲染什么</td><td>一个场景的非固定模板渲染</td></tr>
+          <tr><td>W20</td><td><span class="pill a">P5</span></td><td>部署、限额、多租户、成本看板</td><td>公开链接 + 看板截图</td></tr>
+          <tr><td>W21</td><td><span class="pill a">P5</span></td><td>三件套 README + 60 秒 demo</td><td>3 个仓库可被陌生人读懂</td></tr>
+          <tr><td>W22</td><td><span class="pill a">P6</span></td><td>简历 v3 + 作品集页</td><td>2 个业内人看过并复述得出</td></tr>
+          <tr><td>W23</td><td><span class="pill a">P6</span></td><td>20 题脱稿 + 每项目 8 个追问</td><td>录音回听无卡壳</td></tr>
+          <tr><td>W24</td><td><span class="pill a">P6</span></td><td>投递、记录、按反馈改材料</td><td>投递记录表 + 第一轮复盘</td></tr>
         </tbody>
       </table>
     </div>
@@ -388,7 +388,7 @@
 </div>
 
 <footer>
-  AI Engineer 转型实操手册 · 24 周版 · 起算日 2026-10-26 · 所有时间估算按每周 10–12 小时假设
+  AI Engineer 转型实操手册 · 24 周版 · 所有时间估算按每周 10–12 小时假设
 </footer>
 <script src="assets/app.js"></script>
 </body>

@@ -8,7 +8,7 @@
 
 ```
 .
-├── index.html          总览：24 周日历、时间预算换算、四个里程碑、七个坑
+├── index.html          总览：24 周节奏表、时间预算换算、四个里程碑、七个坑
 ├── env.html            Day 0：uv + Python 3.12、目录骨架、check_env.py
 ├── stage-p0.html       W01      定位与基线
 ├── stage-p1.html       W02–W05  地基：Python + 手写 agent loop + 评测 v1

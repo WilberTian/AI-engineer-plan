@@ -39,7 +39,7 @@
   <aside class="sidebar" id="sidebar">
     <h4>概览</h4>
     <nav>
-      <a href="index.html">总览与日历</a>
+      <a href="index.html">总览与节奏表</a>
       <a href="stage-p2.html">← P2 检索与上下文</a>
     </nav>
     <h4>W10 · 读懂 harness</h4>
@@ -89,7 +89,7 @@
 
   <main>
     <div class="phasehead">
-      <div class="ph-tag">P3 · Week 10–13 · 12/28–01/24</div>
+      <div class="ph-tag">P3 · Week 10–13</div>
       <h2>Agent 运行时：从「能跑一次」到「能跑很久」</h2>
       <p><b>目标：</b>把你的 loop 升级成 harness——能中断恢复、能压缩上下文、能审批危险动作、能被完整观测。</p>
       <p>这一阶段你不需要从零发明任何东西：本地 <code>repos/learn-claude-code</code>（s01–s20）和 <code>repos/claw0</code>（10 节）已经把这些拆成了可读的积木。<b>你的任务是读懂、删减、并说清为什么删。</b></p>
@@ -110,7 +110,7 @@
 
     <!-- ============ W10 ============ -->
     <h2 id="w10"><span class="num">W10</span>读懂 harness：先把「为什么需要」搞清楚</h2>
-    <p class="lead">12/28–01/03 · 这一周不写新功能，只做一件事：把每节代码和自己的 P1 实现对照，找出「它多做了什么、为什么值得做」。</p>
+    <p class="lead">第 10 周 · 这一周不写新功能，只做一件事：把每节代码和自己的 P1 实现对照，找出「它多做了什么、为什么值得做」。</p>
 
     <details class="task" open id="p3-1">
       <summary>
@@ -266,7 +266,7 @@
 
     <!-- ============ W11 ============ -->
     <h2 id="w11"><span class="num">W11</span>上下文、记忆、错误恢复</h2>
-    <p class="lead">01/04–01/10 · 这一周的主题是「长任务为什么活不下来」。四个原因：上下文爆了、忘了关键约束、出错了不会绕、任务状态没地方存。</p>
+    <p class="lead">第 11 周 · 这一周的主题是「长任务为什么活不下来」。四个原因：上下文爆了、忘了关键约束、出错了不会绕、任务状态没地方存。</p>
 
     <details class="task" open id="p3-4">
       <summary>
@@ -443,7 +443,7 @@ def build_system(extra: str = "") -&gt; str:
 
     <!-- ============ W12 ============ -->
     <h2 id="w12"><span class="num">W12</span>持久化、中断恢复、人工审批</h2>
-    <p class="lead">01/11–01/17 · 这一周把 agent 从「一个进程」变成「一个有状态的服务」。做完你就能回答「你的 agent 跑到一半机器挂了会怎样」。</p>
+    <p class="lead">第 12 周 · 这一周把 agent 从「一个进程」变成「一个有状态的服务」。做完你就能回答「你的 agent 跑到一半机器挂了会怎样」。</p>
 
     <details class="task" open id="p3-7">
       <summary>
@@ -661,7 +661,7 @@ if needs_approval(name, args):
 
     <!-- ============ W13 ============ -->
     <h2 id="w13"><span class="num">W13</span>MCP 与可观测性</h2>
-    <p class="lead">01/18–01/24 · 两件事：让工具能被别人（别的客户端）复用，让你的每一步都能被看见。</p>
+    <p class="lead">第 13 周 · 两件事：让工具能被别人（别的客户端）复用，让你的每一步都能被看见。</p>
 
     <div class="callout warn">
       <b>写之前先知道：MCP 在 2026-07 做了一次大改</b>
@@ -998,7 +998,7 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
 </div>
 
 <footer>
-  AI Engineer 转型实操手册 · P3 Agent 运行时 · W10–W13 · 12/28–01/24
+  AI Engineer 转型实操手册 · P3 Agent 运行时 · W10–W13
 </footer>
 <script src="assets/app.js"></script>
 </body>
