@@ -101,6 +101,8 @@
       </div>
     </div>
 
+    <p class="bookhint"><b>书</b><span>第 5 章 §Coding Agent 整体流程 · 第 2 章 §KV Cache、§Skills、§状态栏 · 第 4 章 §工具太多怎么办 · 第 9 章 §从轨迹获得学习信号</span><span class="bx">实验 2-4 ★★、2-6 ★★、9-1 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+
     <div class="callout">
       <b>先看清这两个仓库是什么</b>
       <p><code>learn-claude-code</code>：s01–s20，每节一个 <code>code.py</code> + 中文 README，从 loop 一路到 agent teams / worktree / MCP。<b>教学向</b>，代码短、概念清晰，适合「逐节对照自己的实现」。<br>
@@ -932,6 +934,117 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
             <li><b>Langfuse 起不来（内存不够）</b>：它要 Postgres + ClickHouse + Redis，至少 4GB。改用 <b>Langfuse Cloud 免费档</b>，或本地写一个 60 行的 JSONL logger（每步追加一行），先用着。</li>
             <li><b>trace 里看不到工具调用</b>：<code>@observe()</code> 只对同步函数生效；异步要 <code>@observe(as_type="tool")</code> 并确认在同一个 trace 上下文里。</li>
             <li><b>token 数是 0</b>：没把 <code>resp.usage</code> 传进去。OpenAI 的 usage 在 <code>resp.usage.prompt_tokens</code>。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p3-12">
+      <summary>
+        <span class="tid">P3-12</span>
+        <span class="tname">上下文的三条线索：稳定前缀、按需加载、状态栏</span>
+        <span class="tmin">周日 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：W13 结束你现在接了 MCP，工具从 3 个变成 20 个，光 system 加工具 schema 就上万 token，而且<b>每一轮都在重发</b>。这是 Agent 里唯一真正稀缺的资源——不是钱，是上下文窗口和它的成本。更要紧的是：<b>KV Cache 不是优化技巧，是架构约束</b>。前缀一变，缓存全废，延迟和成本一起回来。所以上下文的排布必须在写第一行 prompt 时就定下来。</div>
+
+        <h5>线索一：稳定前缀 + 追加末尾（这是硬约束）</h5>
+
+        <p>缓存按<b>前缀匹配</b>。这意味着三件事必须成立，否则命中率为 0：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>约束</th><th>具体做法</th><th>最常见的违反方式</th></tr></thead>
+            <tbody>
+              <tr><td><b>稳定前缀</b></td><td><code>system</code> + 工具定义一字不改，永远放最前</td><td>把「当前时间」「用户名」「余额」写进 system —— 每次请求前缀都不同，缓存全灭</td></tr>
+              <tr><td><b>追加末尾</b></td><td>新内容永远 append 到末尾，不改中间、不重排</td><td>每轮重新排序检索结果、给历史消息重新编号</td></tr>
+              <tr><td><b>标准格式</b></td><td>用官方 SDK 的消息结构，自己别拼字符串</td><td>手动拼 <code>&lt;|im_start|&gt;</code> 之类的模板标记，模板一变缓存全废</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>「为什么不把余额写进系统提示？」</b>
+          <p>这是面试里最常见的一道检验题。答案是：余额每轮都变，写进 system 就等于<b>每轮换一个前缀</b>，缓存命中率归零，成本翻倍、首字延迟变差。正确做法是把它放进最末轮的用户消息，或者用一个短的状态栏。</p>
+        </div>
+
+        <pre><code><span class="str">"""src/agentlab/context.py — 组装顺序决定缓存命中率"""</span>
+from __future__ import annotations
+
+from typing import Any
+
+
+def assemble(
+    system: str,                       <span class="cmt"># 稳定：一字不改</span>
+    history: list[dict[str, Any]],     <span class="cmt"># 稳定：只追加，不改写</span>
+    state_bar: str,                    <span class="cmt"># 每轮变，但很短</span>
+    user_text: str,
+) -&gt; list[dict[str, Any]]:
+    <span class="str">"""顺序：system → 历史 → 本轮（状态栏塞进本轮开头）。
+
+    ✗ 错误做法：把 state_bar 插到 system 后面 —— 前缀每轮都变。
+    ✓ 正确做法：前缀只由 system + history 决定，动态内容一律往后放。
+    """</span>
+    return [
+        {"role": "system", "content": system},
+        *history,
+        {"role": "user", "content": f"{state_bar}\n\n{user_text}"},
+    ]
+
+
+def cached_ratio(usage: Any) -&gt; float:
+    <span class="str">"""缓存命中率。第一轮一定是 0，从第二轮开始才有意义。"""</span>
+    details = getattr(usage, "prompt_tokens_details", None)
+    hit = getattr(details, "cached_tokens", 0) if details else 0
+    total = getattr(usage, "prompt_tokens", 0) or 1
+    return hit / total</code></pre>
+
+        <h5>线索二：按需加载（工具和知识都别全塞进去）</h5>
+
+        <p>工具数量超过 100 个时，最先进的模型也开始选错工具；而把能力改成<b>按需查阅</b>后，同类任务的 token 消耗能降将近一半（公开实验里是 46.9%）。所以：</p>
+
+        <ul>
+          <li><b>常驻工具 ≤ 10 个</b>：核心的 search / read / answer，加几个高频动作。</li>
+          <li><b>其余写成 Skill</b>：文件里放「名字 + 一句话描述 + 正文」。第一层只把名字和描述放进上下文（几十 token），模型觉得要用了再去读正文（渐进披露）。</li>
+          <li><b>描述要写成「何时用」</b>：Skill 的触发条件写错，模型永远想不起来用它 —— 等于没写。</li>
+        </ul>
+
+        <h5>线索三：状态栏（用元信息替代整段历史）</h5>
+
+        <p>任务跑到第 30 轮，历史已经几万 token，但真正需要的只是「目标是什么、已经做完什么、还剩什么」。把这些压成 5 行，放在本轮开头：</p>
+
+        <pre><code><span class="cmt"># 状态栏模板：固定字段，每轮重算，不超过 5 行</span>
+STATE_BAR = <span class="str">"""## 当前状态
+目标：{goal}
+已完成：{done}
+待办：{todo}
+约束：预算 {budget} 次工具调用，已用 {used}
+回复要求：只回本轮要做的动作，不要总结历史。"""</span></code></pre>
+
+        <h5>压缩：三层，从便宜到贵</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>层</th><th>做什么</th><th>代价</th><th>什么时候用</th></tr></thead>
+            <tbody>
+              <tr><td>1 截断</td><td>老的工具返回只留前 500 字符 + 一句摘要</td><td>可能丢细节</td><td>工具返回特别长（网页、日志）</td></tr>
+              <tr><td>2 摘要</td><td>把前 N 轮压成一段「已发生什么」</td><td>多一次模型调用</td><td>上下文到 60% 时触发</td></tr>
+              <tr><td>3 交接</td><td>生成结构化交接单（目标/结论/未决问题），开新会话</td><td>丢失原始细节</td><td>任务跨越很长时间</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/context.py</code> + <code>src/agentlab/skills/</code>（至少 2 个按需加载的 skill）+ <code>notes/context.md</code>（三条线索各写一条「违反会怎样」）</div>
+
+        <div class="verify"><b>验收</b>
+          三个数都要有：① 同一个任务跑第二轮起，<code>cached_ratio</code> <b>大于 0.7</b>；② 接完 skill 后常驻工具数<b>下降而任务成功率不降</b>；③ 人为把上下文灌到 70% 触发压缩，<b>压缩后 token 降一半且通过率不掉超过 5 个点</b>。三个数缺一个都不算过——只讲「我做了压缩」而不报数字，面试官会继续追问到答不出。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b><code>cached_tokens</code> 一直是 0</b>：先确认服务商支持（不是所有代理都透传）。再看 system 里有没有时间戳、随机 id、用户余额这类每轮都变的内容。</li>
+            <li><b>缓存只在第二轮命中，后面又掉了</b>：中间有内容被改写。检查是否对 history 做了排序、去重或「美化格式」——任何改写都会让前缀失效。</li>
+            <li><b>压缩后模型开始忘事</b>：说明摘要丢了关键约束。把「不可违反的规则」单独抽出来，永远不参与压缩。</li>
           </ul>
         </div>
       </div>

@@ -102,6 +102,8 @@
       </div>
     </div>
 
+    <p class="bookhint"><b>书</b><span>第 6 章 §异步与事件驱动 · 第 5 章 §代码：通用 Agent 的元能力 · 第 7 章 §可观测性、§生产级评估基础设施 · 第 9 章 §持续进化闭环</span><span class="bx">实验 6-2 ★★★（选做）</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+
     <div class="callout">
       <b>先定一个原则：不做「聊天框 + 消息列表」</b>
       <p>那是最容易做、也最没有区分度的形态。你要做的是<b>把 agent 的过程变成界面的一部分</b>：它在查什么、查到几条、为什么改了参数、花了多少钱。这件事只有懂前端的人做得好，也正好是面试官会记住的部分。</p>
@@ -926,6 +928,102 @@ export async function checkQuota(userKey: string, costUsd: number) {
           <ul>
             <li><b>「录出来很业余」</b>：先写脚本再录，别即兴。分镜就是脚本。</li>
             <li><b>「没时间录」</b>：用 OBS 或系统自带录屏，剪掉等待段。30 分钟能搞定。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p5-13">
+      <summary>
+        <span class="tid">P5-13</span>
+        <span class="tname">上线之后：四种更新载体与灰度回滚</span>
+        <span class="tmin">周日 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：W21 你有了一个能打开的作品，但作品和产品的差别是<b>它能不能在没人管的情况下继续变好</b>。上线后系统一定会退化：模型被升级、用户问法变了、知识库过期。没有更新机制的产品，退化是静默的——你不会收到报错，只会发现用量慢慢掉下去。这一张卡是所有面试里「你的项目上线后怎么维护」的标准答案。</div>
+
+        <h5>四种载体：先挑成本最低的那个</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>载体</th><th>改什么</th><th>生效速度</th><th>风险</th><th>什么时候用</th></tr></thead>
+            <tbody>
+              <tr><td><b>知识</b></td><td>检索库、文档、FAQ</td><td>分钟级</td><td>低</td><td>答案里的事实过时 / 缺失</td></tr>
+              <tr><td><b>指令</b></td><td>system prompt、skill 文件、few-shot</td><td>小时级</td><td>中</td><td>行为不对：该拒答没拒、格式不稳、该调工具没调</td></tr>
+              <tr><td><b>程序</b></td><td>工具实现、校验、编排代码</td><td>天级（要发版）</td><td>中高</td><td>能力缺失：需要新的动作、新的确定性约束</td></tr>
+              <tr><td><b>参数</b></td><td>微调 / 蒸馏</td><td>周级</td><td>高</td><td>以上都试过仍不够，且有 ≥ 数千条高质量样本</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>判据：能写进知识就不要改指令，能改指令就不要改代码</b>
+          <p>这是转型者最容易越级的地方——发现模型回答不好，第一反应是「要不要微调」。<b>微调应该是最后手段</b>：它最慢、最贵、最难回滚，而且一旦模型升级就要重做。面试里被问「你会不会微调」，正确答案不是「会」或「不会」，而是「我会先判断问题出在知识、指令还是能力层，只有前者都排除了才考虑」。</p>
+        </div>
+
+        <h5>证据与指令隔离：别把一次失败当规则</h5>
+
+        <p>从失败轨迹里学到的东西<b>不能直接写进 system prompt</b>。几条失败可能是同一个偶发原因，直接写成规则会污染指令、影响其他场景。正确做法是三级升格：</p>
+
+        <pre><code><span class="cmt"># 三级升格：轨迹 → 候选经验 → 指令</span>
+<span class="cmt"># 1. 原始证据：失败轨迹 id + 归因（留在库里，不进 prompt）</span>
+<span class="cmt"># 2. 候选经验：必须由 ≥3 条独立轨迹支撑，写成一句话假设</span>
+<span class="cmt"># 3. 指令：候选经验跑过 eval 确认不伤害其他场景，才能进 prompt</span>
+
+CANDIDATES = [
+    {
+        "id": "cand-007",
+        "hypothesis": "用户问退款时，先查订单状态再回答，否则会给出不适用的政策",
+        "evidence": ["trace-1832", "trace-1904", "trace-2011"],   <span class="cmt"># ≥3 条独立证据</span>
+        "eval_delta": +0.06,                                        <span class="cmt"># 进 prompt 前的实测增量</span>
+        "status": "promoted",                                       <span class="cmt"># candidate → promoted</span>
+    },
+]</code></pre>
+
+        <h5>灰度与回滚：三段放量，一键退回</h5>
+
+        <pre><code><span class="str">"""src/agentlab/rollout.py — prompt 版本化 + 稳定分流"""</span>
+from __future__ import annotations
+
+import hashlib
+
+PROMPTS = {
+    "v3": "你是……（当前全量版本）",
+    "v4": "你是……（候选版本：加了订单状态前置检查）",
+}
+
+<span class="cmt"># 放量计划：改了先只给 5%，看指标再往上加</span>
+ROLLOUT = {"v3": 95, "v4": 5}
+
+
+def pick(user_id: str) -&gt; str:
+    <span class="str">"""同一个用户必须稳定落在同一版本，否则指标会被抖动污染。"""</span>
+    bucket = int(hashlib.sha256(user_id.encode()).hexdigest()[:8], 16) % 100
+    acc = 0
+    for ver, weight in ROLLOUT.items():
+        acc += weight
+        if bucket &lt; acc:
+            return ver
+    return "v3"
+
+
+def rollback() -&gt; None:
+    <span class="str">"""回滚必须是一行：把候选版本的权重置 0，不需要发版。"""</span>
+    ROLLOUT["v4"] = 0
+    ROLLOUT["v3"] = 100</code></pre>
+
+        <div class="out"><b>产物</b><code>src/agentlab/rollout.py</code> + <code>notes/evolution.md</code>：一条真实改进的完整记录（轨迹证据 → 候选经验 → eval 验证 → 灰度 → 全量或回滚）</div>
+
+        <div class="verify"><b>验收</b>
+          走完一次完整升级并留下四个证据：① 支撑改动的<b>至少 3 条失败轨迹 id</b>；② 改动前后的 eval 对比（20 题 × 3 次，含 Pass@5 与 Pass^5）；③ 灰度 5% 时的指标截图（成功率、P95 延迟、成本三项）；④ <b>真的回滚一次</b>并把回滚耗时记下来。<b>没做过回滚演练的回滚等于没有回滚</b>——第一次执行回滚不该发生在出事的时候。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没有真实用户，没法灰度</b>：用两批不同的 eval 题集模拟——A 集调参、B 集验证，B 集只在最后跑一次。这也叫留出集，面试讲得通。</li>
+            <li><b>找不到 3 条独立证据</b>：说明这个「规律」还不够格进指令。把它留在候选库，等更多轨迹。</li>
+            <li><b>灰度上来指标就掉</b>：先看是不是分流不均匀（同一批用户被反复切换，体验断裂）。用户级稳定分流就是为了防这个。</li>
+            <li><b>模型升级后全盘失效</b>：所有 prompt 都要重跑 eval。这也是为什么缓存 prompt 版本、保留 eval 集比优化 prompt 更重要。</li>
           </ul>
         </div>
       </div>

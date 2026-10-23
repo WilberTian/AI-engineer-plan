@@ -76,6 +76,7 @@
     <nav style="margin-top:14px">
       <a href="#skip">明确不要碰的</a>
       <a href="#weekly">按周索引</a>
+      <a href="#book">书的按周读法（§15）</a>
       <a href="#glossary">术语表</a>
     </nav>
     <h4>七个阶段</h4>
@@ -92,7 +93,7 @@
 
   <main>
     <h1>资源库与 Harness 地图</h1>
-    <p class="subtitle">两件事合在一页：<b>§1–§4、§6–§15 是资源清单</b>（60+ 项，按「用来做什么 / 对应哪一周 / 坑在哪」编排，每一项都绑定到一张任务卡）；<b>§5 是 2026 年的项目地图</b>（harness、框架、协议各是什么、该看哪几个、哪周碰哪个）。</p>
+    <p class="subtitle">两件事合在一页：<b>§1–§4、§6–§16 是资源清单</b>（60+ 项，按「用来做什么 / 对应哪一周 / 坑在哪」编排，每一项都绑定到一张任务卡）；<b>§5 是 2026 年的项目地图</b>（harness、框架、协议各是什么、该看哪几个、哪周碰哪个）。</p>
 
     <h2 id="how"><span class="num">1</span>怎么用这份清单</h2>
 
@@ -1183,7 +1184,148 @@ Mcp-Name: search
       </table>
     </div>
 
-    <h2 id="glossary"><span class="num">15</span>术语表（面试前扫一遍）</h2>
+    <h2 id="book"><span class="num">15</span>《深入理解 AI Agent》按周读法</h2>
+
+    <p class="lead">李博杰《深入理解 AI Agent：设计原理与工程实践》（2.0 版，10 章 + 109 个配套实验）。它不替代这份计划——<b>计划管「这周敲什么命令」，它管「为什么这条命令要这么设计」</b>。两边对不上时以动手为准：书上写了但你没跑过的，面试里说不出口。</p>
+
+    <div class="callout">
+      <b>全书只有一个公式</b>
+      <p><b>Agent = LLM + 上下文 + 工具</b>。三者分别对应强化学习的策略、观察空间、动作空间。所有章节都在这三项上做工程：LLM 怎么调（第 2 章 §API 的上下文结构）、上下文装什么（第 2、3 章）、工具怎么设计（第 4 章）、怎么度量（第 7 章）、怎么变好（第 9 章）。</p>
+      <p>读完的判据只有一条：<b>能不能回答「这个设计换掉会怎样」</b>。答不出来，说明只读到了概念层，没读到工程层。</p>
+    </div>
+
+    <h3 id="book-prio">15.1 章节优先级：109 个实验跑不完，先按这张表挑</h3>
+
+    <p>全书正文约 90 万字节，通读保守 40 小时；109 个实验全做 300 小时以上。而这份计划总共只有 250–290 小时——所以<b>必须挑，而且要挑得很狠</b>。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead>
+          <tr><th>优先级</th><th>章节</th><th>为什么值得先读</th><th>读到什么程度</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 2 章 上下文</td><td>把 KV Cache 讲成<b>架构约束</b>而不是优化技巧；Skills 的渐进披露、Agent 状态栏、上下文压缩都在这一章</td><td>精读，跑 2-4、2-6</td></tr>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 7 章 评估</td><td>计划里最薄的一块。任务定义四要素、Pass@k 与 Pass^k、验证器深度、失败归因、统计显著性、消融与 AB 测试</td><td>精读，跑 7-2、7-3、7-6</td></tr>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 9 章 持续进化</td><td>计划里完全没有。四种更新载体、在线与离线双循环、睡眠学习、证据与指令隔离</td><td>精读，跑 9-1</td></tr>
+          <tr><td style="white-space:nowrap">高价值</td><td>第 1 章 入门</td><td>把公式拆成可操作的工程框架；Harness 五要素的出处。W01 就该读完</td><td>速读</td></tr>
+          <tr><td style="white-space:nowrap">高价值</td><td>第 4 章 工具</td><td>工具对应<b>目标</b>而不是 API 端点；工具超过 100 个最先进模型也开始选错，按需加载让 token 降 46.9%</td><td>精读 §通用原则、§工具太多</td></tr>
+          <tr><td style="white-space:nowrap">高价值</td><td>第 3 章 记忆与知识库</td><td>RAG 完整链路，以及「超越扁平文本」：结构化索引、文件系统范式、智能体化 RAG</td><td>W06–W09 边做边读</td></tr>
+          <tr><td style="white-space:nowrap">选读</td><td>第 5 章 Coding Agent</td><td>harness 工程在真实产品里的落法；故障与错误恢复、Coding Agent 的安全</td><td>W10–W11 读 §整体流程、§故障恢复</td></tr>
+          <tr><td style="white-space:nowrap">选读</td><td>第 6 章 交互</td><td>异步与事件驱动、语音、Computer Use 的共享原语</td><td>W18 读前半，其余跳过</td></tr>
+          <tr><td style="white-space:nowrap">选读</td><td>第 10 章 多 Agent</td><td>唯一有效判据：协作是否引入了单 Agent 生成时拿不到的新信息</td><td>W23 只读「何时真正优于单 Agent」+ 六种失败模式</td></tr>
+          <tr><td style="white-space:nowrap">现在跳</td><td>第 8 章 后训练</td><td>目标岗位在应用层，不做微调</td><td>只读「何时该 Mid-training / SFT / RL」判断段和三个案例，用来回答「你为什么不微调」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="book-weeks">15.2 跟节奏表对齐：每周读哪一节、跑哪个实验</h3>
+
+    <p>实验只列值得动手的。★ 是需要跑一遍的，★★ 要半天到一天，★★★ 建议留到入职后。<b>没有列实验的周就别做实验</b>，那一周的任务卡已经够重了。</p>
+
+    <div class="tw wide">
+      <table class="compact">
+        <thead>
+          <tr><th>周</th><th>主题</th><th>读哪一节</th><th>实验</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>W01</td><td>定位</td><td>第 1 章 §现代 Agent、§Harness 工程</td><td>1-1 ★</td></tr>
+          <tr><td>W02</td><td>Python</td><td>第 1 章 §贯穿全书的设计模式</td><td>—</td></tr>
+          <tr><td>W03</td><td>API 深度</td><td>第 2 章 §Agent 如何调用大模型（消息四种角色、多轮工具调用）</td><td>2-1 ★</td></tr>
+          <tr><td>W04</td><td>手写 loop</td><td>第 2 章 §从 API 看上下文构成；第 4 章 §工具设计的通用原则</td><td>2-3 ★★</td></tr>
+          <tr><td>W05</td><td>eval v1</td><td>第 7 章 §评估任务的解剖、§Pass@k 与 Pass^k</td><td>7-2 ★</td></tr>
+          <tr><td>W06</td><td>解析分块</td><td>第 3 章 §RAG 基础（分块、稠密与稀疏嵌入）</td><td>3-4 ★★</td></tr>
+          <tr><td>W07</td><td>混合检索</td><td>第 3 章 §混合检索：两全其美的艺术</td><td>3-6 ★★</td></tr>
+          <tr><td>W08</td><td>生成侧</td><td>第 3 章 §超越扁平文本（结构化索引、知识更新、智能体化 RAG）</td><td>3-10 ★★</td></tr>
+          <tr><td>W09</td><td>eval v2</td><td>第 7 章 §数据集设计、§LLM-as-a-Judge、§失败归因</td><td>7-3 ★★、7-6 ★★</td></tr>
+          <tr><td>W10</td><td>读 harness</td><td>第 5 章 §Coding Agent 整体流程、§Harness 工程实践</td><td>—（先读代码）</td></tr>
+          <tr><td>W11</td><td>上下文</td><td>第 2 章 §KV Cache 友好设计、§提示工程、§Skills、§状态栏</td><td>2-4 ★★、2-6 ★★</td></tr>
+          <tr><td>W12</td><td>持久化</td><td>第 9 章 §从轨迹获得学习信号、§四种进化方法</td><td>9-1 ★★</td></tr>
+          <tr><td>W13</td><td>MCP + trace</td><td>第 4 章 §工具生态、§工具太多怎么办</td><td>4-4 ★★</td></tr>
+          <tr><td>W14</td><td>故障</td><td>第 5 章 §故障与错误恢复、§Coding Agent 的安全</td><td>5-2 ★★</td></tr>
+          <tr><td>W15</td><td>安全</td><td>第 2 章 §提示注入；第 9 章 §持续进化的安全边界</td><td>2-5 ★★</td></tr>
+          <tr><td>W16</td><td>复盘</td><td><b>不读新章</b>：回读自己 W01–W15 的笔记</td><td>—</td></tr>
+          <tr><td>W17</td><td>成本延迟</td><td>第 7 章 §评估驱动的模型选型（成本分析）、§成本与延迟</td><td>7-10 ★</td></tr>
+          <tr><td>W18</td><td>流式</td><td>第 6 章 §异步与事件驱动（前半：为什么异步、事件触发工具）</td><td>6-2 ★★★（选做）</td></tr>
+          <tr><td>W19</td><td>生成式 UI</td><td>第 5 章 §代码：通用 Agent 的元能力（生成式 UI、系统适配器）</td><td>—</td></tr>
+          <tr><td>W20</td><td>部署</td><td>第 7 章 §Agent 的可观测性、§生产级评估基础设施（消融、AB、双层开关）</td><td>—</td></tr>
+          <tr><td>W21</td><td>作品集</td><td>第 9 章 §可长期运行的持续进化闭环、§睡眠学习</td><td>—</td></tr>
+          <tr><td>W22</td><td>简历</td><td>第 7 章 §从 Benchmark 报告到系统改进</td><td>—</td></tr>
+          <tr><td>W23</td><td>表达</td><td>第 1 章 §Harness 五要素（复习）；第 10 章 §何时真正优于单 Agent</td><td>—</td></tr>
+          <tr><td>W24</td><td>投递</td><td>第 10 章 §六种失败模式（行为面素材）</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="book-gap">15.3 它补上了计划里的三个短板</h3>
+
+    <p>这三块不是「多知道一点」，而是<b>面试里最能拉开差距的地方</b>——因为大多数人只做到跑通，做不到可度量、可迭代。</p>
+
+    <div class="tw wide">
+      <table>
+        <thead>
+          <tr><th>短板</th><th>计划原来的位置</th><th>书里的层次</th><th>补完能答的追问</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>评估</b></td>
+            <td>P1 十张测试集 + 一个通过率</td>
+            <td>第 7 章：Pass@k 看能力上限、<b>Pass^k 看业务可靠性</b>、失败归因到<b>首个</b>错误、统计显著性、消融</td>
+            <td>「你怎么证明这次改动真有用？」</td>
+          </tr>
+          <tr>
+            <td><b>上下文</b></td>
+            <td>P3 一张压缩策略对照表</td>
+            <td>第 2 章：KV Cache 三条约束（稳定前缀、追加末尾、标准格式）、Skills 三层渐进披露、Agent 状态栏</td>
+            <td>「上下文快满了你怎么办？」</td>
+          </tr>
+          <tr>
+            <td><b>持续进化</b></td>
+            <td>没有</td>
+            <td>第 9 章：四种更新载体（知识 / 指令 / 程序 / 参数）、三层验证器、睡眠学习、<b>证据与指令隔离</b></td>
+            <td>「上线后怎么让它自己变好？」</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout ok">
+      <b>这三块已经落成任务卡，不用对着书空想</b>
+      <p><a href="stage-p1.html#p1-5">P1-5</a> 把 KV Cache 三原则写进 <code>llm.py</code> 的设计约束；<a href="stage-p2.html#p2-15">P2-15</a> 是 ACI 工具设计（切在目标上，不切在接口上）；<a href="stage-p2.html#p2-16">P2-16</a> 是评估 v2 的科学方法（Pass^k、失败归因、显著性）；<a href="stage-p3.html#p3-12">P3-12</a> 是上下文的三条线索与压缩；<a href="stage-p4.html#p4-12">P4-12</a> 是消融、AB 与双层特性开关；<a href="stage-p4.html#p4-13">P4-13</a> 是成本、延迟、质量的限时决策演练；<a href="stage-p5.html#p5-13">P5-13</a> 是四种更新载体与灰度回滚。</p>
+      <p>读完一章就回到对应卡片改代码，别攒着。攒到最后一定忘——这是这类书最常见的白读方式。</p>
+    </div>
+
+    <h3 id="book-how">15.4 四条阅读纪律</h3>
+
+    <div class="grid c2">
+      <div class="card">
+        <div class="tag">纪律一</div>
+        <h4>先读结论，再读推导</h4>
+        <p>每节开头先看小结段，能自己讲明白就跳过推导，讲不明白再往回读。这本书的推导密度高，逐字读会卡死进度。</p>
+      </div>
+      <div class="card">
+        <div class="tag">纪律二</div>
+        <h4>只做服务当前作品的实验</h4>
+        <p>W09 做 7-3（Rubric 评估）是因为 P2 正好要写 eval；W04 做 2-3（错误上下文模式）是因为你正在手写 loop。跟当前作品无关的 ★★ 实验一律跳过。</p>
+      </div>
+      <div class="card">
+        <div class="tag">纪律三</div>
+        <h4>每章写三条「换掉会怎样」</h4>
+        <p>读完一章，在页面笔记里写三条：<b>这个设计如果换成另一种会怎样</b>。写不出来就是没读懂。W23 的表达训练直接用这些笔记。</p>
+      </div>
+      <div class="card">
+        <div class="tag">纪律四</div>
+        <h4>它占预算的 15%，不能更多</h4>
+        <p>250–290 小时里给读书留 40 小时左右，也就是每周 1.5–2 小时。读书时间超过动手时间，这个计划就失效了。</p>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <b>版本对不上会读错章</b>
+      <p>2.0 版把原第四章的「异步」和原第九章的「多模态」合并成了<b>新的第六章</b>，后面章号整体后移。如果你手上是旧版 PDF，章号与上表对不上，以 <code>github.com/bojieli/ai-agent-book</code> 的 <code>main</code> 分支为准。</p>
+      <p>另外这本书配套 109 个实验，仓库会持续更新——实验编号也可能增补。表格里标的是写作时的编号。</p>
+    </div>
+
+    <h2 id="glossary"><span class="num">16</span>术语表（面试前扫一遍）</h2>
 
     <p class="lead">这些词你后面每天都会用。面试里说错一个定义，比不知道更伤——因为它说明你只是背过。下面每个都是「一句话准确定义」，不是科普。</p>
 

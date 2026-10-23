@@ -101,6 +101,8 @@
       </div>
     </div>
 
+    <p class="bookhint"><b>书</b><span>第 5 章 §故障与错误恢复 · 第 2 章 §提示注入 · 第 9 章 §持续进化的安全边界 · 第 7 章 §模型选型与成本</span><span class="bx">实验 2-5 ★★、5-2 ★★、7-10 ★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+
     <!-- ============ W14 ============ -->
     <h2 id="w14"><span class="num">W14</span>失败工程：主动把系统打坏</h2>
     <p class="lead">第 14 周 · 这一周不许写新功能。只做一件事：用五种方式把现有系统搞坏，看它怎么死。</p>
@@ -872,6 +874,176 @@ def percentile(values: list[float], p: float) -&gt; float:
           <ul>
             <li><b>拿不到 TTFT</b>：用流式调用，记第一个 chunk 到达的时间。非流式就拿不到，这也是「为什么要流式」的一个理由。</li>
             <li><b>工具耗时占比很高</b>：先看是不是外部 API 慢（加缓存/换源），再看能不能并行。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p4-12">
+      <summary>
+        <span class="tid">P4-12</span>
+        <span class="tname">消融与双层开关：证明每个特性真的有用</span>
+        <span class="tmin">周日 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：到 W17 你的系统已经堆了七八个特性——查询改写、混合检索、重排、自检、缓存、路由。<b>「加了之后感觉更好了」是最常见的自欺</b>：可能是真的有效，也可能是同时改了 prompt；可能是这次样本运气好，也可能它在中位数上更好但尾部长了。消融是唯一能回答「这个特性到底值多少」的方法，也是面试里「你做的哪个优化最有效」这个问题的<b>唯一诚实答法</b>。</div>
+
+        <h5>消融：一次只关一个，其余不动</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>做法</th><th>能回答</th><th>不能回答</th></tr></thead>
+            <tbody>
+              <tr><td><b>全开 vs 全关</b></td><td>这套东西整体有没有用</td><td>哪个特性有用、哪个白花钱</td></tr>
+              <tr><td><b>单特性消融</b>（一次关一个）</td><td>每个特性的边际贡献</td><td>特性之间的耦合</td></tr>
+              <tr><td><b>AB 测试</b>（真实用户分流）</td><td>业务指标有没有变好</td><td>小流量下很难达到显著</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>顺序是固定的：<b>先消融定位，再 AB 验证</b>。跳过消融直接 AB，你会在结论里看到「整体变好了 2%」，然后完全不知道是该保留还是砍掉其中一半。</p>
+
+        <h5>双层开关：能关掉，才敢上线</h5>
+
+        <pre><code><span class="str">"""src/agentlab/flags.py — 任何特性都必须能被单独关掉"""</span>
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Flags:
+    query_rewrite: bool = True     <span class="cmt"># 查询改写</span>
+    rerank: bool = True            <span class="cmt"># 交叉编码器重排</span>
+    self_check: bool = False       <span class="cmt"># 答案自检（多一次调用，贵）</span>
+    cache_prefix: bool = True      <span class="cmt"># 稳定前缀缓存</span>
+
+
+def load(remote: dict[str, bool] | None = None) -&gt; Flags:
+    <span class="str">"""优先级：远程配置 &gt; 环境变量 &gt; 代码默认。
+
+    远程这一层是给「线上出问题、不想等发版」准备的。
+    没有这一层，回滚就要走一次发布流程。
+    """</span>
+    remote = remote or {}
+    kwargs = {}
+    for f in Flags.__dataclass_fields__:
+        if f in remote:
+            kwargs[f] = bool(remote[f])
+        elif os.getenv(f"AIP_{f.upper()}"):
+            kwargs[f] = os.getenv(f"AIP_{f.upper()}") == "1"
+    return replace(Flags(), **kwargs)</code></pre>
+
+        <pre><code><span class="str">"""scripts/ablate.py — 一次关一个，跑同样的测试集"""</span>
+from dataclasses import replace
+
+from agentlab.evals import run_eval
+from agentlab.flags import Flags
+
+BASE = Flags()
+
+for f in ("query_rewrite", "rerank", "self_check", "cache_prefix"):
+    on = run_eval(flags=BASE)
+    off = run_eval(flags=replace(BASE, **{f: False}))
+    d_pass5 = on.pass5 - off.pass5
+    d_cost = on.cost - off.cost
+    print(f"{f:14s} Pass@5 {d_pass5:+.3f}  成本 {d_cost:+.4f}  延迟 {on.p95 - off.p95:+.0f}ms")</code></pre>
+
+        <div class="callout warn">
+          <b>看三个数，不只看一个</b>
+          <p>一个特性「让 Pass@5 涨 2 个点、成本涨 60%、延迟涨 800ms」，那不叫有用，那叫<b>贵</b>。要求每个特性都同时给出 <b>质量 / 成本 / 延迟</b> 三个 delta，然后自己回答「这个交换值不值」。只报质量提升的消融是不完整的。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/flags.py</code> + <code>scripts/ablate.py</code> + <code>notes/ablation.md</code>：4 个特性的三列 delta 表 + 一句「哪个该砍」的结论</div>
+
+        <div class="verify"><b>验收</b>
+          表里必须有一个特性是<b>负作用或零作用</b>——真实系统里几乎总有。找到它、砍掉它、再跑一次 eval 确认没变差。<b>「我加的每个特性都有用」这句话本身就是没做消融的证据。</b>另外验收两条工程硬要求：① 所有特性都能用环境变量单独关掉；② 关掉后不需要改代码、不需要重新部署。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>每个特性都是正作用</b>：样本太少或噪声太大。先按 P2-16 把样本量提到 20 题 × 3 次。</li>
+            <li><b>关掉某特性后 eval 反而变好</b>：这是最好的发现，别怀疑数据。先确认不是评测器偏差（人工看 3 条轨迹），然后砍。</li>
+            <li><b>特性互相依赖，关不掉</b>：说明开关粒度不对。把「重排」和「混合检索」拆成两个独立开关——耦合的开关等于没开关。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p4-13">
+      <summary>
+        <span class="tid">P4-13</span>
+        <span class="tname">限时决策演练：$0.4 → $0.1、9s → 3s，成功率不许掉</span>
+        <span class="tmin">周日 1.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：这是 AI 应用岗面试<b>出现频率最高的系统设计题</b>，几乎照抄真实工作场景。它的杀伤力在于：模型很容易一上来就说「换小模型」「加缓存」，而正确答案是先量后改。这道题考的不是知识，是<b>决策顺序</b>——顺序错了，后面每一步都在优化错误的地方。</div>
+
+        <div class="callout">
+          <b>题目（把这段背下来）</b>
+          <p>「我们的 agent 每次任务成本 $0.4、P95 延迟 9 秒、Pass@5 是 78%。现在要求做到 $0.1、3 秒，成功率不能低于 70%。你会怎么改？」</p>
+          <p>要求：<b>25 分钟讲完，结论先行</b>，中间给一张分解表，最后说清风险和回滚。</p>
+        </div>
+
+        <h5>正确的顺序（四步，不能跳）</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>步</th><th>做什么</th><th>为什么必须先做</th></tr></thead>
+            <tbody>
+              <tr><td><b>1 分解</b></td><td>把成本拆到每一次模型调用、每一次检索、每一次重排；把 9 秒拆成首 token + 生成 + 工具往返</td><td>不做这步，你不知道钱花在哪，「换小模型」可能是错的杠杆</td></tr>
+              <tr><td><b>2 定位</b></td><td>找出占比最大的那一项；通常不是模型单价，而是<b>轮次太多</b>或<b>重复检索</b></td><td>80% 的问题集中在 20% 的调用上，先打这一处</td></tr>
+              <tr><td><b>3 三杠杆</b></td><td>缓存（省重复前缀）、路由（简单请求走小模型）、削减轮次（成本延迟双杀）；并行化只救延迟不救成本</td><td>三个杠杆的作用面不同，要按你的分解表排序，而不是按流行度排序</td></tr>
+              <tr><td><b>4 回归</b></td><td>每个动作后重跑 eval，记录三个 delta；掉超过阈值就回滚</td><td>没有回归的优化 = 不知道自己在优化什么</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <pre><code><span class="str">"""scripts/breakdown.py — 15 分钟能写出来，是这道题的第一步"""</span>
+from collections import defaultdict
+
+<span class="cmt"># 单价按你实际用的模型改（美元 / token）</span>
+COST_IN, COST_OUT = 0.15 / 1e6, 0.60 / 1e6
+
+
+def breakdown(trace) -&gt; list[tuple[str, float, int]]:
+    rows: dict[str, list[float]] = defaultdict(lambda: [0.0, 0])
+
+    for s in trace.spans:
+        if s.kind != "llm":
+            continue
+        cost = s.in_tok * COST_IN + s.out_tok * COST_OUT
+        agg = rows[s.name]
+        agg[0] += cost
+        agg[1] += s.ms
+
+    total_cost = sum(v[0] for v in rows.values()) or 1
+    out = [
+        (name, cost, ms)
+        for name, (cost, ms) in rows.items()
+    ]
+    out.sort(key=lambda r: -r[1])
+    for name, cost, ms in out:
+        print(f"{name:22s} ${cost:.4f}  {cost / total_cost:5.1%}  {ms:6d}ms")
+    return out</code></pre>
+
+        <div class="callout ok">
+          <b>标准答法的一句话骨架</b>
+          <p>「先别换模型。<code>breakdown.py</code> 跑出来，如果 70% 的钱在三个 <code>self_check</code> 调用上，那第一步是把它从每轮都跑改成只在低置信时跑；第二步给稳定前缀开缓存；第三步把意图分类这类简单判断路由到小模型。做完这三步大概能到 $0.12、5s。剩下最后 2 秒要么并行化检索，要么接受 $0.12 和业务方谈。<b>每一步我都会重跑 20 题 × 3 次的 eval，掉超过 5 个点就回滚。</b>」</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>scripts/breakdown.py</code> + <code>notes/cost-latency-drill.md</code>（含分解表照片 + 25 分钟讲稿大纲 + 你实际做完的两个杠杆的数据）</div>
+
+        <div class="verify"><b>验收</b>
+          三件事：① 分解表能说出「钱花在哪一跳、占比多少」；② 讲稿能<b>不看稿</b>在 25 分钟内讲完，且第一句是结论不是背景；③ <b>真的做了至少两个杠杆</b>（缓存 + 路由最便宜），并把改前改后的 $ / ms / Pass@5 三个数记下来。只有讲稿没有实测数据的，面试官追问两句就穿了。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没有真实 trace 可分解</b>：用自己 P3-11 接的 trace，跑 10 次真实任务就能出表。没有 trace 就先回去做 P3-11。</li>
+            <li><b>成本降下来了但成功率掉太多</b>：说明你砍的是「有效轮次」而不是「冗余轮次」。判据：被砍的那一步，去掉后答案是否等价。不等价就不能砍，只能换更便宜的实现。</li>
+            <li><b>延迟降不下去</b>：看 P95 而不是平均值。P95 通常卡在最慢的那一跳（重排或长工具调用），并行化或给它设超时。</li>
           </ul>
         </div>
       </div>

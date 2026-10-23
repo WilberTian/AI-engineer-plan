@@ -730,7 +730,14 @@
       var el = document.getElementById(location.hash.slice(1));
       if (el) {
         var d = el.closest('details.task');
-        if (d) d.open = true;
+        if (d && !d.open) {
+          d.open = true;
+          /* 折叠时目标高度为 0，浏览器原生的 fragment 滚动会落空，
+             必须等展开后的布局重算完再手动滚一次。 */
+          requestAnimationFrame(function () {
+            el.scrollIntoView({ block: 'start' });
+          });
+        }
       }
     }
   }

@@ -104,6 +104,8 @@
       </div>
     </div>
 
+    <p class="bookhint"><b>书</b><span>第 2 章 §Agent 如何调用大模型 · 第 4 章 §工具设计的通用原则 · 第 7 章 §Pass@k 与 Pass^k</span><span class="bx">实验 2-1 ★、2-3 ★★、7-2 ★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+
     <div class="callout">
       <b>这四周的一个硬要求</b>
       <p><b>不装任何 agent 框架。</b> 不用 LangChain、LangGraph、LlamaIndex、OpenAI Agents SDK、Pydantic AI。装了就一定会用它，用了就一定会跳过「消息怎么拼、tool_call_id 怎么对应、上下文什么时候爆」这些细节——而这些恰好是面试分水岭。P3 会用框架，那时你已经知道它在替你做什么。</p>
@@ -575,6 +577,18 @@ class LLM:
             max_tokens=kw.get("max_tokens", MAX_OUTPUT_TOKENS),
         )</code></pre>
 
+        <div class="callout">
+          <b>写这四个方法之前，先定一条不能破的约束</b>
+          <p><code>llm.py</code> 是所有模型调用的唯一出口，所以<b>上下文顺序必须在这里定死</b>：<code>system</code> 和 <code>tools</code> 是稳定前缀，历史只追加不改写，每轮会变的东西（时间、用户、检索结果）一律放到最后一轮的用户消息里。</p>
+          <p>这不是洁癖。缓存按<b>前缀匹配</b>，前缀一变缓存全废，成本和首字延迟一起回来。现在写对，W11 和 P3-12 就不用返工。</p>
+          <ul>
+            <li><b>稳定前缀</b>：system 与工具定义一字不改。绝不把「当前时间」「用户名」「余额」写进 system。</li>
+            <li><b>追加末尾</b>：不重排历史、不给消息重新编号、不对历史做「格式化美化」。</li>
+            <li><b>标准格式</b>：用 SDK 的消息结构，别自己拼 <code>&lt;|im_start|&gt;</code> 那类模板标记。</li>
+          </ul>
+          <p>面试里对应的就是那句「为什么不把余额写进系统提示」——答案不是「不安全」，是「每轮换前缀，缓存归零」。</p>
+        </div>
+
         <div class="callout warn">
           <b>一个刻意的取舍</b>
           <p><code>structured()</code> 只重试 1 次。为什么不重试 3 次？因为重试 3 次意味着你的 schema 或 prompt 有问题，应该修根因而不是靠重试掩盖。重试是兜底，不是策略——这个判断在面试里能加分。</p>
@@ -583,6 +597,7 @@ class LLM:
         <div class="out"><b>产物</b><code>src/agentlab/llm.py</code>（约 100 行）</div>
         <div class="verify"><b>验收</b>
           四个方法各跑通一次。特别注意 <code>stream()</code>：<code>for t in llm.stream(msgs): print(t, end="", flush=True)</code> 要能看到逐字输出。
+          <p style="margin:6px 0 0">再加一条缓存验收：<b>用同一个 system 连续调两次 <code>chat()</code>，第二次的 <code>resp.usage.prompt_tokens_details.cached_tokens</code> 要大于 0</b>。等于 0 就说明前缀被污染了（system 里有时间戳或随机 id）。如果服务商不支持缓存、字段是 <code>None</code>，把这件事记在笔记里——W17 和 P4 的成本优化要用到这个结论。</p>
         </div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>

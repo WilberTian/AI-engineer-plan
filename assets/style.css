@@ -236,7 +236,7 @@ pre:hover .copybtn{opacity:1}
 .task[open] > summary{border-bottom:1px solid var(--line);background:var(--surface-2)}
 .task-body{padding:4px 17px 16px}
 .task-body > h5{
-  font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);
+  font-size:12px;letter-spacing:.08em;color:var(--ink-3);
   margin:16px 0 5px;font-weight:650;
 }
 .task-body > h5:first-child{margin-top:12px}
@@ -294,6 +294,23 @@ pre:hover .copybtn{opacity:1}
   font-size:12.5px;background:var(--surface);border:1px solid var(--line-2);
   border-radius:7px;padding:3px 9px;color:var(--ink-2);
 }
+
+/* 阶段页顶部：本书对应章节提示 */
+.bookhint{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+  margin:14px 0 0;padding:10px 14px;
+  border:1px dashed var(--line-2);border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  font-size:12.9px;line-height:1.75;color:var(--ink-2);
+}
+.bookhint > b{
+  flex:0 0 auto;font-size:10.8px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--accent-ink);font-weight:700;
+}
+.bookhint span{min-width:0}
+.bookhint a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid transparent}
+.bookhint a:hover{border-bottom-color:currentColor}
+.bookhint .bx{color:var(--ink-3);font-size:12.2px}
 
 .weekbar{
   display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;

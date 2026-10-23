@@ -104,6 +104,8 @@
       </div>
     </div>
 
+    <p class="bookhint"><b>书</b><span>第 3 章 §RAG 基础、§混合检索、§超越扁平文本 · 第 7 章 §数据集设计、§失败归因</span><span class="bx">实验 3-4 ★★、3-6 ★★、7-3 ★★、7-6 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+
     <div class="callout danger">
       <b>RAG 最贵的错误：先调 prompt</b>
       <p>90% 的人遇到「答得不对」就开始改 prompt、换模型。而真实原因分布大概是：<b>切分边界错 40%、元数据缺失 20%、检索召回不足 20%、排序差 10%、prompt 问题 10%</b>。改 prompt 最多碰到最后那 10%。所以本周第一件事不是写检索，是造一把能区分这五种的尺子。</p>
@@ -1022,6 +1024,89 @@ LIMIT 10;</code></pre>
     </details>
 
     <!-- ============ W09 ============ -->
+    <details class="task" id="p2-15">
+      <summary>
+        <span class="tid">P2-15</span>
+        <span class="tname">把检索包成工具：切在目标上，不切在接口上</span>
+        <span class="tmin">周日 2h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：P1 你写的工具只有一个假的天气查询，真实项目不会这么简单。最容易犯的错是<b>把每个接口都包成一个工具</b>——<code>search_by_title</code>、<code>search_by_date</code>、<code>get_chunk</code>、<code>list_docs</code>……工具一多，模型选错的概率立刻上升，公开评测里工具超过 100 个时最先进的模型也开始挑错。工具应该切在<b>用户目标</b>上，不是切在<b>后端接口</b>上。这一条在面试里几乎必问，因为它是「会写 agent」和「设计过 agent」的分界线。</div>
+
+        <h5>先做减法：三个工具覆盖全部检索目标</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>工具</th><th>覆盖什么目标</th><th>不要拆成</th></tr></thead>
+            <tbody>
+              <tr><td><code>search</code></td><td>找资料。把标题、日期、来源、文档类型全收进 <code>filters</code> 参数</td><td><code>search_by_title</code> / <code>search_by_date</code> / <code>search_by_source</code></td></tr>
+              <tr><td><code>read</code></td><td>看全文。按 <code>doc_id</code> + 可选 <code>section</code> 定位</td><td><code>get_chunk</code> / <code>get_doc</code> / <code>get_page</code></td></tr>
+              <tr><td><code>answer</code></td><td>给出带引用的最终答案。拒答也走这个工具</td><td>不要用「普通文本回复」当答案通道，那样拿不到结构化引用</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>三个工具能覆盖 90% 的检索类需求。剩下的需求先问自己：<b>它真的需要模型自己决定吗？</b> 如果调用顺序是固定的，那就是工作流，写进代码里，不要交给模型选。</p>
+
+        <h5>描述决定成败：写「什么时候别用」</h5>
+
+        <p>工具描述不是文档，是<b>给模型的决策依据</b>。只写「搜索文档」等于没写——模型只能靠名字猜。对照下面两版：</p>
+
+        <pre><code><span class="cmt"># ✗ 差：描述只说它是什么，没说什么时候用、什么时候别用</span>
+{
+  "name": "search",
+  "description": "搜索文档库",
+  "parameters": {"type": "object", "properties": {"q": {"type": "string"}}}
+}
+
+<span class="cmt"># ✓ 好：触发条件 + 反例 + 边界，三段都要有</span>
+{
+  "name": "search",
+  "description": (
+    "在内部知识库中检索相关文档片段。"
+    "<span class="kw">何时用</span>：需要查事实、政策、流程、具体数字时。"
+    "<span class="kw">何时别用</span>：用户问的是上一轮对话里已经给出的信息，或纯计算/纯推理题——直接回答。"
+    "<span class="kw">返回</span>：最多 8 条片段，每条带 doc_id 与 section，可用 read 看全文。"
+    "如果返回空，说明知识库没有，不要改用同义词反复搜超过两次。"
+  ),
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {"type": "string", "description": "自然语言查询，用完整问句比关键词效果更好"},
+      "filters": {
+        "type": "object",
+        "properties": {
+          "doc_type": {"type": "string", "enum": ["policy", "faq", "manual", "contract"]},
+          "date_from": {"type": "string", "description": "ISO 日期，如 2026-01-01"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "required": ["query"]
+  }
+}</code></pre>
+
+        <div class="callout warn">
+          <b>参数保真：不要让模型拼字符串</b>
+          <p>参数一律用结构化类型 + <code>enum</code>，不要用「自由字符串 + 后端 split」。也不要为了图省事设计一个 <code>params: string</code> 让模型塞 JSON 进去——模型会在引号、转义、中文标点上出错，而这类错误永远只在线上出现。<b>能用 enum 就不用 string，能用扁平参数就不用嵌套对象。</b></p>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/tools/search.py</code>（3 个工具 + schema）+ <code>notes/tool-design.md</code>（写清为什么这样切、被砍掉的 7 个工具是什么）</div>
+
+        <div class="verify"><b>验收</b>
+          拿 12 条真实问句（含 3 条「不该检索」的）跑一遍，看模型选对工具的比例：<b>12/12 才算过</b>。其中「不该检索」那 3 条最能说明描述写得好不好——模型如果每次都去搜，说明「何时别用」那段没起作用。再手动把 <code>search</code> 的描述删掉触发条件那一句，重跑一次，记录选错率上升多少（这个数字面试可以讲）。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>模型老是连续搜三四次</b>：描述里补一句「空结果不要用同义词重试超过两次」；或者在 loop 里对同一工具连续调用做计数，超过就注入一条系统提示。</li>
+            <li><b>模型把 filters 写成字符串</b>：<code>additionalProperties: false</code> + 严格模式，让它在参数校验阶段就失败，而不是到后端才炸。</li>
+            <li><b>不知道该不该拆成两个工具</b>：问一句——模型做决策时需要在这两者之间<b>选</b>吗？需要选就拆，不需要选就合并成一个带参数的。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
     <h2 id="w9"><span class="num">W09</span>eval v2：把「答得对不对」拆成五个数</h2>
     <p class="lead">第 9 周 · 这一周结束时，你要能做到：给任意一条失败回答，5 分钟内判定问题出在检索还是生成。</p>
 
@@ -1194,6 +1279,114 @@ for i, (cid, s) in enumerate(bm25.search(q, 10), 1):
           <ul>
             <li><b>五个 case 都卡在第 2 步</b>：说明分块是主要瓶颈。这是好消息——改一处就能提升整体，比到处调参强。</li>
             <li><b>grep 找不到但你知道语料里有</b>：解析时丢了内容，或关键词被空格/换行打断。用更短的短语再试。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-16">
+      <summary>
+        <span class="tid">P2-16</span>
+        <span class="tname">一个通过率说明不了任何事：Pass@k、Pass^k、失败归因、显著性</span>
+        <span class="tmin">周日 3h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：W09 你已经能跑出一个通过率了，但它回答不了面试里真正会问的那句——<b>「你怎么证明这次改动真的有用？」</b> 一个数字同时混了四件事：任务难度、模型随机性、样本量、评测器本身的偏差。不改，你会长期陷在「改了 prompt 感觉好了、上线又不行」的循环里。这张卡把通过率拆成能被追问的数字。</div>
+
+        <h5>第一个分裂：Pass@k 与 Pass^k</h5>
+
+        <p>同一道题跑 5 次，单次成功率 <code>p = 0.6</code> 时：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>指标</th><th>算法</th><th>数值</th><th>它回答什么</th></tr></thead>
+            <tbody>
+              <tr><td><b>Pass@5</b></td><td>1 − (1−p)⁵，任一次成功即算成功</td><td>≈ <b>99%</b></td><td>能力上限：<b>这事它到底能不能做</b></td></tr>
+              <tr><td><b>Pass^5</b></td><td>p⁵，连续 5 次都成功才算</td><td>≈ <b>7.8%</b></td><td>业务可靠性：<b>它能不能一直做对</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout danger">
+          <b>这两个数差 91 个百分点，但它们是同一个系统</b>
+          <p>演示、比赛、写 README 用 Pass@k；<b>付款、退款、发信、改数据用 Pass^k</b>。给系统定目标时如果只写「成功率 95%」，那这句话在工程上没有意义——必须写清是哪一个。这是面试里区分「跑过 demo」和「上过生产」的高频问题。</p>
+        </div>
+
+        <h5>第二个分裂：失败要归因到「首个」错误</h5>
+
+        <p>一条轨迹有 8 步，第 3 步检索拿错了文档，后面 5 步全在错误信息上打转。如果只记「最终答案错」，你会去调最终答案的 prompt，而真正的病灶在第 3 步。<b>归因必须定位到首个错误步。</b></p>
+
+        <p>公开评测里有个数字值得记住：某客服基准 704 次运行、240 次失败，人工复盘后发现其中 <b>80 次（三分之一）属于「环境状态改对了，但没告诉用户」</b>——这类失败在总通过率里完全看不出来，只有逐条读轨迹才会暴露。所以归因不是可选步骤。</p>
+
+        <pre><code><span class="str">"""evals/metrics.py — 通过率之外，你还需要这几个数"""</span>
+from __future__ import annotations
+
+import random
+from dataclasses import dataclass, field
+
+
+@dataclass
+class Run:
+    task_id: str
+    ok: bool
+    steps: list[dict] = field(default_factory=list)   <span class="cmt"># 每步：tool / args / result / error</span>
+
+
+<span class="cmt"># ---------- 1. 两种成功率 ----------</span>
+def pass_at_k(runs: dict[str, list[bool]], k: int) -&gt; float:
+    <span class="str">"""任一次成功即算成功：能力上限。"""</span>
+    return sum(1 for rs in runs.values() if any(rs[:k])) / len(runs)
+
+
+def pass_pow_k(runs: dict[str, list[bool]], k: int) -&gt; float:
+    <span class="str">"""连续 k 次都成功才算：业务可靠性。"""</span>
+    return sum(1 for rs in runs.values() if len(rs) &gt;= k and all(rs[:k])) / len(runs)
+
+
+<span class="cmt"># ---------- 2. 失败归因：三步判据 ----------</span>
+def attribute(run: Run) -&gt; str:
+    <span class="str">"""把一条失败轨迹归到第一个出问题的环节，不要归到「最终答案错」。"""</span>
+    for i, s in enumerate(run.steps):
+        if s.get("error"):
+            return f"step{i}:tool_error"          <span class="cmt"># 工具本身报错</span>
+        if s.get("tool") and not s.get("result"):
+            return f"step{i}:bad_args"            <span class="cmt"># 参数错，工具没返回有效结果</span>
+    if not run.ok:
+        return "final:answer_format"              <span class="cmt"># 步骤都对，答案表达不合格</span>
+    return "ok"
+
+
+<span class="cmt"># ---------- 3. 显著性：小样本别用正态近似 ----------</span>
+def boot_ci(xs: list[float], n: int = 2000) -&gt; tuple[float, float]:
+    means = sorted(
+        sum(random.choice(xs) for _ in xs) / len(xs) for _ in range(n)
+    )
+    return means[int(n * 0.025)], means[int(n * 0.975)]
+
+
+def paired_delta(a: dict[str, bool], b: dict[str, bool]) -&gt; tuple[int, int]:
+    <span class="str">"""只在 A 上对的题数、只在 B 上对的题数。两边都对/都错的不提供信息。"""</span>
+    a_only = sum(1 for t in a if a[t] and not b.get(t))
+    b_only = sum(1 for t in b if b[t] and not a.get(t))
+    return a_only, b_only</code></pre>
+
+        <div class="callout warn">
+          <b>样本量不够就别下结论</b>
+          <p>配对比较里，<code>a_only + b_only &lt; 10</code> 时差异基本是噪声——20 道题里 3 道变好、2 道变差，说明不了任何事。经验线：<b>至少 20 题 × 3 次</b>才敢说「有提升」，要写进简历就 <b>≥ 30 题 × 5 次</b>。跑得慢就把并发开到 5，别用「样本少所以跑得快」自我安慰。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>evals/metrics.py</code> + <code>notes/eval-v2-report.md</code>：同一个 eval 集上 A/B 两版 prompt 的 Pass@5、Pass^5、归因分布、差值置信区间</div>
+
+        <div class="verify"><b>验收</b>
+          交一份对比报告，必须能回答四个问题：① 两版 prompt 的 Pass@5 与 Pass^5 各是多少；② <b>失败里 tool_error / bad_args / answer_format 各占多少</b>（这个分布直接告诉你下一步该改哪一层）；③ 差值是否落在置信区间之外；④ 如果重跑一次，你敢不敢保证结论不变。<b>四个都答得出才算过</b>——只报一个通过率的，等于没做。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>Pass^5 低到没法看（比如 0%）</b>：正常。这说明你的系统在长链路任务上还不可靠，正好是 P4 故障工程要解决的。把这个数写进笔记本，W17 之后再测一次，那个对比是简历素材。</li>
+            <li><b>归因写不出来</b>：说明你的轨迹里没记「每步的输入输出」。先回去把 loop 的日志补全（tool 名、参数、返回、耗时），这是 P3-11 全链路 trace 的前置。</li>
+            <li><b>20 题跑 5 次太慢</b>：把 eval 并发写到 <code>asyncio.Semaphore(5)</code>，同时给每题设 90 秒超时——超时算失败，不要挂死。</li>
+            <li><b>两次跑结论不一样</b>：模型有温度。评测时 <code>temperature=0</code> 只降低方差，不消除——所以要多跑几次取分布，而不是相信单次。</li>
           </ul>
         </div>
       </div>
