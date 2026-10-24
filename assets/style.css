@@ -326,6 +326,26 @@ pre:hover .copybtn{opacity:1}
 .resweek table{font-size:12.6px}
 .resweek td,.resweek th{vertical-align:top}
 
+/* 阶段页「开始之前」概念表：第一列概念名不拆行 */
+.ctab td:first-child{white-space:nowrap}
+
+/* 卡内：关键知识点补讲（只用在「概念重、代码多」的卡） */
+.concept{
+  margin:12px 0 14px;padding:11px 14px;
+  background:var(--accent-soft);border-radius:var(--radius-sm);
+  border-left:2px solid var(--accent);
+}
+.concept > b:first-child{
+  display:block;margin-bottom:5px;
+  font-size:11.6px;letter-spacing:.05em;color:var(--accent-ink);font-weight:700;
+}
+.concept p{margin:0 0 7px;font-size:13.6px;line-height:1.78;color:var(--ink-2)}
+.concept p:last-child{margin-bottom:0}
+.concept b{color:var(--ink);font-weight:650}
+.concept ul{margin:2px 0 7px;padding-left:19px}
+.concept li{margin:0 0 4px;font-size:13.6px;line-height:1.75;color:var(--ink-2)}
+.concept code{font-size:12.4px}
+
 /* 总览：七个阶段的流程条 */
 .flow{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 4px}
 .flow .st{

@@ -50,6 +50,10 @@
       <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
     <h4>本页目录</h4>
+    <h4 class="grp">开始之前</h4>
+    <nav>
+      <a href="#concepts">要懂的 9 个概念</a>
+    </nav>
     <h4 class="grp">W18 · 流式体验</h4>
     <nav>
       <a href="#w18" class="on">本周目标</a>
@@ -118,6 +122,27 @@
         </table>
       </div>
     </div>
+    <h2 id="concepts">开始之前：这一阶段要懂的 9 个概念</h2>
+
+    <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
+
+    <div class="tw wide">
+      <table class="ctab">
+        <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
+        <tbody>
+          <tr><td><b>流式改的是感知</b></td><td>首字时间（TTFT）从 3 秒降到 0.5 秒，总时长没变，但用户不再觉得卡</td><td>总延迟决定成本，TTFT 决定留存；两个数要分开优化</td><td><a href="#p5-2">P5-2</a> · <a href="#p5-4">P5-4</a></td></tr>
+          <tr><td><b>SSE 而不是 WebSocket</b></td><td>单向推送用 SSE：协议简单、能过代理、断线浏览器自动重连</td><td>WebSocket 适合双向；为“以后可能要双向”上 WS，是最常见的过度设计</td><td><a href="#p5-2">P5-2</a></td></tr>
+          <tr><td><b>三态都要有出路</b></td><td>中断、重试、错误——每种状态都要给用户一个能点的按钮</td><td>只做 loading 和 done，用户遇到错误时只能刷新页面，前面全白跑</td><td><a href="#p5-5">P5-5</a></td></tr>
+          <tr><td><b>生成式 UI 的边界</b></td><td>让模型选“渲染哪个组件”，不让它写代码</td><td>组件注册表就是安全边界：模型只能在白名单里挑，不能引入任意 HTML/JS</td><td><a href="#p5-6">P5-6</a> · <a href="#p5-7">P5-7</a></td></tr>
+          <tr><td><b>什么时候不该用</b></td><td>结构固定、需要一致性的场景（表单、设置页）用它只会更难维护</td><td>生成式 UI 的价值在“不确定该展示什么”；确定的地方用它纯属增加不确定性</td><td><a href="#p5-7">P5-7</a></td></tr>
+          <tr><td><b>配额是产品功能</b></td><td>超出预算要明确拒绝，而不是继续烧钱</td><td>没有配额的多租户系统，一次滥用就能吃掉整月预算</td><td><a href="#p5-9">P5-9</a></td></tr>
+          <tr><td><b>成本看板五个数</b></td><td>每次问答均成本、P95 延迟、失败率、拒答率、缓存命中率</td><td>只报总花费看不出问题；拒答率太高说明检索差，太低说明可能在瞎答</td><td><a href="#p5-10">P5-10</a></td></tr>
+          <tr><td><b>灰度与回滚</b></td><td>新版本先给 5% 流量，指标不降再放量；随时能一键退回</td><td>上线之后再改的成本，是上线前验证的十倍</td><td><a href="#p5-13">P5-13</a></td></tr>
+          <tr><td><b>作品集是一屏三件</b></td><td>README 六块 + 60 秒 demo + 三个项目，陌生人 3 分钟能判断你做过什么</td><td>面试官先看 README 不读代码；README 不写取舍，等于没做过</td><td><a href="#p5-11">P5-11</a> · <a href="#p5-12">P5-12</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
 
     <div class="callout">
       <b>先定一个原则：不做「聊天框 + 消息列表」</b>
@@ -182,6 +207,16 @@ node -v   <span class="cmt"># 必须 ≥ 22，v7 不再支持 CJS require()</spa
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：先跑通「打字机效果」，再谈其他。很多人第一天就想做工具可视化，结果卡在流式协议上三天。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>流式改的是感知，不是总时长。</b> 生成 500 字，流式和非流式的总耗时都是 8 秒。差别在用户多久看到第一个字：非流式是 8 秒后一次性出现，流式是 0.5 秒开始逐字出现。前者让人怀疑卡死并刷新页面，后者让人愿意等——这就是为什么它值得做。</p>
+          <ul>
+            <li><b>两个指标要分开优化</b>：TTFT（首字时间）决定留存，总时长决定成本与并发占用。把两者混成「加载时间」，就不知道该往哪改。</li>
+            <li><b>为什么选 SSE 不选 WebSocket</b>：单向推送用 SSE 就是一条不关闭的 HTTP 响应，能过大多数代理、断线浏览器自动重连、实现只要几十行。为「以后可能要双向」上 WebSocket，是典型的过度设计。</li>
+            <li><b>必须处理的细节</b>：流式下的错误发生在中途——HTTP 状态码早就是 200 了，错误只能放在流里传（最后一个 event 带 <code>error</code> 字段），前端要能识别并给出出路（P5-5）。</li>
+          </ul>
+        </div>
+
 
         <h5>服务端：一个 route handler</h5>
 <pre><code>// app/api/chat/route.ts
@@ -510,6 +545,16 @@ useEffect(() =&gt; {
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么先用注册表而不是 RSC 流式组件</b>：注册表的思路是「模型返回 <code>{component:"bar_chart", props:{...}}</code>，前端查表渲染」。它有三个好处——可控（只有白名单组件）、可测（props 是数据，能校验）、可降级（组件不存在就显示文本）。RSC 方案更强但调试成本高，等你把这条跑通再说。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>组件注册表是安全边界，不是设计偏好。</b> 生成式 UI 的本质是让模型决定「渲染什么」。如果模型输出的是 HTML/JS 字符串，你等于把页面的执行权交给了它——而它的输入里可能藏着别人写的文档（提示注入，P4-4）。注册表把这个问题变成了白名单问题：模型只能输出 <code>{"component": "BarChart"}</code>，名字不在这张表里就丢弃。</p>
+          <ul>
+            <li><b>模型永远碰不到 DOM</b>。它产出的是「组件名 + 参数」，由你的代码去渲染。这一条是方案 A「稳且可控」的全部含义。</li>
+            <li><b>props 也要约束</b>：每个组件声明自己的 schema，模型给的参数先校验再渲染。校验失败就降级成纯文本答案，不要让页面白屏。</li>
+            <li><b>能力边界由你写死，不由模型的想象力决定</b>：少一个组件只是少一种呈现方式；多一个口子可能是整站 XSS。取舍方向很明确。</li>
+          </ul>
+        </div>
+
 
         <h5>1. 定义允许的组件和它的 props schema</h5>
 <pre><code>// lib/blocks.ts

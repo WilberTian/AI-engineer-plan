@@ -50,6 +50,10 @@
       <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
     <h4>本页目录</h4>
+    <h4 class="grp">开始之前</h4>
+    <nav>
+      <a href="#concepts">要懂的 9 个概念</a>
+    </nav>
     <h4 class="grp">W10 · 读懂 harness</h4>
     <nav>
       <a href="#w10" class="on">本周目标</a>
@@ -117,6 +121,27 @@
         </table>
       </div>
     </div>
+    <h2 id="concepts">开始之前：这一阶段要懂的 9 个概念</h2>
+
+    <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
+
+    <div class="tw wide">
+      <table class="ctab">
+        <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
+        <tbody>
+          <tr><td><b>harness ≠ framework</b></td><td>framework 给你一个循环，harness 给你一台电脑：loop + 内置工具 + 沙箱 + 权限 + 压缩 + 会话 + 子 agent</td><td>面试问“为什么选它”，答的是控制权放在哪一层，不是功能列表</td><td><a href="#p3-1">P3-1</a></td></tr>
+          <tr><td><b>durable execution</b></td><td>每步状态落盘成 checkpoint，进程被 kill 也能从最后一步续跑</td><td>长任务一定会被打断（超时、重启、人关电脑）；不落盘就只能重头来，而重头来会重复副作用</td><td><a href="#p3-7">P3-7</a></td></tr>
+          <tr><td><b>上下文三线索</b></td><td>稳定前缀、按需加载、状态栏——分别解决“缓存命中”“别全塞进去”“历史太长”</td><td>三者有优先级：前缀不稳定，后面两条省下的钱全赔回去</td><td><a href="#p3-12">P3-12</a></td></tr>
+          <tr><td><b>KV cache 是前缀匹配</b></td><td>前缀变一个字节，后面全废；命中时按约 10% 计价</td><td>“当前时间/用户名/余额”绝不放 system；追加、不改写、不重排是硬约束，不是风格建议</td><td><a href="stage-p1.html#p1-5">P1-5</a> · <a href="#p3-12">P3-12</a></td></tr>
+          <tr><td><b>渐进披露</b></td><td>能力先只暴露“名字 + 一句话描述”，模型要用时再读正文</td><td>工具全塞进去模型就开始选错；按需加载能在不掉成功率的前提下让常驻工具数下降</td><td><a href="#p3-12">P3-12</a></td></tr>
+          <tr><td><b>压缩三层</b></td><td>截断（便宜、丢细节）→ 摘要（多一次调用）→ 交接单（开新会话）</td><td>顺序从便宜到贵；“不可违反的规则”要抽出来不参与压缩，否则压缩完模型会忘约束</td><td><a href="#p3-12">P3-12</a></td></tr>
+          <tr><td><b>MCP 是协议不是 SDK</b></td><td>工具跑在独立进程，通过标准消息和 agent 通信；换模型、换宿主不用重写工具</td><td>独立进程带来隔离（工具崩了不拖死 agent）和复用（写一次多个客户端能用）</td><td><a href="#p3-9">P3-9</a></td></tr>
+          <tr><td><b>trace 是一棵调用树</b></td><td>一次任务一个 trace，每次模型请求/工具调用一个 span，带时长和 token</td><td>没有 trace，“慢”和“错”都只能靠猜；有了才能说清 3 秒花在哪一段</td><td><a href="#p3-11">P3-11</a></td></tr>
+          <tr><td><b>审批点是设计不是补丁</b></td><td>危险动作（删文件、发邮件、花钱）前停机等人确认</td><td>这不是保守，是把“不可逆”和“可逆”分开处理；全自动化的代价是一次不可逆操作</td><td><a href="#p3-8">P3-8</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
 
     <div class="callout">
       <b>先看清这两个仓库是什么</b>
@@ -470,6 +495,16 @@ def build_system(extra: str = "") -&gt; str:
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：长任务的现实是「一定会被打断」——部署、超时、用户关闭页面、机器重启。没有 checkpoint 的 agent 每次都从头开始，等于每次都烧一遍钱。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>durable execution 是长任务的前提。</b> agent 的长任务一定会被打断：超时、进程重启、机器休眠、人直接关电脑。没有落盘，中断就等于从第一步重来——而重来不只是浪费时间，还会<b>重复副作用</b>（第二次下单、第二次发邮件）。</p>
+          <ul>
+            <li><b>落盘的最小单位是「一步」</b>：调完模型 + 执行完工具 + 拿到结果，这三件事作为一个原子单元写进 checkpoint，带 <code>run_id</code> 和 <code>step_idx</code>。只存半截状态，恢复时会重放出一半的操作。</li>
+            <li><b>恢复时要区分两类状态</b>：可重放的（消息序列、已完成步骤）和不可重放的（已经发出去的外部请求）。后者只能靠幂等键挡住重复（P4-3）。</li>
+            <li><b>checkpoint 要小</b>：每步把整个历史全存一遍，跑 100 步就是 100 份副本。正确做法是存增量，或只存最后状态 + 步骤摘要。</li>
+          </ul>
+        </div>
+
 
         <h5>三张表，别设计得更复杂</h5>
 <pre><code>CREATE TABLE IF NOT EXISTS runs (
@@ -694,6 +729,16 @@ if needs_approval(name, args):
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：MCP 的价值不是「又一个协议」，而是<b>工具写一次、所有客户端都能用</b>。你把 P2 的检索包成 MCP server 之后，Claude Desktop、Cursor、你自己的 agent 都能直接调——这才叫「能力复用」。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>MCP 定义的是「怎么说话」，不是「怎么写工具」。</b> 它规定 host 和 server 之间如何列出工具、调用工具、返回结果（JSON-RPC 消息），但不规定工具用什么语言实现。所以任何语言写的 server，都能被任何支持 MCP 的客户端直接用——这才是「工具生态」能成立的原因。</p>
+          <ul>
+            <li><b>为什么工具要跑在独立进程</b>：① 隔离——工具崩了不拖死 agent；② 权限——server 用自己的凭据，不把密钥交给 agent；③ 复用——写一次，IDE、桌面客户端、自己的 agent 都能接。</li>
+            <li><b>两种传输要分清</b>：stdio（本地子进程，适合自己的机器）和 HTTP/SSE（远程，适合团队共享）。选错会在部署那一步卡住，而这时代码通常已经写完了。</li>
+            <li><b>常见误解</b>：以为写了 server 就等于「我的工具上线了」。协议只解决「怎么调」，鉴权、限流、审计仍然要在 server 里自己做（P4 会用到）。</li>
+          </ul>
+        </div>
+
 
 <pre><code>uv add "mcp[cli]"</code></pre>
 

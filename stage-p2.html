@@ -50,6 +50,10 @@
       <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
     <h4>本页目录</h4>
+    <h4 class="grp">开始之前</h4>
+    <nav>
+      <a href="#concepts">要懂的 9 个概念</a>
+    </nav>
     <h4 class="grp">W06 · 解析与入库</h4>
     <nav>
       <a href="#w6" class="on">本周目标</a>
@@ -120,6 +124,27 @@
         </table>
       </div>
     </div>
+    <h2 id="concepts">开始之前：这一阶段要懂的 9 个概念</h2>
+
+    <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
+
+    <div class="tw wide">
+      <table class="ctab">
+        <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
+        <tbody>
+          <tr><td><b>分块是检索精度的上限</b></td><td>块切错了，后面的 embedding、rerank、prompt 全都救不回来</td><td>检索只能返回“已经存在的块”；边界切错的答案永远补不回来，这是唯一一个必须在第一步就做对的环节</td><td><a href="#p2-1">P2-1</a> · <a href="#p2-3">P2-3</a></td></tr>
+          <tr><td><b>结构感知分块</b></td><td>按标题切，并把标题路径拼进块文本，让每块自带上下文</td><td>否则“该值”“它的上限”这类指代脱离标题就无法解析；检索到了，模型也答不对</td><td><a href="#p2-2">P2-2</a> · <a href="#p2-3">P2-3</a></td></tr>
+          <tr><td><b>稠密 vs 稀疏</b></td><td>embedding 管语义相近，BM25 管词面精确，两者的失败方式正好相反</td><td>向量检索对专有名词、型号、错误码几乎必漏——这就是要混合检索的全部理由</td><td><a href="#p2-6">P2-6</a></td></tr>
+          <tr><td><b>recall@k 是唯一硬指标</b></td><td>前 k 条里有没有正确文档，直接决定生成侧的天花板</td><td>没进前 5 的文档，再好的 prompt 也生成不出来；先量召回，再谈别的，顺序不能反</td><td><a href="#p2-5">P2-5</a></td></tr>
+          <tr><td><b>RRF 用排名不用分数</b></td><td>两路检索的分数不同量纲，只能按名次融合</td><td>加权平均要先归一化两路分数、还要调权重，换语料就得重调；RRF 只看名次，不需要归一化</td><td><a href="#p2-7">P2-7</a></td></tr>
+          <tr><td><b>rerank 是贵但准的第二层</b></td><td>cross-encoder 把 query 和文档拼一起过一遍模型，只对 20–30 条候选做</td><td>它对全库做不起（成本与延迟都是 O(N)），只能当精排用；候选超过 50 条时 CPU 上单次要几秒，得先砍候选</td><td><a href="#p2-8">P2-8</a></td></tr>
+          <tr><td><b>拒答要两层</b></td><td>检索侧阈值（最高分低于阈值直接拒）+ 生成侧指令（资料不足就说不知道）</td><td>只靠 prompt 不可靠，只靠阈值会误杀可答问题；两层缺一层都有洞</td><td><a href="#p2-10">P2-10</a></td></tr>
+          <tr><td><b>权限必须在检索前过滤</b></td><td>把租户/文档权限写进查询条件，而不是检索出 10 条再筛掉没权限的</td><td>先检索后过滤，会让“有权限的文档一条都没进前 10”，模型于是拒答或者编造</td><td><a href="#p2-11">P2-11</a></td></tr>
+          <tr><td><b>引用让答案可验证</b></td><td>每句结论挂回原文块，能点击回原文</td><td>没有引用，「答案对不对」只能靠感觉；面试问「怎么证明它没编」，答的就是引用和拒答这两层</td><td><a href="#p2-9">P2-9</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
 
     <div class="callout danger">
       <b>RAG 最贵的错误：先调 prompt</b>
@@ -279,6 +304,16 @@ if __name__ == "__main__":
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：这是 P2 最有面试价值的一张卡。别人说「我用了语义分块」，你说「我对比了三种，在 20 条 query 上 recall@5 分别是 0.55 / 0.70 / 0.65，结构感知最好但不是因为它更聪明，是因为它保留了标题上下文」——这是两个层级的回答。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>检索只能返回已经存在的块，所以分块决定检索的上限。</b> 如果答案正好跨在两个块的边界上，两块各自都不完整，谁都排不进前 5——这不是 rerank 能救的，也不是换个更大的模型能救的。这是全流程里唯一一个「第一步没做对，后面全白费」的环节。</p>
+          <ul>
+            <li><b>三种策略的差别在「按什么边界切」</b>：固定长度按 token 数切（简单，容易切断句子和表格）；按段落/语义切（尊重作者结构，长度不均）；结构感知按标题切（最贵最准，尤其适合技术文档）。</li>
+            <li><b>判断标准不是「哪种更好」，是在同一批 query 上量 recall@5</b>。同一个 embedding 模型、同样的 20 条 query，只换切法。这一步不做，后面所有优化都没有基线。</li>
+            <li><b>块必须带定位信息</b>：文档 id + 标题路径 + 块序号。否则引用点不回原文（P2-9），拒答也说不清依据。</li>
+          </ul>
+        </div>
+
 
         <h5>三种策略，固定变量</h5>
         <div class="tw wide">
@@ -415,6 +450,16 @@ def _split_paragraph(text: str, limit: int) -&gt; list[str]:
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：选 pgvector 不是因为最强，是因为你已经有 Postgres 的心智模型，而且<b>元数据过滤、事务、迁移</b>这些你熟。等真的撞上性能天花板再换 Qdrant，那时你能说清为什么换。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>代码写错可以改，schema 错了要重跑全部 embedding。</b> 所以表结构要在第一版就定对：块文本、向量、文档 id、标题路径、块序号、权限字段，一个都不能少。返工成本不是改几行代码，是重新解析 + 重新向量化整份语料。</p>
+          <ul>
+            <li><b>为什么存标题路径而不是只存文档 id</b>：检索时「这块属于哪一节」是判断相关性的重要线索，生成时它又是引用的锚点。存下来比事后 join 便宜得多。</li>
+            <li><b>索引类型要选</b>：<code>IVFFlat</code> 要先有数据才能建（依赖聚类），<code>HNSW</code> 可以边写边建、查询更快但吃内存。200–500 页这个量级直接用 HNSW，不值得纠结。</li>
+            <li><b>维度与 embedding 模型绑定</b>：从 768 维换到 1024 维要重建表，没有兼容模式。所以 embedding 模型必须在建表前定下来，换模型 = 换表。</li>
+          </ul>
+        </div>
+
 
         <h5>起库</h5>
 <pre><code><span class="cmt"># docker-compose.yml</span>
@@ -648,6 +693,16 @@ if __name__ == "__main__":
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：embedding 把语义压成向量，副作用是<b>罕见字符串被平滑掉</b>。产品型号「XR-2000B」、函数名「useSyncExternalStore」、错误码「E1024」，向量检索经常找不准；而这些恰恰是用户最常精确查的东西。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>两种检索的失败方式正好相反，这才是要混合的全部理由。</b> 向量检索把文本压成稠密向量，语义相近的会靠近，代价是精确词面被稀释：产品型号 <code>X200-Pro</code>、错误码 <code>ERR_4012</code> 在向量空间里几乎没有区分度，经常漏。BM25 按词频打分，专有名词只要出现过就能命中，但同义词（「退款」vs「退钱」）完全无能为力。</p>
+          <ul>
+            <li><b>不是替代关系</b>：一条 query 走两路，再融合（P2-7 的 RRF）。单路再调参也补不上另一路的洞。</li>
+            <li><b>落地要有两个证据</b>：① 只用向量时，那几条专有名词 query 确实失败；② 加上 BM25 后同一批 query 的 recall@5 提升。没有这两个数，「我做了混合检索」就是口号。</li>
+            <li><b>一个常被忽略的细节</b>：BM25 依赖分词。中文要先分词（jieba 之类），英文要处理连字符和大小写——型号 <code>X200-Pro</code> 被切成三个词之后，精确匹配就失效了。</li>
+          </ul>
+        </div>
+
 
         <h5>用 jieba + rank_bm25（避开 Postgres 中文分词）</h5>
 <pre><code>uv add rank-bm25 jieba</code></pre>

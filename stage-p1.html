@@ -50,6 +50,10 @@
       <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
     <h4>本页目录</h4>
+    <h4 class="grp">开始之前</h4>
+    <nav>
+      <a href="#concepts">要懂的 8 个概念</a>
+    </nav>
     <h4 class="grp">W02 · Python 速通</h4>
     <nav>
       <a href="#w2" class="on">本周目标</a>
@@ -120,6 +124,26 @@
         </table>
       </div>
     </div>
+    <h2 id="concepts">开始之前：这一阶段要懂的 8 个概念</h2>
+
+    <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
+
+    <div class="tw wide">
+      <table class="ctab">
+        <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
+        <tbody>
+          <tr><td><b>虚拟环境与锁文件</b></td><td>每个项目一份独立依赖树，<code>uv sync</code> 按 <code>uv.lock</code> 复原</td><td>全局 install 会让两个项目的依赖互相踩；AI 生态的库半年一换，不锁就复现不了三个月前的报错</td><td><a href="#p1-1">P1-1</a></td></tr>
+          <tr><td><b>coroutine ≠ Promise</b></td><td>coroutine 是“可暂停的函数”，不 await 一行都不执行；Promise 一创建就开始跑</td><td>这是前端转 Python 最高频的 bug：以为 <code>f()</code> 已经发起了请求，其实什么都没发生</td><td><a href="#p1-3">P1-3</a></td></tr>
+          <tr><td><b>运行时类型契约</b></td><td>TS 的类型编译后就消失；Pydantic 在运行时校验，报错信息能直接喂给模型看</td><td>LLM 的输出不可信，schema 是唯一拦得住它的地方；错误要说清“哪个字段、期望什么、实际什么”</td><td><a href="#p1-2">P1-2</a> · <a href="#p1-6">P1-6</a></td></tr>
+          <tr><td><b>tool calling 的真相</b></td><td>模型从不执行工具，它只产出 <code>tool_calls</code>（名字 + JSON 参数）；执行、回填、再请求全是你的代码</td><td>不理解这点就会以为框架在“调用函数”，出错时不知道该改 prompt、改 schema 还是改执行代码</td><td><a href="#p1-7">P1-7</a></td></tr>
+          <tr><td><b>loop = while + 三个出口</b></td><td>循环体四步：请求 → 看有无 tool_calls → 执行并回填 → 再请求；出口三个：不再调工具、超时、步数用尽</td><td>loop 和 chain 的分界就在这里：chain 的步数由人写死，loop 的步数由模型决定，所以必须有兜底出口</td><td><a href="#p1-10">P1-10</a></td></tr>
+          <tr><td><b>assistant 消息必须原样回填</b></td><td>带 <code>tool_calls</code> 的 assistant 消息要一字不改地 append 回消息序列</td><td>不回填，下一轮模型不知道自己调过什么，会重复调用同一个工具或直接报协议错——这是 loop 里最容易漏的一行</td><td><a href="#p1-10">P1-10</a></td></tr>
+          <tr><td><b>错误是上下文，不是异常</b></td><td>工具失败不要 raise 结束任务，把错误文本作为 <code>role=tool</code> 的内容喂回去</td><td>这是“自愈”的唯一实现方式；模型看不到“参数不是合法 JSON”，就只会重复同样的调用</td><td><a href="#p1-11">P1-11</a></td></tr>
+          <tr><td><b>eval = 测试集 + 判分器 + runner</b></td><td>通过率不是指标，是三个组件跑出来的输出</td><td>只有 runner 没有 gold，得到的数字没法比较；测试集里必须有“故意应该失败”的样本，否则 100% 只说明题太简单</td><td><a href="#p1-12">P1-12</a> · <a href="#p1-13">P1-13</a> · <a href="#p1-14">P1-14</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
 
     <div class="callout">
       <b>这四周的一个硬要求</b>
@@ -816,6 +840,16 @@ probe("max_tokens 负数", messages=[{"role": "user", "content": "hi"}], max_tok
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：工具是 agent 唯一的「行动能力」。工具设计好坏直接决定准确率，而设计的核心是 description 和「工具之间有没有重叠」——这一张卡就练这两件事。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>模型看不到你的函数，它只看得到 name / description / 参数 schema。</b> 所以工具「能不能被用对」几乎完全由描述决定：写「查询数据库」它不知道什么时候该用；写「按关键词搜公司文档库，返回标题+摘要+URL，支持中文」它才知道该在什么场合调。这就是为什么工具设计（ACI）比工具实现更值钱。</p>
+          <ul>
+            <li><b>schema 的严格程度决定失败率。</b> 参数写成 <code>string</code>，模型自由发挥；写成 <code>enum</code>，选项只有三种。能用 enum 就不用 string，能用扁平参数就不嵌套对象。</li>
+            <li><b>失败也要是一个结果。</b> 工具抛异常会让整个 loop 断掉；返回 <code>ok=false</code> + 可读原因，模型才有机会改参数重试（P1-11 展开）。</li>
+            <li><b>常见误解：工具越多越强。</b> 工具列表每一轮都要重发，20 个工具的 schema 就上万 token；数量到上百个时，连最强的模型也开始选错（P3-12 有做法和数字）。所以常驻工具要少，其余改成按需加载。</li>
+          </ul>
+        </div>
+
 
         <h5>建三个工具，刻意设计成不同类型</h5>
 <pre><code><span class="str">"""src/agentlab/tools.py — 注册表 + 三个工具"""</span>
@@ -994,6 +1028,16 @@ def build_registry() -&gt; Registry:
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：这是整个 24 周最重要的 100 行。它一旦写清楚，P3 的 harness、P4 的容错都只是在它上面加东西。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>为什么是 loop，不是 chain。</b> chain（工作流）的步数由人固定：检索→改写→生成，三步就三步。loop 的步数由模型在运行时决定：它觉得信息不够就再调一次工具。<b>这是 agent 和 workflow 的唯一分界线</b>，P3 判断「该做成 agent 还是 workflow」用的就是这条。</p>
+          <ul>
+            <li><b>步数由模型决定，就必须有兜底出口。</b> 三个出口各治一种死法：模型不再调工具（正常结束）、超时（防单次任务无限拖）、步数用尽（防工具死循环）。缺任一个，就有一种情况会卡死。</li>
+            <li><b>最容易漏的一行</b>：把带 <code>tool_calls</code> 的 assistant 消息原样 append 回序列。省掉它，下一轮模型不知道自己调过什么，会重复调同一个工具，或者因为协议不完整直接报错。</li>
+            <li><b>隐形成本</b>：工具返回必须截断。一个网页工具返回 200KB，第二轮上下文就爆了，而且这一轮的 token 全部计费——这是 agent 账单失控最常见的原因。</li>
+          </ul>
+        </div>
+
 
 <pre><code><span class="str">"""src/agentlab/loop.py — 手写 agent loop"""</span>
 from __future__ import annotations
@@ -1263,6 +1307,16 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：runner 的要求是<b>无交互、可重复、有输出文件</b>。这样后面才能放进 CI、才能对比两次运行。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <p><b>runner 的职责不是「跑一遍」，是让同一个测试集在改代码前后可比。</b> 所以三件事是硬要求：测试集版本化（jsonl 进 git）、每条 case 相互独立（一条失败不影响其他）、输出结构化（通过率 + 每条明细）。少了任何一条，你拿到的数字就只能自己看，没法拿来论证「这次改动变好了」。</p>
+          <ul>
+            <li><b>为什么一定要并发</b>：10 条串行 × 每条 20 秒 = 3 分钟。改一行 prompt 要等 3 分钟，第二周就没人愿意跑了。并发到 5 路是 40 秒，这才是能坚持每天跑的量级。</li>
+            <li><b>为什么值得做缓存</b>：LLM 不保证幂等，重跑结果会漂。按 case 内容哈希缓存响应，只在改了 prompt 或换了模型时失效——这样「只改了一行 system」也能只重跑受影响的 case。</li>
+            <li><b>边界</b>：runner 只给 pass/fail 和明细，<b>不解释为什么</b>。归因是 P2-14 分层诊断的事，两者别混成一件。</li>
+          </ul>
+        </div>
+
 
 <pre><code><span class="str">"""evals/run_eval.py — 用法：uv run python evals/run_eval.py --out eval_results/v1.json"""</span>
 from __future__ import annotations
