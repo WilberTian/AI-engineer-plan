@@ -37,54 +37,54 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
-      <a href="stage-p2.html">← P2 检索与上下文</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html" class="on">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
-    <h4>W10 · 读懂 harness</h4>
+    <h4>本页目录</h4>
+    <h4 class="grp">W10 · 读懂 harness</h4>
     <nav>
       <a href="#w10" class="on">本周目标</a>
       <a href="#p3-1">1 读源码的四步法</a>
       <a href="#p3-2">2 s01–s03 对照</a>
       <a href="#p3-3">3 s04–s06 对照</a>
     </nav>
-    <h4>W11 · 上下文与恢复</h4>
+    <h4 class="grp">W11 · 上下文与恢复</h4>
     <nav>
       <a href="#w11">本周目标</a>
       <a href="#p3-4">4 s07–s09</a>
       <a href="#p3-5">5 s10–s12</a>
       <a href="#p3-6">6 压缩策略对照表</a>
     </nav>
-    <h4>W12 · 持久化与审批</h4>
+    <h4 class="grp">W12 · 持久化与审批</h4>
     <nav>
       <a href="#w12">本周目标</a>
       <a href="#p3-7">7 checkpoint + resume</a>
       <a href="#p3-8">8 人工审批点</a>
     </nav>
-    <h4>W13 · MCP 与 trace</h4>
+    <h4 class="grp">W13 · MCP 与 trace</h4>
     <nav>
       <a href="#w13">本周目标</a>
       <a href="#p3-9">9 写一个 MCP server</a>
       <a href="#p3-10">10 客户端接入与权限</a>
       <a href="#p3-11">11 全链路 trace</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#selftest">闭卷自测</a>
-      <a href="#done">交付物清单</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
+      <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
-    <h4>附录</h4>
-    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
   </aside>
 
   <main>
@@ -99,9 +99,24 @@
         <span>一个 MCP server</span>
         <span>全链路 trace</span>
       </div>
+      <p class="linepos"><span class="arw">上一阶段给了</span>可检索、可溯源的问答服务<span class="arw">→</span><b>本阶段交出：能跑长任务的 harness</b><span class="arw">→</span><span class="arw">下一阶段</span>P4 往这个 harness 里逐个注入故障</p>
     </div>
 
     <p class="bookhint"><b>书</b><span>第 5 章 §Coding Agent 整体流程 · 第 2 章 §KV Cache、§Skills、§状态栏 · 第 4 章 §工具太多怎么办 · 第 9 章 §从轨迹获得学习信号</span><span class="bx">实验 2-4 ★★、2-6 ★★、9-1 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <div class="resweek">
+      <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
+      <div class="tw">
+        <table class="compact">
+          <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
+          <tbody>
+            <tr><td><b>W10</b></td><td>读 harness</td><td>learn-claude-code s01–s06；12-Factor Agents 前 6 条</td><td>claw0 s01–s02</td></tr>
+            <tr><td><b>W11</b></td><td>上下文</td><td>Effective context engineering；s07–s09</td><td>Claude cookbook 的 compaction notebook</td></tr>
+            <tr><td><b>W12</b></td><td>持久化</td><td>s10–s12；12-Factor 的 launch-pause-resume</td><td>LangGraph checkpoint 源码</td></tr>
+            <tr><td><b>W13</b></td><td>MCP + trace</td><td>modelcontextprotocol.io；python-sdk；Langfuse 自托管文档</td><td>DeepLearning.AI 的 MCP 短课</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="callout">
       <b>先看清这两个仓库是什么</b>

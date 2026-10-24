@@ -37,12 +37,20 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
-      <a href="env.html">环境搭建（Day 0）</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html" class="on">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
-    <h4>W02 · Python 速通</h4>
+    <h4>本页目录</h4>
+    <h4 class="grp">W02 · Python 速通</h4>
     <nav>
       <a href="#w2" class="on">本周目标</a>
       <a href="#p1-1">1 七天分配</a>
@@ -50,7 +58,7 @@
       <a href="#p1-3">3 asyncio</a>
       <a href="#p1-4">4 重写旧工具</a>
     </nav>
-    <h4>W03 · 模型 API</h4>
+    <h4 class="grp">W03 · 模型 API</h4>
     <nav>
       <a href="#w3">本周目标</a>
       <a href="#p1-5">5 llm.py 四能力</a>
@@ -58,36 +66,28 @@
       <a href="#p1-7">7 tool calling 原始协议</a>
       <a href="#p1-8">8 错误码</a>
     </nav>
-    <h4>W04 · 手写 loop</h4>
+    <h4 class="grp">W04 · 手写 loop</h4>
     <nav>
       <a href="#w4">本周目标</a>
       <a href="#p1-9">9 工具注册表</a>
       <a href="#p1-10">10 loop 核心</a>
       <a href="#p1-11">11 错误自愈</a>
     </nav>
-    <h4>W05 · eval v1</h4>
+    <h4 class="grp">W05 · eval v1</h4>
     <nav>
       <a href="#w5">本周目标</a>
       <a href="#p1-12">12 测试集</a>
       <a href="#p1-13">13 runner</a>
       <a href="#p1-14">14 判分器</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#selftest">闭卷自测</a>
-      <a href="#done">交付物清单</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
+      <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
-    <h4>附录</h4>
-    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
   </aside>
 
   <main>
@@ -102,9 +102,24 @@
         <span>evals/v1.jsonl（10 条）</span>
         <span>一条命令跑出通过率</span>
       </div>
+      <p class="linepos"><span class="arw">上一阶段给了</span>岗位靶心与能力盘点<span class="arw">→</span><b>本阶段交出：手写 loop + evals/v1</b><span class="arw">→</span><span class="arw">下一阶段</span>P2 把检索器挂进这个 loop，评测脚本直接复用</p>
     </div>
 
     <p class="bookhint"><b>书</b><span>第 2 章 §Agent 如何调用大模型 · 第 4 章 §工具设计的通用原则 · 第 7 章 §Pass@k 与 Pass^k</span><span class="bx">实验 2-1 ★、2-3 ★★、7-2 ★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <div class="resweek">
+      <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
+      <div class="tw">
+        <table class="compact">
+          <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
+          <tbody>
+            <tr><td><b>W02</b></td><td>Python</td><td>uv 文档；Pydantic 文档</td><td>任何 Python for JS devs 的对照表</td></tr>
+            <tr><td><b>W03</b></td><td>API 深度</td><td>OpenAI / Anthropic API 文档（tool use、structured output、errors）</td><td>HF Agents Course Unit 1</td></tr>
+            <tr><td><b>W04</b></td><td>手写 loop</td><td>Writing tools for agents；HF Unit 1 的 loop 示例</td><td>smolagents agents.py</td></tr>
+            <tr><td><b>W05</b></td><td>eval v1</td><td>promptfoo 文档；HF bonus：evaluation</td><td>DeepEval 快速开始</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="callout">
       <b>这四周的一个硬要求</b>

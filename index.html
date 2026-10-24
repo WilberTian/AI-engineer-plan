@@ -36,9 +36,23 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
+    <nav>
+      <a href="index.html" class="on">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
+    </nav>
+    <h4>本页目录</h4>
+
     <nav>
       <a href="index.html#how" class="on">怎么用这份手册</a>
+      <a href="index.html#mainline">主线：七个阶段怎么排</a>
       <a href="index.html#target">先选靶心（岗位细分）</a>
       <a href="index.html#portfolio">你要交付的三个作品</a>
       <a href="index.html#calendar">24 周节奏表</a>
@@ -46,23 +60,14 @@
       <a href="index.html#milestone">四个里程碑</a>
       <a href="index.html#daily">每日执行模板</a>
       <a href="index.html#pitfalls">七个坑</a>
-      <a href="env.html">环境搭建（Day 0）</a>
     </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
-    </nav>
-    <h4>附录</h4>
-    <nav>
-      <a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a>
-      <a href="resources.html#skip">明确不要碰的东西</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
       <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
   </aside>
 
@@ -118,7 +123,104 @@
       <p>你已经有十年工程经验，看得懂代码。但「读懂」和「能改」是两件事。这些骨架故意留了不完整的地方（比如 agent loop 的停止条件只写了一个、eval 的 judge 只给了 prompt 没给解析），因为面试追问的正是这些空白处。抄完能跑不算过，能回答「如果我把这里改成 X 会怎样」才算过。</p>
     </div>
 
-    <h2 id="target"><span class="num">2</span>先选靶心：这行有 7 种岗，你打哪两个</h2>
+    <h2 id="mainline"><span class="num">2</span>主线：七个阶段是怎么排的</h2>
+
+    <p class="lead">七个阶段不是七个技术主题的并列清单，而是一条<b>单向依赖链</b>：上一阶段交出的东西，就是下一阶段的输入。跳过任何一环，后面都会卡住——这是全站唯一需要先看懂的一张图。</p>
+
+    <div class="flow">
+      <div class="st"><b>P0</b><span>定方向<br>打哪两个岗</span></div>
+      <div class="st"><b>P1</b><span>会调模型<br>手写 loop</span></div>
+      <div class="st"><b>P2</b><span>有知识<br>可溯源</span></div>
+      <div class="st"><b>P3</b><span>能动手<br>跑长任务</span></div>
+      <div class="st"><b>P4</b><span>不出事<br>不烧钱</span></div>
+      <div class="st"><b>P5</b><span>有人用<br>讲得清</span></div>
+      <div class="st"><b>P6</b><span>有人买<br>拿到 offer</span></div>
+    </div>
+
+    <h3>每个阶段只回答一个问题，只交一样东西</h3>
+
+    <div class="tw wide">
+      <table>
+        <thead>
+          <tr><th style="width:58px">阶段</th><th>它回答的问题</th><th>唯一交付物</th><th style="width:30%">下一阶段拿它做什么</th><th style="width:86px">周次</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>P0</b></td><td>我要打哪两个岗？我手上已经有什么？</td><td>岗位靶心 + 能力盘点表</td><td>决定 P1 的 Python 和 loop 要写到什么程度，不写超纲的</td><td style="white-space:nowrap">W01</td></tr>
+          <tr><td><b>P1</b></td><td>模型怎么调、循环怎么写、好坏怎么量？</td><td>手写 <code>loop.py</code> + <code>evals/v1</code></td><td>P2 的检索器挂进这个 loop，评测脚本直接复用</td><td style="white-space:nowrap">W02–05</td></tr>
+          <tr><td><b>P2</b></td><td>怎么让答案有依据、能溯源、敢拒答？</td><td>带引用与拒答的 RAG 服务</td><td>P3 把「检索」当成一个工具，挂到 harness 上</td><td style="white-space:nowrap">W06–09</td></tr>
+          <tr><td><b>P3</b></td><td>怎么让它连续干活，中途断了还能续？</td><td>能跑长任务的 harness</td><td>P4 往这个 harness 里逐个注入故障</td><td style="white-space:nowrap">W10–13</td></tr>
+          <tr><td><b>P4</b></td><td>怎么保证不出事、不失控、不烧钱？</td><td>故障注入报告 + 成本与延迟模型</td><td>P5 上线要拿这组数据定 SLA、配额和降级线</td><td style="white-space:nowrap">W14–17</td></tr>
+          <tr><td><b>P5</b></td><td>怎么让人用起来，并且在 60 秒内讲清？</td><td>线上 demo + 作品集三件套</td><td>P6 面试就讲这三个作品，不再另造素材</td><td style="white-space:nowrap">W18–21</td></tr>
+          <tr><td><b>P6</b></td><td>怎么把能力换成 offer？</td><td>简历 v3 + 面试稿 + 投递记录</td><td>—（走完即进入招聘市场）</td><td style="white-space:nowrap">W22–24</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>为什么这么切：三条依据</h3>
+
+    <div class="grid c3">
+      <div class="card">
+        <div class="tag">依据一</div>
+        <h4>按依赖链切，不按技术清单切</h4>
+        <p>「Python → RAG → Agent → 评测 → 部署」是技术清单，学完不知道自己能做什么。这里每一阶段都以前一阶段的<b>产物</b>为起点：没有 <code>loop.py</code>，P2 的检索器就没地方挂；没有评测集，P3 的改造就说不清是变好还是变坏。</p>
+      </div>
+      <div class="card">
+        <div class="tag">依据二</div>
+        <h4>按失败模式升级，一级治一种病</h4>
+        <p>跑不起来（P1）→ 跑不准（P2）→ 跑不稳（P3）→ 跑不起（P4）→ 没人用（P5）→ 没人买（P6）。真实的 agent 项目就是按这个顺序死的，所以学习顺序和它对齐：遇到哪类失败，就知道该回哪个阶段补。</p>
+      </div>
+      <div class="card">
+        <div class="tag">依据三</div>
+        <h4>每阶段必须有可验收产物</h4>
+        <p>没产物就不进下一阶段。这条是硬的：产物是文件、是命令输出、是能贴进 README 的结论。所有验收都查产物，不查「感觉懂了」。也正因为如此，附录不占周次——它不产生产物，不构成阶段。</p>
+      </div>
+    </div>
+
+    <h3>七个阶段和参考层是什么关系</h3>
+
+    <p>一句话：<b>主线是路线图，参考层是字典</b>。但更准的说法是——<b>凡是能挂在「哪一步用」上的，都已经搬进那一步了</b>；留在参考层的，只有「必须放在一起才有用」的东西。</p>
+
+    <div class="tw">
+      <table class="compact">
+        <thead><tr><th style="width:30%">内容类型</th><th>判定规则</th><th style="width:34%">现在在哪</th></tr></thead>
+        <tbody>
+          <tr><td><b>只在某一周用</b><br><span class="muted">工具文档、教程、论文、书的某章</span></td><td>能明确说「第 N 周用」的，一律挂到那一周</td><td>阶段页顶部「<b>本阶段该看什么</b>」表 + 每页的「<b>书</b>」提示条</td></tr>
+          <tr><td><b>要横向对比才决策</b><br><span class="muted">12 个 harness、三档 SDK、五个协议</span></td><td>拆开就比不出差别，必须放在一处</td><td>参考层 <a href="resources.html#frameworks">§5 Harness 与框架地图</a></td></tr>
+          <tr><td><b>查的不是学</b><br><span class="muted">术语、千万别踩的坑</span></td><td>只有「卡住时」和「面试前」两个使用时刻</td><td>参考层 <a href="resources.html#glossary">§15 术语表</a>、<a href="resources.html#skip">§13 不要碰的</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4>为什么不是全拆掉</h4>
+
+    <div class="grid c2">
+      <div class="card">
+        <div class="tag">理由一</div>
+        <h4>拆开会变成三份互相打脸的副本</h4>
+        <p>同一条资源如果同时出现在 P2、P3、P5，改一次就要改三处。半年后必然出现「P3 说用 A，P5 说 A 已经不该起步」这种自相矛盾——这比多跳一次链接的代价大得多。</p>
+      </div>
+      <div class="card">
+        <div class="tag">理由二</div>
+        <h4>对比的价值就在「放在一起」</h4>
+        <p>选型时你要做的是「十二个项目里挑一个」，把它们拆到不同阶段页，就再也没法横向看「谁把控制权放在哪一层」。这类内容天然属于参考层，不属于任何单一阶段。</p>
+      </div>
+    </div>
+
+    <h4>参考层的三个使用时刻</h4>
+
+    <p><b>① 任务卡里写着「去查 X」</b>——照卡片推进时卡在某个具体工具上；<b>② 要做横向对比</b>——P3 决定读哪个 harness 源码、P5 决定技术选型；<b>③ 面试前 30 分钟</b>——扫一遍术语表，把说法校准。其余时间不必打开它。</p>
+
+    <div class="callout warn">
+      <b>反过来：这一层不该被通读</b>
+      <p>它不产生任何产物，也没有「完成」这个状态。如果你发现自己一整周都在读资源库、没碰任务卡，那就是走偏了——<b>「这周该看什么」已经在阶段页里，你不需要回来查</b>。</p>
+    </div>
+
+    <div class="callout warn">
+      <b>七阶段 ≠ 七件作品</b>
+      <p>你只需要交付三个作品（见<a href="#portfolio">「你要交付的三个作品」</a>），它们横跨三个阶段：RAG 问答服务在 P2 成型、Agent 任务执行器在 P3–P4 变可靠、生成式界面在 P5 上线。不用每个阶段都造一个新东西出来。</p>
+    </div>
+
+    <h2 id="target"><span class="num">3</span>先选靶心：这行有 7 种岗，你打哪两个</h2>
 
     <p class="lead">「Agent 工程师」不是一种岗，是一类岗。同一个你，投不同细分，匹配度能差一档以上。这一步只花 10 分钟，但它决定后面 24 周的内容优先级会不会来回摇摆。</p>
 
@@ -162,7 +264,7 @@
 
     <p class="muted">薪资溢价确实存在，但地区 / 层级差异极大，公开口径披露率低、样本有限（2026 上半年中国一线大致：Agent 应用开发 3–5 年 20–40K×15，Agent 架构师 5–10 年 40–70K×15）。<b>只作方向参考，不要当报价</b>。为什么这类数字要打折看，见<a href="resources.html#caliber">资源库的口径说明</a>。</p>
 
-    <h2 id="portfolio"><span class="num">3</span>你要交付的三个作品</h2>
+    <h2 id="portfolio"><span class="num">4</span>你要交付的三个作品</h2>
 
     <p class="lead">招聘方读的是代码，不是你的简历。一个干净 README + 一套评测 + 一个能点的 demo，胜过十个「跑通过的 notebook」。<b>2–3 个做透的项目，永远大于 10 个表面项目。</b></p>
 
@@ -220,7 +322,7 @@
 
     <p class="muted">三个仓库的 README 统一按「六块结构」写（一句话 / 在线地址 / 关键数字 / 架构图 / 取舍说明 / 诚实局限），模板和示例数字见 <a href="stage-p5.html#p5-11">P5-11</a>。</p>
 
-    <h2 id="calendar"><span class="num">4</span>24 周节奏表</h2>
+    <h2 id="calendar"><span class="num">5</span>24 周节奏表</h2>
     <p>一周一行，写清本周主任务和周交付物。点进阶段页看这一周拆成了哪几张卡。</p>
 
     <div class="tw wide">
@@ -229,7 +331,7 @@
           <tr><th>周</th><th>阶段</th><th>本周主任务</th><th>周交付物</th></tr>
         </thead>
         <tbody>
-          <tr><td>W01</td><td><span class="pill a">P0</span></td><td>扒 JD、归并能力项、环境跑通、简历 v0</td><td>能力频次表 + 简历 v0 + 环境自检通过</td></tr>
+          <tr><td style="white-space:nowrap">W01</td><td><span class="pill a">P0</span></td><td>扒 JD、归并能力项、环境跑通、简历 v0</td><td>能力频次表 + 简历 v0 + 环境自检通过</td></tr>
           <tr><td>W02</td><td><span class="pill a">P1</span></td><td>Python 速通（只学 AI 生态要用的那部分）</td><td>一个 Python 版的旧工具 + ruff/mypy 全绿</td></tr>
           <tr><td>W03</td><td><span class="pill a">P1</span></td><td>模型 API 深度：流式、结构化输出、tool use、错误码</td><td><code>llm.py</code> 四个能力 + 10 次连续 schema 通过</td></tr>
           <tr><td>W04</td><td><span class="pill a">P1</span></td><td>手写 agent loop（不用任何框架）</td><td>60–150 行 <code>loop.py</code>，3 个任务选对工具</td></tr>
@@ -259,7 +361,7 @@
 
     <p class="muted" style="margin-top:10px">每周该读《深入理解 AI Agent》的哪一章、跑哪个实验，在 <a href="resources.html#book-weeks">资源库 §15.2</a> 有一张对齐表。读书只占预算的 15%，超了就会挤掉动手时间。</p>
 
-    <h2 id="budget"><span class="num">5</span>时间预算与换算</h2>
+    <h2 id="budget"><span class="num">6</span>时间预算与换算</h2>
 
     <p>先算你真实能给的时间，再决定用哪一档。不要用「理想情况」估——按你过去一个月实际能挤出的时长算。</p>
 
@@ -280,7 +382,7 @@
       <p>顺序是：<b>P5 的生成式 UI → P5 的部署运营 → P4 的成本优化 → P3 的 MCP</b>。<b>绝对不砍</b>：P1 的手写 loop、任何阶段的 eval、P4 的故障注入。因为面试筛的就是这三样，砍掉等于没学。</p>
     </div>
 
-    <h2 id="milestone"><span class="num">6</span>四个里程碑</h2>
+    <h2 id="milestone"><span class="num">7</span>四个里程碑</h2>
     <p>每到一个节点做一次硬检查。不过关就不往前推——带病前进会在 P4 集中爆发。</p>
 
     <div class="milestone">
@@ -312,7 +414,7 @@
       </div>
     </div>
 
-    <h2 id="daily"><span class="num">7</span>每日执行模板</h2>
+    <h2 id="daily"><span class="num">8</span>每日执行模板</h2>
     <p>把下面这段贴在你的笔记工具顶部，每天开工前选一格。</p>
 
     <div class="tw">
@@ -336,7 +438,7 @@
       <li>如果下周只做一件事，是哪件？</li>
     </ol>
 
-    <h2 id="pitfalls"><span class="num">8</span>七个坑（都会真实发生）</h2>
+    <h2 id="pitfalls"><span class="num">9</span>七个坑（都会真实发生）</h2>
 
     <p class="lead">这七条不是抽象警告，是这类转型里反复出现的具体失败方式。卡住的时候回来看一眼，比继续硬撑有用。</p>
 
@@ -355,7 +457,7 @@
       </table>
     </div>
 
-    <h2 id="start"><span class="num">9</span>从哪开始</h2>
+    <h2 id="start"><span class="num">10</span>从哪开始</h2>
 
     <div class="grid c2">
       <div class="card">

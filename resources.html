@@ -36,18 +36,30 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
+    </nav>
+    <h4>本页目录</h4>
+
+    <nav>
       <a href="#how" class="on">怎么用这份清单</a>
     </nav>
-    <h4>必读与原理</h4>
+    <h4 class="grp">必读与原理</h4>
     <nav>
       <a href="#papers">官方必读文章</a>
       <a href="#courses">课程</a>
       <a href="#source">读源码的仓库</a>
     </nav>
-    <h4>Harness 地图（§5）</h4>
+    <h4 class="grp">Harness 地图（§5）</h4>
     <nav>
       <a class="sub" href="#words">5.1 四个词先分清</a>
       <a class="sub" href="#seven">5.2 七个必备件</a>
@@ -60,40 +72,31 @@
       <a class="sub" href="#plan">5.9 接进 24 周</a>
       <a class="sub" href="#interview">5.10 面试怎么说</a>
     </nav>
-    <h4>技术栈</h4>
+    <h4 class="grp">技术栈</h4>
     <nav>
       <a href="#ragstack">检索与解析</a>
       <a href="#eval">评测与观测</a>
       <a href="#frontend">前端与产品</a>
       <a href="#sandbox">沙箱与执行</a>
     </nav>
-    <h4>Benchmark 与面试</h4>
+    <h4 class="grp">Benchmark 与面试</h4>
     <nav>
       <a href="#bench">Benchmark 与数据集</a>
       <a href="#bench-read">怎么读 benchmark 分数</a>
       <a href="#cn">中文面经与题库</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#skip">明确不要碰的</a>
-      <a href="#weekly">按周索引</a>
-      <a href="#book">书的按周读法（§15）</a>
-      <a href="#glossary">术语表</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="#frameworks">Harness 与框架地图</a>
+      <a href="#book">书的读法（§14）</a>
+      <a href="#glossary">术语表</a>
+      <a href="#skip">明确不要碰的</a>
     </nav>
   </aside>
 
   <main>
     <h1>资源库与 Harness 地图</h1>
-    <p class="subtitle">两件事合在一页：<b>§1–§4、§6–§16 是资源清单</b>（60+ 项，按「用来做什么 / 对应哪一周 / 坑在哪」编排，每一项都绑定到一张任务卡）；<b>§5 是 2026 年的项目地图</b>（harness、框架、协议各是什么、该看哪几个、哪周碰哪个）。</p>
+    <p class="subtitle">两件事合在一页：<b>§1–§4、§6–§15 是资源清单</b>（60+ 项，按「用来做什么 / 对应哪一周 / 坑在哪」编排，每一项都绑定到一张任务卡）；<b>§5 是 2026 年的项目地图</b>（harness、框架、协议各是什么、该看哪几个、哪周碰哪个）。</p>
 
     <h2 id="how"><span class="num">1</span>怎么用这份清单</h2>
 
@@ -113,6 +116,26 @@
         <h4>读源码 &gt; 看视频</h4>
         <p>一周视频不如读一个 200 行的主循环。下面「读源码的仓库」那一节是最值钱的部分。</p>
       </div>
+    </div>
+
+    <h3>这份参考层，什么时候才翻</h3>
+
+    <p>它不产生任何产物，所以只在三种时刻打开。其余时间待在你的阶段页里。</p>
+
+    <div class="tw">
+      <table class="compact">
+        <thead><tr><th style="width:28%">时刻</th><th>翻哪一节</th><th style="width:27%">你那时在做什么</th></tr></thead>
+        <tbody>
+          <tr><td><b>任务卡里说「去查 X」</b></td><td>对应条目（每项都标了周次，按周次定位最快）</td><td>照卡片推进，卡在一个具体工具上</td></tr>
+          <tr><td><b>要做横向对比</b></td><td><a href="#frameworks">§5 Harness 与框架地图</a></td><td>P3 决定读哪个 harness 源码；P5 决定技术选型</td></tr>
+          <tr><td><b>面试前 30 分钟</b></td><td><a href="#glossary">§15 术语表</a> + <a href="#skip">§13 不要碰的</a></td><td>把说法校准一遍，别答成「我知道有这个」</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <b>反过来：这一层不该被通读</b>
+      <p>如果你发现自己一整周都在这里逛、没碰任务卡，那就是走偏了。<b>「这周该看什么」已经搬到每个阶段页顶部</b>，你不用回来查——除非要做上面三件事之一。</p>
     </div>
 
     <div class="callout warn">
@@ -1134,57 +1157,22 @@ Mcp-Name: search
 
     <div class="tw wide">
       <table>
-        <thead><tr><th style="width:22%">不要学</th><th>为什么（不是「没用」，是「现在不该」）</th><th style="width:26%">什么情况下才值得</th></tr></thead>
+        <thead><tr><th style="width:20%">不要学</th><th>为什么（不是「没用」，是「现在不该」）</th><th style="width:24%">什么情况下才值得</th><th style="width:92px">最容易出现在</th></tr></thead>
         <tbody>
-          <tr><td><b>从零训练模型</b></td><td>应用岗不训练模型。投入 300 小时换不来面试里的一分</td><td>你想转算法研究岗（那是另一条路）</td></tr>
-          <tr><td><b>CUDA / 算子优化</b></td><td>基础设施岗的技能，和应用岗几乎零重叠</td><td>去做推理引擎、模型服务团队</td></tr>
-          <tr><td><b>一上来微调（SFT / LoRA）</b></td><td>JD 里出现率远低于 RAG 和评测；且多数问题用 better retrieval / prompt 就能解</td><td>有稳定数据 + 明确指标 + 已排除检索和 prompt 问题之后</td></tr>
-          <tr><td><b>刷 300 道 LeetCode</b></td><td>面试确实会考手撕，但一两道中等题就够（LRU、岛屿数量这类）。每天 2 小时刷题是逃避做项目</td><td>面试前两周，针对目标公司高频题练 20 道</td></tr>
-          <tr><td><b>「框架观光」</b>（把 LangChain / CrewAI / AutoGen / MetaGPT 都跑一遍 hello world）</td><td>面试问的是「你为什么选它」，不是「你会不会用它」。跑 8 个 demo 不如读 1 个源码</td><td>需要选型时，读 2 个候选的源码对比</td></tr>
-          <tr><td><b>追每一个新模型发布</b></td><td>模型半年一换，能力判断方法不会变。追新闻给你「知道」，不给你「能做」</td><td>每周固定 30 分钟扫一眼，够用</td></tr>
-          <tr><td><b>做「10 个教程 demo」</b></td><td>简历上 10 个玩具项目 &lt; 1 个有评测有取舍的项目。<b>面试官一眼能看出教程复现</b></td><td>永不。宁可把 1 个项目做深</td></tr>
-          <tr><td><b>先学多智能体</b></td><td>单 agent 还没跑稳就上多 agent，只会让你分不清「协议问题」还是「模型问题」</td><td>单 agent + eval 已经很稳，且任务天然可分解</td></tr>
-          <tr><td><b>过早做「平台」</b></td><td>做给内部用的 agent 平台是个 6 个月工程，且需要真实用户</td><td>你已经在公司里负责这件事（那是工作，不是学习项目）</td></tr>
+          <tr><td><b>从零训练模型</b></td><td>应用岗不训练模型。投入 300 小时换不来面试里的一分</td><td>你想转算法研究岗（那是另一条路）</td><td style="white-space:nowrap"><a href="stage-p2.html">P2</a></td></tr>
+          <tr><td><b>CUDA / 算子优化</b></td><td>基础设施岗的技能，和应用岗几乎零重叠</td><td>去做推理引擎、模型服务团队</td><td style="white-space:nowrap"><a href="stage-p3.html">P3</a></td></tr>
+          <tr><td><b>一上来微调（SFT / LoRA）</b></td><td>JD 里出现率远低于 RAG 和评测；且多数问题用 better retrieval / prompt 就能解</td><td>有稳定数据 + 明确指标 + 已排除检索和 prompt 问题之后</td><td style="white-space:nowrap"><a href="stage-p2.html">P2</a> / <a href="stage-p6.html">P6</a></td></tr>
+          <tr><td><b>刷 300 道 LeetCode</b></td><td>面试确实会考手撕，但一两道中等题就够（LRU、岛屿数量这类）。每天 2 小时刷题是逃避做项目</td><td>面试前两周，针对目标公司高频题练 20 道</td><td style="white-space:nowrap"><a href="stage-p6.html">P6</a></td></tr>
+          <tr><td><b>「框架观光」</b>（把 LangChain / CrewAI / AutoGen / MetaGPT 都跑一遍 hello world）</td><td>面试问的是「你为什么选它」，不是「你会不会用它」。跑 8 个 demo 不如读 1 个源码</td><td>需要选型时，读 2 个候选的源码对比</td><td style="white-space:nowrap"><a href="stage-p1.html">P1</a> / <a href="stage-p3.html">P3</a></td></tr>
+          <tr><td><b>追每一个新模型发布</b></td><td>模型半年一换，能力判断方法不会变。追新闻给你「知道」，不给你「能做」</td><td>每周固定 30 分钟扫一眼，够用</td><td style="white-space:nowrap">全程</td></tr>
+          <tr><td><b>做「10 个教程 demo」</b></td><td>简历上 10 个玩具项目 &lt; 1 个有评测有取舍的项目。<b>面试官一眼能看出教程复现</b></td><td>永不。宁可把 1 个项目做深</td><td style="white-space:nowrap"><a href="stage-p5.html">P5</a></td></tr>
+          <tr><td><b>先学多智能体</b></td><td>单 agent 还没跑稳就上多 agent，只会让你分不清「协议问题」还是「模型问题」</td><td>单 agent + eval 已经很稳，且任务天然可分解</td><td style="white-space:nowrap"><a href="stage-p3.html">P3</a></td></tr>
+          <tr><td><b>过早做「平台」</b></td><td>做给内部用的 agent 平台是个 6 个月工程，且需要真实用户</td><td>你已经在公司里负责这件事（那是工作，不是学习项目）</td><td style="white-space:nowrap"><a href="stage-p5.html">P5</a></td></tr>
         </tbody>
       </table>
     </div>
 
-    <h2 id="weekly"><span class="num">14</span>按周索引</h2>
-    <p>快速查「这周该看什么」。</p>
-
-    <div class="tw wide">
-      <table class="compact">
-        <thead><tr><th style="width:80px">周</th><th>主题</th><th>必看</th><th>选看</th></tr></thead>
-        <tbody>
-          <tr><td>W01</td><td>定位</td><td>Building effective agents；20 份 JD</td><td>AI Engineering 书第 1 章</td></tr>
-          <tr><td>W02</td><td>Python</td><td>uv 文档；Pydantic 文档</td><td>任何 Python for JS devs 的对照表</td></tr>
-          <tr><td>W03</td><td>API 深度</td><td>OpenAI / Anthropic API 文档（tool use、structured output、errors）</td><td>HF Agents Course Unit 1</td></tr>
-          <tr><td>W04</td><td>手写 loop</td><td>Writing tools for agents；HF Unit 1 的 loop 示例</td><td>smolagents <code>agents.py</code></td></tr>
-          <tr><td>W05</td><td>eval v1</td><td>promptfoo 文档；HF bonus：evaluation</td><td>DeepEval 快速开始</td></tr>
-          <tr><td>W06</td><td>解析分块</td><td>Docling / Chonkie 文档；pgvector README</td><td>HF Unit 3 agentic RAG</td></tr>
-          <tr><td>W07</td><td>混合检索</td><td>RRF 原论文（十分钟）；bge-m3 模型卡</td><td>Qdrant 混合检索教程</td></tr>
-          <tr><td>W08</td><td>生成侧</td><td>引用与拒答的实践文章；OWASP 的「过度代理」条目</td><td>Claude cookbook 的 citation 示例</td></tr>
-          <tr><td>W09</td><td>eval v2</td><td>RAGAS 指标定义（读文档不是读代码）</td><td>inspect_ai 的实验设计</td></tr>
-          <tr><td>W10</td><td>读 harness</td><td>learn-claude-code s01–s06；12-Factor Agents 前 6 条</td><td>claw0 s01–s02</td></tr>
-          <tr><td>W11</td><td>上下文</td><td>Effective context engineering；s07–s09</td><td>Claude cookbook 的 compaction notebook</td></tr>
-          <tr><td>W12</td><td>持久化</td><td>s10–s12；12-Factor 的 launch-pause-resume</td><td>LangGraph checkpoint 源码</td></tr>
-          <tr><td>W13</td><td>MCP + trace</td><td>modelcontextprotocol.io；python-sdk；Langfuse 自托管文档</td><td>DeepLearning.AI 的 MCP 短课</td></tr>
-          <tr><td>W14</td><td>故障</td><td>12-Factor 第 8/9 条；claw0 s09 重试洋葱</td><td>故障注入相关文章</td></tr>
-          <tr><td>W15</td><td>安全</td><td>OWASP LLM Top 10（逐条对照）</td><td>garak 的攻击样例</td></tr>
-          <tr><td>W16</td><td>复盘</td><td>只用自己的笔记</td><td>—</td></tr>
-          <tr><td>W17</td><td>成本延迟</td><td>Anthropic prompt caching 文档；Claude cookbook 成本那篇</td><td>OpenAI caching 文档</td></tr>
-          <tr><td>W18</td><td>流式</td><td>AI SDK 文档（<code>useChat</code> / <code>streamText</code>）</td><td>assistant-ui 源码</td></tr>
-          <tr><td>W19</td><td>生成式 UI</td><td>AI SDK 的 tool UI 与 structured output</td><td>AI SDK 的 RSC 方案（了解即可）</td></tr>
-          <tr><td>W20</td><td>部署</td><td>Vercel / Fly 部署文档；限流实践</td><td>OpenTelemetry 基础</td></tr>
-          <tr><td>W21</td><td>作品集</td><td>3 个优秀 README 范例（找同类项目看）</td><td>—</td></tr>
-          <tr><td>W22</td><td>简历</td><td>目标公司近 3 个月面经</td><td>—</td></tr>
-          <tr><td>W23</td><td>表达</td><td>你自己的 notes（这是最重要的资源）</td><td>面经里的追问链</td></tr>
-          <tr><td>W24</td><td>投递</td><td>投递记录表</td><td>—</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <h2 id="book"><span class="num">15</span>《深入理解 AI Agent》按周读法</h2>
+    <h2 id="book"><span class="num">14</span>《深入理解 AI Agent》按周读法</h2>
 
     <p class="lead">李博杰《深入理解 AI Agent：设计原理与工程实践》（2.0 版，10 章 + 109 个配套实验）。它不替代这份计划——<b>计划管「这周敲什么命令」，它管「为什么这条命令要这么设计」</b>。两边对不上时以动手为准：书上写了但你没跑过的，面试里说不出口。</p>
 
@@ -1194,7 +1182,7 @@ Mcp-Name: search
       <p>读完的判据只有一条：<b>能不能回答「这个设计换掉会怎样」</b>。答不出来，说明只读到了概念层，没读到工程层。</p>
     </div>
 
-    <h3 id="book-prio">15.1 章节优先级：109 个实验跑不完，先按这张表挑</h3>
+    <h3 id="book-prio">14.1 章节优先级：109 个实验跑不完，先按这张表挑</h3>
 
     <p>全书正文约 90 万字节，通读保守 40 小时；109 个实验全做 300 小时以上。而这份计划总共只有 250–290 小时——所以<b>必须挑，而且要挑得很狠</b>。</p>
 
@@ -1218,7 +1206,7 @@ Mcp-Name: search
       </table>
     </div>
 
-    <h3 id="book-weeks">15.2 跟节奏表对齐：每周读哪一节、跑哪个实验</h3>
+    <h3 id="book-weeks">14.2 跟节奏表对齐：每周读哪一节、跑哪个实验</h3>
 
     <p>实验只列值得动手的。★ 是需要跑一遍的，★★ 要半天到一天，★★★ 建议留到入职后。<b>没有列实验的周就别做实验</b>，那一周的任务卡已经够重了。</p>
 
@@ -1256,7 +1244,7 @@ Mcp-Name: search
       </table>
     </div>
 
-    <h3 id="book-gap">15.3 它补上了计划里的三个短板</h3>
+    <h3 id="book-gap">14.3 它补上了计划里的三个短板</h3>
 
     <p>这三块不是「多知道一点」，而是<b>面试里最能拉开差距的地方</b>——因为大多数人只做到跑通，做不到可度量、可迭代。</p>
 
@@ -1294,7 +1282,7 @@ Mcp-Name: search
       <p>读完一章就回到对应卡片改代码，别攒着。攒到最后一定忘——这是这类书最常见的白读方式。</p>
     </div>
 
-    <h3 id="book-how">15.4 四条阅读纪律</h3>
+    <h3 id="book-how">14.4 四条阅读纪律</h3>
 
     <div class="grid c2">
       <div class="card">
@@ -1325,7 +1313,7 @@ Mcp-Name: search
       <p>另外这本书配套 109 个实验，仓库会持续更新——实验编号也可能增补。表格里标的是写作时的编号。</p>
     </div>
 
-    <h2 id="glossary"><span class="num">16</span>术语表（面试前扫一遍）</h2>
+    <h2 id="glossary"><span class="num">15</span>术语表（面试前扫一遍）</h2>
 
     <p class="lead">这些词你后面每天都会用。面试里说错一个定义，比不知道更伤——因为它说明你只是背过。下面每个都是「一句话准确定义」，不是科普。</p>
 

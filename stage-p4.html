@@ -37,31 +37,39 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
-      <a href="stage-p3.html">← P3 Agent 运行时</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html" class="on">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
-    <h4>W14 · 失败工程</h4>
+    <h4>本页目录</h4>
+    <h4 class="grp">W14 · 失败工程</h4>
     <nav>
       <a href="#w14" class="on">本周目标</a>
       <a href="#p4-1">1 故障注入框架</a>
       <a href="#p4-2">2 五类故障逐个打</a>
       <a href="#p4-3">3 幂等与退避</a>
     </nav>
-    <h4>W15 · 安全</h4>
+    <h4 class="grp">W15 · 安全</h4>
     <nav>
       <a href="#w15">本周目标</a>
       <a href="#p4-4">4 最小权限 + 内容隔离</a>
       <a href="#p4-5">5 攻击清单</a>
       <a href="#p4-6">6 审计日志</a>
     </nav>
-    <h4>W16 · 缓冲</h4>
+    <h4 class="grp">W16 · 缓冲</h4>
     <nav>
       <a href="#w16">本周目标</a>
       <a href="#p4-7">7 复盘与错题本</a>
     </nav>
-    <h4>W17 · 成本与延迟</h4>
+    <h4 class="grp">W17 · 成本与延迟</h4>
     <nav>
       <a href="#w17">本周目标</a>
       <a href="#p4-8">8 成本核算</a>
@@ -69,22 +77,14 @@
       <a href="#p4-10">10 prompt caching</a>
       <a href="#p4-11">11 延迟分解</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#selftest">闭卷自测</a>
-      <a href="#done">交付物清单</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
+      <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
-    <h4>附录</h4>
-    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
   </aside>
 
   <main>
@@ -99,9 +99,24 @@
         <span>成本降 30% 的 eval 证据</span>
         <span>p50/p95 延迟对比</span>
       </div>
+      <p class="linepos"><span class="arw">上一阶段给了</span>能跑长任务、但还不稳的 harness<span class="arw">→</span><b>本阶段交出：故障注入报告 + 成本与延迟模型</b><span class="arw">→</span><span class="arw">下一阶段</span>P5 拿这组数据定 SLA、配额和降级线</p>
     </div>
 
     <p class="bookhint"><b>书</b><span>第 5 章 §故障与错误恢复 · 第 2 章 §提示注入 · 第 9 章 §持续进化的安全边界 · 第 7 章 §模型选型与成本</span><span class="bx">实验 2-5 ★★、5-2 ★★、7-10 ★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <div class="resweek">
+      <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
+      <div class="tw">
+        <table class="compact">
+          <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
+          <tbody>
+            <tr><td><b>W14</b></td><td>故障</td><td>12-Factor 第 8/9 条；claw0 s09 重试洋葱</td><td>故障注入相关文章</td></tr>
+            <tr><td><b>W15</b></td><td>安全</td><td>OWASP LLM Top 10（逐条对照）</td><td>garak 的攻击样例</td></tr>
+            <tr><td><b>W16</b></td><td>复盘</td><td>只用自己的笔记</td><td>—</td></tr>
+            <tr><td><b>W17</b></td><td>成本延迟</td><td>Anthropic prompt caching 文档；Claude cookbook 成本那篇</td><td>OpenAI caching 文档</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- ============ W14 ============ -->
     <h2 id="w14"><span class="num">W14</span>失败工程：主动把系统打坏</h2>

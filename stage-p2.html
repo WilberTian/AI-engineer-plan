@@ -37,12 +37,20 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
-      <a href="stage-p1.html">← P1 地基</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html" class="on">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
-    <h4>W06 · 解析与入库</h4>
+    <h4>本页目录</h4>
+    <h4 class="grp">W06 · 解析与入库</h4>
     <nav>
       <a href="#w6" class="on">本周目标</a>
       <a href="#p2-1">1 选语料</a>
@@ -51,43 +59,35 @@
       <a href="#p2-4">4 pgvector 入库</a>
       <a href="#p2-5">5 先测 recall@5</a>
     </nav>
-    <h4>W07 · 混合检索</h4>
+    <h4 class="grp">W07 · 混合检索</h4>
     <nav>
       <a href="#w7">本周目标</a>
       <a href="#p2-6">6 关键词检索</a>
       <a href="#p2-7">7 RRF 融合</a>
       <a href="#p2-8">8 交叉编码器重排</a>
     </nav>
-    <h4>W08 · 生成侧</h4>
+    <h4 class="grp">W08 · 生成侧</h4>
     <nav>
       <a href="#w8">本周目标</a>
       <a href="#p2-9">9 引用机制</a>
       <a href="#p2-10">10 拒答判据</a>
       <a href="#p2-11">11 权限过滤</a>
     </nav>
-    <h4>W09 · eval v2</h4>
+    <h4 class="grp">W09 · eval v2</h4>
     <nav>
       <a href="#w9">本周目标</a>
       <a href="#p2-12">12 30 条测试集</a>
       <a href="#p2-13">13 两组指标</a>
       <a href="#p2-14">14 分层诊断</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#selftest">闭卷自测</a>
-      <a href="#done">交付物清单</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
+      <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
-    <h4>附录</h4>
-    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
   </aside>
 
   <main>
@@ -102,9 +102,24 @@
         <span>带引用的问答接口</span>
         <span>30 条 eval + 分组指标</span>
       </div>
+      <p class="linepos"><span class="arw">上一阶段给了</span>一个能跑通、可评测的 loop<span class="arw">→</span><b>本阶段交出：带引用与拒答的 RAG 服务</b><span class="arw">→</span><span class="arw">下一阶段</span>P3 把「检索」当成一个工具挂到 harness 上</p>
     </div>
 
     <p class="bookhint"><b>书</b><span>第 3 章 §RAG 基础、§混合检索、§超越扁平文本 · 第 7 章 §数据集设计、§失败归因</span><span class="bx">实验 3-4 ★★、3-6 ★★、7-3 ★★、7-6 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <div class="resweek">
+      <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
+      <div class="tw">
+        <table class="compact">
+          <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
+          <tbody>
+            <tr><td><b>W06</b></td><td>解析分块</td><td>Docling / Chonkie 文档；pgvector README</td><td>HF Unit 3 agentic RAG</td></tr>
+            <tr><td><b>W07</b></td><td>混合检索</td><td>RRF 原论文（十分钟）；bge-m3 模型卡</td><td>Qdrant 混合检索教程</td></tr>
+            <tr><td><b>W08</b></td><td>生成侧</td><td>引用与拒答的实践文章；OWASP 的「过度代理」条目</td><td>Claude cookbook 的 citation 示例</td></tr>
+            <tr><td><b>W09</b></td><td>eval v2</td><td>RAGAS 指标定义（读文档不是读代码）</td><td>inspect_ai 的实验设计</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="callout danger">
       <b>RAG 最贵的错误：先调 prompt</b>

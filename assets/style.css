@@ -124,6 +124,16 @@ kbd{font-family:var(--mono);font-size:.82em;background:var(--surface-3);border:1
 .sidebar nav a:hover{background:var(--surface-2);color:var(--ink)}
 .sidebar nav a.on{color:var(--accent-ink);border-left-color:var(--accent);background:var(--accent-soft);font-weight:600}
 .sidebar nav a.sub{padding-left:20px;font-size:12.5px;color:var(--ink-3)}
+/* 侧栏：本页目录下的周/主题分组小标题 + 主线里的周次 */
+.sidebar h4.grp{
+  font-size:10.6px;letter-spacing:.06em;text-transform:none;
+  color:var(--ink-3);margin:13px 0 3px;font-weight:600;
+}
+.sidebar nav a .wk{
+  float:right;margin-left:8px;font-size:10.4px;letter-spacing:.02em;
+  color:var(--ink-3);
+}
+.sidebar nav a.on .wk{color:var(--accent-ink);opacity:.75}
 main{padding:34px 0 120px;min-width:0}
 
 /* ---------- typography ---------- */
@@ -294,6 +304,40 @@ pre:hover .copybtn{opacity:1}
   font-size:12.5px;background:var(--surface);border:1px solid var(--line-2);
   border-radius:7px;padding:3px 9px;color:var(--ink-2);
 }
+
+/* 阶段页顶部：这一阶段在主线的位置（上一阶段 → 本阶段 → 下一阶段） */
+.linepos{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 9px;
+  margin:11px 0 0;padding:8px 13px;
+  border:1px solid var(--line);border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  font-size:12.7px;line-height:1.7;color:var(--ink-2);
+}
+.linepos .arw{color:var(--ink-3);font-size:11.5px}
+.linepos b{color:var(--ink);font-weight:650}
+
+/* 阶段页：本阶段该看什么（原资源库「按周索引」搬进来） */
+.resweek{margin:14px 0 0}
+.resweek .rw-h{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+  margin:0 0 7px;font-size:12.9px;color:var(--ink-2);
+}
+.resweek .rw-h b{font-size:11.6px;letter-spacing:.05em;color:var(--accent-ink)}
+.resweek table{font-size:12.6px}
+.resweek td,.resweek th{vertical-align:top}
+
+/* 总览：七个阶段的流程条 */
+.flow{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 4px}
+.flow .st{
+  flex:1 1 108px;min-width:100px;
+  border:1px solid var(--line-2);border-radius:9px;
+  padding:9px 10px;background:var(--surface);
+}
+.flow .st b{
+  display:block;font-size:11.5px;letter-spacing:.08em;
+  color:var(--accent-ink);font-weight:700;margin-bottom:2px;
+}
+.flow .st span{font-size:12.2px;line-height:1.45;color:var(--ink-2)}
 
 /* 阶段页顶部：本书对应章节提示 */
 .bookhint{

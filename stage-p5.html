@@ -37,12 +37,20 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <h4>概览</h4>
+    <h4>主线</h4>
     <nav>
-      <a href="index.html">总览与节奏表</a>
-      <a href="stage-p4.html">← P4 可靠性与成本</a>
+      <a href="index.html">总览：24 周节奏表</a>
+      <a href="env.html">Day 0 环境搭建 <span class="wk">起点</span></a>
+      <a href="stage-p0.html">P0 定位与基线 <span class="wk">W01</span></a>
+      <a href="stage-p1.html">P1 地基：Python + loop <span class="wk">W02–05</span></a>
+      <a href="stage-p2.html">P2 检索与上下文 <span class="wk">W06–09</span></a>
+      <a href="stage-p3.html">P3 Agent 运行时 <span class="wk">W10–13</span></a>
+      <a href="stage-p4.html">P4 可靠性与成本 <span class="wk">W14–17</span></a>
+      <a href="stage-p5.html" class="on">P5 产品化与差异化 <span class="wk">W18–21</span></a>
+      <a href="stage-p6.html">P6 求职冲刺 <span class="wk">W22–24</span></a>
     </nav>
-    <h4>W18 · 流式体验</h4>
+    <h4>本页目录</h4>
+    <h4 class="grp">W18 · 流式体验</h4>
     <nav>
       <a href="#w18" class="on">本周目标</a>
       <a href="#p5-1">1 技术选型</a>
@@ -51,41 +59,33 @@
       <a href="#p5-4">4 首字 &lt;2s</a>
       <a href="#p5-5">5 中断与重试</a>
     </nav>
-    <h4>W19 · 生成式 UI</h4>
+    <h4 class="grp">W19 · 生成式 UI</h4>
     <nav>
       <a href="#w19">本周目标</a>
       <a href="#p5-6">6 组件注册表</a>
       <a href="#p5-7">7 边界与降级</a>
     </nav>
-    <h4>W20 · 部署运营</h4>
+    <h4 class="grp">W20 · 部署运营</h4>
     <nav>
       <a href="#w20">本周目标</a>
       <a href="#p5-8">8 上线</a>
       <a href="#p5-9">9 限额与多租户</a>
       <a href="#p5-10">10 成本看板</a>
     </nav>
-    <h4>W21 · 作品集打磨</h4>
+    <h4 class="grp">W21 · 作品集打磨</h4>
     <nav>
       <a href="#w21">本周目标</a>
       <a href="#p5-11">11 README 六块</a>
       <a href="#p5-12">12 60 秒 demo</a>
     </nav>
-    <nav style="margin-top:14px">
-      <a href="#selftest">闭卷自测</a>
-      <a href="#done">交付物清单</a>
-    </nav>
-    <h4>七个阶段</h4>
+    <h4>参考（随时查）</h4>
     <nav>
-      <a href="stage-p0.html">P0 定位与基线</a>
-      <a href="stage-p1.html">P1 地基：Python + loop</a>
-      <a href="stage-p2.html">P2 检索与上下文</a>
-      <a href="stage-p3.html">P3 Agent 运行时</a>
-      <a href="stage-p4.html">P4 可靠性与成本</a>
-      <a href="stage-p5.html">P5 产品化与差异化</a>
-      <a href="stage-p6.html">P6 求职冲刺</a>
+      <a href="resources.html#frameworks">Harness 与框架地图</a>
+      <a href="resources.html">资源库（60+ 项）</a>
+      <a href="resources.html#book">书的读法（§14）</a>
+      <a href="resources.html#glossary">术语表</a>
+      <a href="resources.html#skip">明确不要碰的</a>
     </nav>
-    <h4>附录</h4>
-    <nav><a href="resources.html#frameworks">Harness 与框架地图</a><a href="resources.html">资源库（60+ 项）</a><a href="resources.html#glossary">术语表</a></nav>
   </aside>
 
   <main>
@@ -100,9 +100,24 @@
         <span>限额 + 成本看板</span>
         <span>3 个仓库的 README</span>
       </div>
+      <p class="linepos"><span class="arw">上一阶段给了</span>可靠性与成本基线<span class="arw">→</span><b>本阶段交出：线上 demo + 作品集三件套</b><span class="arw">→</span><span class="arw">下一阶段</span>P6 面试就讲这三个作品，不另造素材</p>
     </div>
 
     <p class="bookhint"><b>书</b><span>第 6 章 §异步与事件驱动 · 第 5 章 §代码：通用 Agent 的元能力 · 第 7 章 §可观测性、§生产级评估基础设施 · 第 9 章 §持续进化闭环</span><span class="bx">实验 6-2 ★★★（选做）</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <div class="resweek">
+      <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
+      <div class="tw">
+        <table class="compact">
+          <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
+          <tbody>
+            <tr><td><b>W18</b></td><td>流式</td><td>AI SDK 文档（useChat / streamText）</td><td>assistant-ui 源码</td></tr>
+            <tr><td><b>W19</b></td><td>生成式 UI</td><td>AI SDK 的 tool UI 与 structured output</td><td>AI SDK 的 RSC 方案（了解即可）</td></tr>
+            <tr><td><b>W20</b></td><td>部署</td><td>Vercel / Fly 部署文档；限流实践</td><td>OpenTelemetry 基础</td></tr>
+            <tr><td><b>W21</b></td><td>作品集</td><td>3 个优秀 README 范例（找同类项目看）</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="callout">
       <b>先定一个原则：不做「聊天框 + 消息列表」</b>
