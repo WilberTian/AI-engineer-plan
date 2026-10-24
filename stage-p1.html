@@ -1017,6 +1017,9 @@ def build_registry() -&gt; Registry:
             <li><b>「search_notes 和 read_file 会不会重叠」</b>：会。所以 description 里要划清边界：「搜索返回片段，读文件返回全文；要具体内容用 read_file」。</li>
           </ul>
         </div>
+        <div class="callout"><b>三个月后回来比一次</b>
+          <p>这张卡写完，<b>先别去看任何开源实现</b>——照着写会跳过「为什么这样设计」那一步，只学到形状。<code>repos/learn-claude-code/s02_tool_use</code> 是同一件事的另一种写法，P3-2 会拿它跟你的 <code>tools.py</code> 做 diff。<b>到那时你会同时看到两样东西</b>：你漏了什么，以及你在没有参照物的情况下独立想到的那部分有多值钱。</p>
+        </div>
       </div>
     </details>
 
@@ -1201,6 +1204,9 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
             <li><b>第二轮就报 <code>Invalid parameter: messages with role 'tool' must be a response to a preceding message with 'tool_calls'</code></b>：你漏了 <code>messages.append(msg...)</code> 那行。</li>
             <li><b>回答里出现「我将调用工具」但没真调</b>：模型在模仿文本。确保你传了 <code>tools=</code> 且 <code>specs()</code> 非空；再检查 tool 的 <code>parameters</code> 是不是合法 JSON Schema。</li>
           </ul>
+        </div>
+        <div class="callout"><b>这 100 行会被公开处刑一次</b>
+          <p><code>repos/learn-claude-code/s01_agent_loop</code> 是同一个 loop 的更成熟版本（137 行，含 usage 统计与中断处理）。<b>现在别看</b>。P3-2 会让你逐行 diff，到时会问三个问题：它多做了什么、为什么值得做、你的版本少了它会不会出事。<b>先手写一遍再对比，比先看一遍再抄，多出来的正是判断力</b>——这是整个 24 周里唯一一次「同一个东西写两遍」。</p>
         </div>
       </div>
     </details>

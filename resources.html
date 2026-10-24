@@ -830,19 +830,19 @@ Mcp-Name: search
           </tr>
           <tr>
             <td><b>W11</b><br><span class="muted">P3</span></td>
-            <td><code>claw0</code> s03 / s05 / s08 / s09 / s10<br><b>+ OpenClaw 官方架构文档</b></td>
-            <td>先读教学版，再去 OpenClaw 文档看真实实现，<b>列一张「教学版简化了什么」的对照表</b>。重点看 <code>sessionKey</code> 怎么决定串行/并行</td>
-            <td>能画出「消息进来 → 路由 → 会话 → 执行 → 回送」这条链，并指出并发控制点在哪</td>
+            <td><code>learn-claude-code</code> <b>s07–s12</b><br><span class="muted">六节，对应 P3-4 + P3-5</span></td>
+            <td>仍然用四步法（P3-1），每节 30 分钟。<b>s08（compact）是本阶段最值钱的一节</b>，读的时候只找它的四个决策点：什么时候压、压哪一段、压成什么形式、哪些不许压</td>
+            <td>能说出 s08 四个决策点各自的做法；能解释为什么「不可违反的规则」要抽出来不参与压缩</td>
           </tr>
           <tr>
             <td><b>W12</b><br><span class="muted">P3</span></td>
-            <td><b>精读一个工业 harness</b><br>（推荐 OpenHands 的 <code>software-agent-sdk</code> 或 OpenCode 的 session/server 层）</td>
-            <td>只读一个模块，不要通读全仓。看它怎么把「会话状态」和「传输」解耦——这正是你 P3-7 要解决的问题</td>
-            <td>写出三句话：它解决什么故障 / 代价是什么 / 你什么时候不该这么设计</td>
+            <td><b>持久化</b>：12-Factor 的 launch-pause-resume</td>
+            <td>12-Factor 那两条（状态外置、可恢复）是概念，<b>必读</b>。有余力再看 <code>claw0</code> s03 的具体做法：把会话写成 JSONL、追加写入、启动时重放——这是 P3-7 最直接的参照实现，两小时</td>
+            <td>能画出「一步执行 → 追加落盘 → 进程被杀 → 重放续跑」这条路径，并说出重放时怎么避免重复执行有副作用的步骤</td>
           </tr>
           <tr>
             <td><b>W13</b><br><span class="muted">P3</span></td>
-            <td><b>MCP</b>（stdio 起手）</td>
+            <td><b>MCP</b>（stdio 起手）<br>+ <code>learn-claude-code</code> <b>s19</b></td>
             <td>照 P3-9 写 <code>stdio</code> server（不受 2026 规范影响）。然后<b>只做一件事</b>：读一遍 2026-07-28 的 changelog，确认自己知道无状态改了什么</td>
             <td>能解释「为什么去掉 session 就能放普通负载均衡后面」，以及显式句柄怎么替代 session</td>
           </tr>
@@ -872,6 +872,52 @@ Mcp-Name: search
       <b>一条贯穿的纪律</b>
       <p>整条线上，你<b>只精读一个</b>工业 harness（W12），其余都靠「读一节 + 对照自己」推进。这不是偷懒——<b>读三个 harness 的收益，远小于把一个读到能改</b>。面试官问「你读过哪个开源项目的源码」时，他想听的是你对某一段的判断，不是你去过几个仓库。</p>
     </div>
+
+    <h4 id="repomap">这两个仓库 30 节，你只需要读 14 节</h4>
+    <p class="lead">下表不给「读 / 不读」的判决，给<b>判据</b>：每行都写了「什么情况下该读」。你的产物里出现了那个故障，就反过来读它；没出现，读了也只是观光。<b>判据可以被反驳</b>——读到某一节时如果你发现它治的故障你其实也有，那就改这张表，这比照表执行多一层训练。</p>
+
+    <div class="callout">
+      <b>先记住三条，再看表</b>
+      <p><b>① 两个仓库有一半是重叠的。</b> claw0 的 s01/s02 与 learn-claude-code 的 s01/s02 是同一个循环的两种写法，s06 与 s10 讲的是同一件事。两边都读不会多懂一层，只会多花三小时。<br>
+      <b>② 「读代码」和「做产品」是两件事。</b> s15–s17 是多智能体，上一节又说「先学多智能体」是坑——两句话不矛盾：读它是为了知道协议长什么样，做它是为了交付一个多 agent 产品。这个阶段你只做前者。<br>
+      <b>③ 判据是「你的产物里有没有这个故障」，不是「这节重不重要」。</b> 每节都重要，但 24 周装不下所有重要的东西。</p>
+    </div>
+
+    <div class="tw wide">
+      <table class="compact">
+        <thead><tr><th style="width:15%">learn-claude-code</th><th style="width:34%">它治哪种故障</th><th>什么情况下该读</th></tr></thead>
+        <tbody>
+          <tr><td><code>s01–s12</code></td><td>harness 的十二层积木，每层堵一个具体故障</td><td><b>全读</b>。P3-2 到 P3-5 四张卡逐节对照，产物是 <code>notes/harness.md</code>。没有跳过选项——每一层都对应你 harness 里的一个件</td></tr>
+          <tr><td><code>s13</code> background</td><td>慢操作（下载、长命令）卡住主循环</td><td>你的工具里有超过 30 秒的调用就该读。没有就跳过——后台线程是复杂度，不是必需品</td></tr>
+          <tr><td><code>s14</code> cron</td><td>没人问的时候自己跑（定时触发）</td><td>只有产物需要「主动醒来」才读。<b>P3 的 harness 是被动响应，这个阶段不读</b></td></tr>
+          <tr><td><code>s15</code> teams</td><td>单 agent 干不完，要分工</td><td><b>不读</b>。见上面第 ② 条：读协议 ≠ 做产品</td></tr>
+          <tr><td><code>s16</code> protocols</td><td>队友之间怎么协商（request-response）</td><td>同上，不读</td></tr>
+          <tr><td><code>s17</code> autonomous</td><td>空闲轮询、自己认领任务</td><td>同上，不读</td></tr>
+          <tr><td><code>s18</code> worktree</td><td>多个任务改同一目录互相踩</td><td>你的 harness 会跑「改文件」的工具就该看一眼——<b>这不是多 agent 专属</b>，单 agent 每个任务一个独立目录也用它</td></tr>
+          <tr><td><code>s19</code> mcp</td><td>工具要跨客户端复用，client 不该写死工具名</td><td><b>必读</b>（W13）。P3-9 写完对着看它怎么处理工具发现与生命周期</td></tr>
+          <tr><td><code>s20</code> comprehensive</td><td>全部机制归到同一个 <code>while True</code></td><td>选读。当参考实现翻，只看主循环怎么调度，不必通读 2119 行</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tw wide">
+      <table class="compact">
+        <thead><tr><th style="width:15%">claw0</th><th style="width:34%">它治哪种故障</th><th>什么情况下该读</th></tr></thead>
+        <tbody>
+          <tr><td><code>s01</code> 循环<br><code>s02</code> 工具</td><td>与 lcc s01/s02 是同一个循环、同一套工具调用</td><td><b>不读</b>。同一件事的另一种写法，你已经在 learn-claude-code 读过一遍</td></tr>
+          <tr><td><code>s03</code> 会话保护</td><td>会话太大存不住、进程崩了要能重放</td><td><b>选读（W12）</b>。lcc s08/s09 讲压缩，它补的是另一半：JSONL 追加写入 + 重放恢复。P3-7 做完读，两小时</td></tr>
+          <tr><td><code>s04</code> 通道</td><td>多个平台（微信/飞书/网页）收敛成同一种消息</td><td><b>不读</b>。你的产物只有一个入口，读它是观光</td></tr>
+          <tr><td><code>s05</code> 网关路由</td><td>一张绑定表把 (渠道, 对方) 映射到某个 agent</td><td><b>不读</b>。要同时服务多个用户、多个 agent 时才有用</td></tr>
+          <tr><td><code>s06</code> 智能层</td><td>系统提示从磁盘上的文件组装，换文件换性格</td><td><b>不读</b>。与 lcc s10 重叠，读两遍不会多懂一层</td></tr>
+          <tr><td><code>s07</code> 心跳 cron</td><td>定时器线程决定「该不该运行」</td><td><b>不读</b>。同 lcc s14，你的产物没有主动触发需求</td></tr>
+          <tr><td><code>s08</code> 投递</td><td>先写磁盘再发送，崩溃不丢消息</td><td><b>选读</b>。P3-7 落盘之后再进一步就是它；不读也能过验收</td></tr>
+          <tr><td><code>s09</code> 弹性</td><td>一次调用失败，轮换重试</td><td><b>必读（W14）</b>。P4-3 幂等与退避之前读，它的重试洋葱就是你要实现的东西</td></tr>
+          <tr><td><code>s10</code> 并发</td><td>命名 lane 把混沌的并发序列化</td><td><b>选读</b>。等 P4 真的遇到并发问题再读，现在读没有痛感</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted">合计：<b>必读 14 节</b>（lcc s01–s12 + s19、claw0 s09）、<b>选读 6 节</b>（lcc s13/s18/s20、claw0 s03/s08/s10）、<b>不读 10 节</b>。不读的那 10 节不是「不重要」，是它们治的故障你的产物里没有——<b>等你哪天真的遇到，再回来读，那时两小时能顶现在读十小时</b>。</p>
 
     <h3 id="interview">5.10 面试怎么说（五句可直接用的）</h3>
     <p class="lead">这一段不是话术模板，是<b>把上面的判断压缩成能说出口的句子</b>。每句都要能接住追问。</p>
@@ -1166,7 +1212,7 @@ Mcp-Name: search
           <tr><td><b>「框架观光」</b>（把 LangChain / CrewAI / AutoGen / MetaGPT 都跑一遍 hello world）</td><td>面试问的是「你为什么选它」，不是「你会不会用它」。跑 8 个 demo 不如读 1 个源码</td><td>需要选型时，读 2 个候选的源码对比</td><td style="white-space:nowrap"><a href="stage-p1.html">P1</a> / <a href="stage-p3.html">P3</a></td></tr>
           <tr><td><b>追每一个新模型发布</b></td><td>模型半年一换，能力判断方法不会变。追新闻给你「知道」，不给你「能做」</td><td>每周固定 30 分钟扫一眼，够用</td><td style="white-space:nowrap">全程</td></tr>
           <tr><td><b>做「10 个教程 demo」</b></td><td>简历上 10 个玩具项目 &lt; 1 个有评测有取舍的项目。<b>面试官一眼能看出教程复现</b></td><td>永不。宁可把 1 个项目做深</td><td style="white-space:nowrap"><a href="stage-p5.html">P5</a></td></tr>
-          <tr><td><b>先学多智能体</b></td><td>单 agent 还没跑稳就上多 agent，只会让你分不清「协议问题」还是「模型问题」</td><td>单 agent + eval 已经很稳，且任务天然可分解</td><td style="white-space:nowrap"><a href="stage-p3.html">P3</a></td></tr>
+          <tr><td><b>先学多智能体</b></td><td>单 agent 还没跑稳就上多 agent，只会让你分不清「协议问题」还是「模型问题」。<b>注意区别</b>：读 <code>learn-claude-code</code> s15–s17 看协议长什么样，不算踩这个坑；拿它去做一个多 agent 产品才算</td><td>单 agent + eval 已经很稳，且任务天然可分解</td><td style="white-space:nowrap"><a href="stage-p3.html">P3</a></td></tr>
           <tr><td><b>过早做「平台」</b></td><td>做给内部用的 agent 平台是个 6 个月工程，且需要真实用户</td><td>你已经在公司里负责这件事（那是工作，不是学习项目）</td><td style="white-space:nowrap"><a href="stage-p5.html">P5</a></td></tr>
         </tbody>
       </table>

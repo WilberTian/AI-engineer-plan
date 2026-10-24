@@ -96,7 +96,7 @@
       <div class="ph-tag">P3 · Week 10–13</div>
       <h2>Agent 运行时：从「能跑一次」到「能跑很久」</h2>
       <p><b>目标：</b>把你的 loop 升级成 harness——能中断恢复、能压缩上下文、能审批危险动作、能被完整观测。</p>
-      <p>这一阶段你不需要从零发明任何东西：本地 <code>repos/learn-claude-code</code>（s01–s20）和 <code>repos/claw0</code>（10 节）已经把这些拆成了可读的积木。<b>你的任务是读懂、删减、并说清为什么删。</b></p>
+      <p>这一阶段你不需要从零发明任何东西：本地 <code>repos/learn-claude-code</code>（s01–s20）和 <code>repos/claw0</code>（10 节）已经把这些拆成了可读的积木。<b>你的任务是读懂、删减、并说清为什么删。</b>三十节里只有 14 节必读——哪节读、哪节跳过、凭什么判断，在 <a href="resources.html#repomap">资源库 §5.9 末的判据表</a>。</p>
       <div class="deliv">
         <span>可恢复的 harness</span>
         <span>压缩策略对照表</span>
@@ -113,10 +113,10 @@
         <table class="compact">
           <thead><tr><th style="width:52px">周</th><th style="width:15%">主题</th><th>必看</th><th style="width:29%">选看</th></tr></thead>
           <tbody>
-            <tr><td><b>W10</b></td><td>读 harness</td><td>learn-claude-code s01–s06；12-Factor Agents 前 6 条</td><td>claw0 s01–s02</td></tr>
-            <tr><td><b>W11</b></td><td>上下文</td><td>Effective context engineering；s07–s09</td><td>Claude cookbook 的 compaction notebook</td></tr>
-            <tr><td><b>W12</b></td><td>持久化</td><td>s10–s12；12-Factor 的 launch-pause-resume</td><td>LangGraph checkpoint 源码</td></tr>
-            <tr><td><b>W13</b></td><td>MCP + trace</td><td>modelcontextprotocol.io；python-sdk；Langfuse 自托管文档</td><td>DeepLearning.AI 的 MCP 短课</td></tr>
+            <tr><td><b>W10</b></td><td>读 harness</td><td><code>learn-claude-code</code> <b>s01–s06</b>；12-Factor Agents 前 6 条</td><td><code>claw0</code> s01–s02（与 lcc 重叠，跳过不影响）</td></tr>
+            <tr><td><b>W11</b></td><td>上下文与恢复</td><td><code>learn-claude-code</code> <b>s07–s12</b>（六节，对应 P3-4 + P3-5）；Effective context engineering</td><td>Claude cookbook 的 compaction notebook</td></tr>
+            <tr><td><b>W12</b></td><td>持久化</td><td>12-Factor 的 launch-pause-resume</td><td><code>claw0</code> s03（JSONL 落盘与重放）、s08 投递；LangGraph checkpoint 源码</td></tr>
+            <tr><td><b>W13</b></td><td>MCP + trace</td><td>modelcontextprotocol.io；python-sdk；<code>learn-claude-code</code> <b>s19</b>（工具发现与组装）；Langfuse 自托管文档</td><td>DeepLearning.AI 的 MCP 短课</td></tr>
           </tbody>
         </table>
       </div>
@@ -827,6 +827,10 @@ async def main() -&gt; None:
 asyncio.run(main())</code></pre>
           </li>
         </ol>
+
+        <div class="callout"><b>写完对着 s19 看一遍</b>
+          <p><code>repos/learn-claude-code/s19_mcp_plugin</code>（1026 行）做的是同一件事，但多了一层你要抄的东西：<b>工具发现</b>——工具不是硬编码在 client 里，而是运行时问 server「你有哪些工具」。你把检索包成 MCP 之后，如果 client 那边还要写死工具名，等于没解耦。看它怎么处理工具列表的生命周期，再看你的实现缺哪一步。</p>
+        </div>
 
         <div class="out"><b>产物</b><code>src/agentlab/mcp_server.py</code> + <code>scripts/test_mcp.py</code> + 客户端调用成功的截图或日志</div>
         <div class="verify"><b>验收</b>三个工具/资源都能被外部客户端列出并调用；<code>search_knowledge</code> 的 description 让模型在「问配置项」时能选对。</div>

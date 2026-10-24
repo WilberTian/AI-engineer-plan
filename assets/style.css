@@ -162,7 +162,7 @@ hr{border:0;border-top:1px solid var(--line);margin:36px 0}
   background:var(--surface);border-radius:0 var(--radius-sm) var(--radius-sm) 0;
   padding:13px 16px;margin:16px 0;font-size:14.5px;
 }
-.callout > b:first-child{display:block;margin-bottom:3px;font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--accent-ink)}
+.callout > b:first-child{display:block;margin-bottom:3px;font-size:13px;letter-spacing:.02em;color:var(--accent-ink)}
 .callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
 .callout.ok > b:first-child{color:var(--ok)}
 .callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
@@ -265,18 +265,18 @@ pre:hover .copybtn{opacity:1}
   background:var(--ok-soft);border-radius:var(--radius-sm);padding:10px 13px;
   margin:12px 0 4px;font-size:13.8px;border-left:2px solid var(--ok);
 }
-.verify b{color:var(--ok);font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.verify > b:first-child{color:var(--ok);font-size:12px;letter-spacing:.06em;display:block;margin-bottom:3px}
 .stuck{
   background:var(--warn-soft);border-radius:var(--radius-sm);padding:10px 13px;
   margin:12px 0 4px;font-size:13.8px;border-left:2px solid var(--warn);
 }
-.stuck b{color:var(--warn);font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.stuck > b:first-child{color:var(--warn);font-size:12px;letter-spacing:.06em;display:block;margin-bottom:3px}
 .out{
   font-family:var(--mono);font-size:12.5px;color:var(--ink-2);
   background:var(--surface-2);border-radius:var(--radius-sm);padding:8px 12px;margin:10px 0;
   border:1px dashed var(--line-2);
 }
-.out b{font-family:var(--sans);color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.out > b:first-child{font-family:var(--sans);color:var(--ink-3);font-size:11px;letter-spacing:.06em;display:block;margin-bottom:2px}
 
 /* ---------- misc components ---------- */
 .pill{
