@@ -29,12 +29,14 @@
 
   /* ---------- toc active highlight ---------- */
   function initToc() {
-    var links = [].slice.call(document.querySelectorAll('.sidebar nav a[href^="#"]'));
+    /* 本页目录有两种写法：同页锚点 #id，以及 index.html#id（总览页侧栏用） */
+    var links = [].slice.call(document.querySelectorAll(
+      '.sidebar nav a[href^="#"], .sidebar nav a[href*="index.html#"]'));
     if (!links.length) return;
     var map = {};
     links.forEach(function (a) {
-      var id = a.getAttribute('href').slice(1);
-      var el = document.getElementById(id);
+      var id = (a.getAttribute('href').split('#')[1] || '');
+      var el = id && document.getElementById(id);
       if (el) map[id] = a;
     });
     var targets = Object.keys(map).map(function (id) {
@@ -725,19 +727,17 @@
     initExpand();
     initNotes();
 
-    /* 深链：若 URL 带 #id，展开其所属 task */
+    /* 深链：若 URL 带 #id，展开其所属 task，并校正一次滚动位置。
+       两件事都要做：① 折叠时目标高度为 0，浏览器原生 fragment 滚动会落空；
+       ② 原生滚动发生在样式表应用之前，等布局重算完位置已经偏了。 */
     if (location.hash) {
       var el = document.getElementById(location.hash.slice(1));
       if (el) {
         var d = el.closest('details.task');
-        if (d && !d.open) {
-          d.open = true;
-          /* 折叠时目标高度为 0，浏览器原生的 fragment 滚动会落空，
-             必须等展开后的布局重算完再手动滚一次。 */
-          requestAnimationFrame(function () {
-            el.scrollIntoView({ block: 'start' });
-          });
-        }
+        if (d && !d.open) d.open = true;
+        requestAnimationFrame(function () {
+          el.scrollIntoView({ block: 'start', behavior: 'instant' });
+        });
       }
     }
   }

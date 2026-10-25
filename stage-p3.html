@@ -52,7 +52,7 @@
     <h4>本页目录</h4>
     <h4 class="grp">开始之前</h4>
     <nav>
-      <a href="#concepts">要懂的 9 个概念</a>
+      <a href="#concepts">要懂的 10 个概念</a>
     </nav>
     <h4 class="grp">W10 · 读懂 harness</h4>
     <nav>
@@ -80,6 +80,8 @@
       <a href="#p3-9">9 写一个 MCP server</a>
       <a href="#p3-10">10 客户端接入与权限</a>
       <a href="#p3-11">11 全链路 trace</a>
+        <a href="#p3-12">12 上下文三线索</a>
+        <a href="#p3-13">13 trace 反哺评测集</a>
     </nav>
     <h4>参考（随时查）</h4>
     <nav>
@@ -121,7 +123,7 @@
         </table>
       </div>
     </div>
-    <h2 id="concepts">开始之前：这一阶段要懂的 9 个概念</h2>
+    <h2 id="concepts">开始之前：这一阶段要懂的 10 个概念</h2>
 
     <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
 
@@ -138,6 +140,7 @@
           <tr><td><b>MCP 是协议不是 SDK</b></td><td>工具跑在独立进程，通过标准消息和 agent 通信；换模型、换宿主不用重写工具</td><td>独立进程带来隔离（工具崩了不拖死 agent）和复用（写一次多个客户端能用）</td><td><a href="#p3-9">P3-9</a></td></tr>
           <tr><td><b>trace 是一棵调用树</b></td><td>一次任务一个 trace，每次模型请求/工具调用一个 span，带时长和 token</td><td>没有 trace，“慢”和“错”都只能靠猜；有了才能说清 3 秒花在哪一段</td><td><a href="#p3-11">P3-11</a></td></tr>
           <tr><td><b>审批点是设计不是补丁</b></td><td>危险动作（删文件、发邮件、花钱）前停机等人确认</td><td>这不是保守，是把“不可逆”和“可逆”分开处理；全自动化的代价是一次不可逆操作</td><td><a href="#p3-8">P3-8</a></td></tr>
+          <tr><td><b>记忆是检索的一种</b></td><td>记忆存在外面，每次用都是取出来拼进上下文——所以它属于「按需加载」，不是「存储」</td><td>三种写入策略按代价排序：全量追加 → 摘要压缩 → 结构化抽取，<b>先全量再结构化</b>。记忆是注入攻击的第二入口（第一是文档）</td><td><a href="#p3-12">P3-12</a></td></tr>
         </tbody>
       </table>
     </div>
@@ -926,7 +929,7 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
       <summary>
         <span class="tid">P3-11</span>
         <span class="tname">全链路 trace：一次任务能看到每一步</span>
-        <span class="tmin">周日 2h</span>
+        <span class="tmin">周日 1.5h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：没有 trace 的 agent 调试等于盲猜。有了 trace，你能回答「这次为什么花了 8 秒」「这个工具的输入到底是什么」「第 3 轮上下文多大」——这些是面试里「你怎么定位线上问题」的底气。</div>
@@ -1007,10 +1010,20 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
       <summary>
         <span class="tid">P3-12</span>
         <span class="tname">上下文的三条线索：稳定前缀、按需加载、状态栏</span>
-        <span class="tmin">周日 3h</span>
+        <span class="tmin">周日 2h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：W13 结束你现在接了 MCP，工具从 3 个变成 20 个，光 system 加工具 schema 就上万 token，而且<b>每一轮都在重发</b>。这是 Agent 里唯一真正稀缺的资源——不是钱，是上下文窗口和它的成本。更要紧的是：<b>KV Cache 不是优化技巧，是架构约束</b>。前缀一变，缓存全废，延迟和成本一起回来。所以上下文的排布必须在写第一行 prompt 时就定下来。</div>
+        <div class="concept">
+          <b>关键知识点</b>
+          <h5>记忆不是存储，是「按需加载」的一类</h5>
+          <p><b>记忆和上下文不是两件事。</b>记忆是存在外面的数据，每次使用都是「取出来、拼进上下文」，所以它天然属于本卡第二条线索——按需加载。想清这一点，就不会把记忆做成「全文塞进 system」。</p>
+          <ul>
+            <li><b>三种写入策略，按代价排序</b>：① <b>全量追加</b>（一句一句存，最便宜，但检索时噪音大）；② <b>摘要压缩</b>（每 N 轮让模型压成一段，多一次调用，会丢细节）；③ <b>结构化抽取</b>（只抽成「偏好 / 事实 / 待办」三类槽位，最贵，但冲突检测和过期处理只有结构化之后才做得了）。<b>先做全量 + 检索，不要一上来就结构化</b>——没有全量原始数据，你无法回填。</li>
+            <li><b>记忆是注入攻击的第二入口</b>：第一是文档（P4-4 已覆盖），第二就是记忆。攻击者只要让 agent 记下一条「以后这类操作都不用再确认」，之后每一轮都会自动带上它。<b>写入前要过和不可信内容同样的隔离规则</b>，别把记忆当成「自己的数据」。</li>
+            <li><b>什么时候不该写</b>：一次性的任务参数、能从别处查到的（用户 ID、订单状态）、24 小时内会过期的状态。<b>写成记忆的东西会被一直读到，所以错误的记忆比没有记忆更糟</b>——它在之后每一轮都污染上下文。</li>
+          </ul>
+        </div>
 
         <h5>线索一：稳定前缀 + 追加末尾（这是硬约束）</h5>
 
@@ -1114,6 +1127,90 @@ STATE_BAR = <span class="str">"""## 当前状态
       </div>
     </details>
 
+    <details class="task" id="p3-13">
+      <summary>
+        <span class="tid">P3-13</span>
+        <span class="tname">把线上失败变成评测集：从 trace 里挖 case</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：<code>evals/v1.jsonl</code> 里那 30 条是你自己编的，只覆盖<b>你想到的</b>失败。trace 里躺的是真实失败：同一类问题反复错、某个工具连续超时、某类提问永远拒答。<b>把 trace 里的失败挖出来补进评测集，是「离线评测」和「线上真相」之间唯一的那根线</b>——57% 的公司有 agent 上线、89% 有可观测性，但只有 37.3% 做线上评测。这个差值，就是你能在面试里讲出差异的地方。</div>
+
+        <div class="concept">
+          <b>关键知识点</b>
+          <h5>评测集的质量，取决于 expected 是谁写的</h5>
+          <p>评测集只有三种来源：① 自己想的（覆盖你想到的）② 公开数据集（覆盖学术界关心的）③ <b>真实失败（覆盖用户真正碰上的）</b>。前两种便宜，第三种才反映你的系统。但第三种有个陷阱：<b>expected 不能让模型自己生成</b>——模型自评会产生自我一致性偏差，它会认为自己的输出是对的，于是通过率虚高，而这个虚高在面试里解释不通（「既然 92% 通过，线上为什么还这么多错？」）。</p>
+          <ul>
+            <li><b>必须人判一次</b>，哪怕只有 10 条。你判的这 10 条，就是测试集的锚。</li>
+            <li><b>要按失败类型去重</b>：从 trace 挖出来的样本分布天然不均，同类失败会重复出现几十次。不去重，测试集会被一类问题主导，通过率只反映那一类。</li>
+            <li><b>v2 不是 v1 的替代品</b>：v1 覆盖「你应该做对什么」，v2 覆盖「你实际上做错了什么」。两个都跑，看差距。</li>
+          </ul>
+        </div>
+
+        <h5>怎么做</h5>
+        <p><b>第 1 步：确认 trace 有落盘。</b>没有落盘就没有可挖的数据，这一步不能跳。</p>
+        <pre><code># P3-11 的 observability.py 应该每次跑完追加一行 JSONL
+head -1 logs/runs.jsonl | python -m json.tool | head -20</code></pre>
+        <p>如果这个文件不存在，回 P3-11 补一行 <code>open("logs/runs.jsonl","a").write(...)</code>，再跑 20 个真实任务攒数据。<b>不要跳过这步去编 case</b>——编出来的就又回到 v1 了。</p>
+
+        <p><b>第 2 步：写挖矿脚本。</b>信号要少而准，宁可漏，不要脏。</p>
+        <pre><code># evals/mine_failures.py
+import json, pathlib
+
+LOG = pathlib.Path("logs/runs.jsonl")      # P3-11 落盘的那份
+OUT = pathlib.Path("evals/v2.jsonl")
+
+def is_failure(r):
+    if r.get("error"):                    return True   # 显式异常
+    if r.get("retries", 0) &gt;= 2:          return True   # 反复重试
+    if r.get("tool_calls", 0) &gt; 15:       return True   # 无限循环的痕迹
+    if (r.get("user_score") or 1) &lt; 0.5:  return True   # 用户点踩
+    return False
+
+cases, seen = [], set()
+for line in LOG.read_text().splitlines():
+    r = json.loads(line)
+    if not is_failure(r):
+        continue
+    kind = r.get("error_type") or "unknown"   # 按失败类型去重
+    if kind in seen:                          # 同类只留第一条
+        continue
+    seen.add(kind)
+    cases.append({"id": f"mined-{r['run_id'][:8]}",
+                  "question": r["input"],
+                  "expected": "",             # ← 故意留空，必须人填
+                  "actual": r["final_answer"],
+                  "source": "trace"})
+
+OUT.write_text("\n".join(json.dumps(c, ensure_ascii=False) for c in cases))
+print(f"{len(cases)} 条待填 expected")</code></pre>
+
+        <p><b>第 3 步：人工填 expected。</b>判不出来的那条直接删——<b>你自己判不了的，测试集也判不了</b>。想让这一步快一点，就把案例发给自己（或者让另一个模型给「参考答案草案」，但你逐条确认），不要让它直接落成标准答案。</p>
+
+        <p><b>第 4 步：两个版本都跑，看差距。</b></p>
+        <pre><code>python evals/run_eval.py --cases evals/v1.jsonl &gt; /tmp/v1.json
+python evals/run_eval.py --cases evals/v2.jsonl &gt; /tmp/v2.json</code></pre>
+        <p>然后在 <code>evals/compare.md</code> 写一句话结论：<b>我原来的测试集漏了哪一类失败</b>。这句话比两个通过率数字都值钱。</p>
+
+        <p><b>顺带一句（skills 打包）</b>：如果这套挖矿流程你以后要反复用，把它做成一个 skill——<code>mine-failures/SKILL.md</code> 里写清「什么时候触发、需要哪些输入、产物放哪」。2026 的分发单位是 skill 不是 prompt，这是最小的一次练习。</p>
+
+        <div class="out"><b>产物</b><code>evals/v2.jsonl</code>（≥10 条真实失败，<code>expected</code> 全部人工填写）+ <code>evals/compare.md</code>（v1 / v2 通过率对比 + 一句话说出漏了哪一类）</div>
+
+        <div class="verify"><b>验收</b>
+          三个判据：① v2 至少 10 条，每条 <code>expected</code> 是人填的——模型自评的 case 在面试里一问就穿；② <b>v1 通过率 − v2 通过率 ≥ 10 个点</b>，如果两个几乎一样，先怀疑筛的信号不对，别先怀疑「我的系统很稳」；③ <code>compare.md</code> 能点出具体漏了哪一类，比如「v1 里 0 条涉及工具返回空结果，而线上 40% 的错都在这儿」。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>没有 <code>logs/runs.jsonl</code></b>：说明 P3-11 只接了 trace 界面、没落盘。回 P3-11 加一行 append，跑 20 个任务再回来。这步省了，后面全是假的。</li>
+            <li><b>挖出来的全是同一类</b>：这其实是好消息——改一处能解决大部分。但要按类型去重之后再补几条边界 case，否则测试集只有一条有效。</li>
+            <li><b><code>expected</code> 填不出来</b>：说明这条的正确答案取决于上下文或业务规则，不是好 case，删掉。</li>
+            <li><b>v2 通过率反而更高</b>：别庆祝。说明 v1 里有几条已经失效（prompt 改过后问法变了），去清 v1。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
     <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
 
     <details class="task" id="selftest-card">
@@ -1163,6 +1260,7 @@ STATE_BAR = <span class="str">"""## 当前状态
           <tr><td>☐</td><td>审批</td><td><code>runtime/approval.py</code></td><td>「按参数判风险，拒绝也回灌」</td></tr>
           <tr><td>☐</td><td>MCP server</td><td><code>src/agentlab/mcp_server.py</code></td><td>「工具写一次，三个客户端都能用」</td></tr>
           <tr><td>☐</td><td>trace</td><td><code>observability.py</code></td><td>「每步的 token、耗时、工具结果长度」</td></tr>
+          <tr><td>☐</td><td>线上失败评测集</td><td><code>evals/v2.jsonl</code></td><td>「我的测试集是真实失败驱动的，v1 漏了一整类」</td></tr>
         </tbody>
       </table>
     </div>

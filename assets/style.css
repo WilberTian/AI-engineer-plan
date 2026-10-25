@@ -189,6 +189,8 @@ hr{border:0;border-top:1px solid var(--line);margin:36px 0}
 .tw{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
 table{border-collapse:collapse;width:100%;font-size:13.6px;line-height:1.6}
 th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+/* 表格里的深链不折断：卡片编号如 P3-12 被挤成 P3- / 12 会读不出来 */
+td a{white-space:nowrap}
 th{
   background:var(--surface-2);font-weight:640;font-size:12.5px;color:var(--ink-2);
   white-space:nowrap;position:relative;
@@ -384,6 +386,42 @@ pre:hover .copybtn{opacity:1}
 .weekbar .wname{font-size:17.5px;font-weight:660}
 .weekbar .wdates{margin-left:auto;font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 
+/* 总览页首：按「你现在属于哪种」三分流，不参与章节编号 */
+.triage{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 4px}
+.triage a{
+  display:block;padding:11px 13px 10px;text-decoration:none;color:inherit;
+  border:1px solid var(--line);border-top:2px solid var(--accent);
+  border-radius:var(--radius-sm);background:var(--surface);transition:.15s;
+}
+.triage a:hover{background:var(--accent-soft);border-color:var(--accent)}
+.triage b{display:block;font-size:13.4px;font-weight:650;margin-bottom:3px}
+.triage span{display:block;font-size:12.4px;line-height:1.62;color:var(--ink-3)}
+.triage em{display:block;margin-top:6px;font-style:normal;font-size:12.2px;color:var(--accent-ink)}
+
+/* 总览页内：以下进入「工具区」。它不是章节，只是一条分隔 */
+.band{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 10px;
+  margin:34px 0 2px;padding:10px 14px;
+  border:1px dashed var(--line-2);border-radius:var(--radius-sm);
+  background:var(--surface-2);font-size:13px;line-height:1.7;color:var(--ink-2);
+}
+.band b{color:var(--ink);font-weight:650}
+
+/* 可折叠的补充材料：默认收起，需要时点开 */
+details.fold{
+  margin:14px 0;border:1px solid var(--line);border-radius:var(--radius-sm);
+  background:var(--surface-2);
+}
+details.fold > summary{
+  list-style:none;cursor:pointer;padding:10px 14px;
+  font-size:13.2px;line-height:1.6;color:var(--ink-2);
+}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary::before{content:"▸";display:inline-block;width:14px;color:var(--accent-ink)}
+details.fold[open] > summary::before{content:"▾"}
+details.fold > summary:hover{color:var(--ink)}
+details.fold > .fold-in{padding:0 14px 4px}
+
 .milestone{
   display:flex;gap:14px;align-items:flex-start;
   border:1px solid var(--line);border-radius:var(--radius);
@@ -453,6 +491,8 @@ footer{
   pre{font-size:12px;padding:12px 13px}
   table{font-size:12.8px}
   th,td{padding:8px 10px}
+  .triage{grid-template-columns:1fr}
+  .triage a{padding:10px 12px}
 }
 
 /* ==========================================================
