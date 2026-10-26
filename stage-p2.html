@@ -349,6 +349,8 @@ class Chunk:
     strategy: str = ""
 
 
+<span class="cmt"># 三种策略不是「哪个更好」，而是三档对照：fixed 是基线，recursive 是通用解，</span>
+<span class="cmt"># structural 是有结构文档的最优解。先让三档都能跑，再让 measure_recall 说话。</span>
 def fixed(path: Path, size: int = 400, overlap: int = 64) -&gt; list[Chunk]:
     chunker = TokenChunker(chunk_size=size, chunk_overlap=overlap)
     return [
@@ -357,6 +359,8 @@ def fixed(path: Path, size: int = 400, overlap: int = 64) -&gt; list[Chunk]:
     ]
 
 
+<span class="cmt"># recursive 不认标题，只按分隔符优先级往下试（段落 → 句子 → 词）。</span>
+<span class="cmt"># 好处是任何文本都能切，坏处是永远切不出一个语义完整的「小节」。</span>
 def recursive(path: Path) -&gt; list[Chunk]:
     chunker = RecursiveChunker(chunk_size=400)
     return [
@@ -365,6 +369,7 @@ def recursive(path: Path) -&gt; list[Chunk]:
     ]
 
 
+<span class="cmt"># 结构性切分的前提：标题层级本身就是天然的语义边界</span>
 H2 = re.compile(r"^(#{1,4})\s+(.+)$", re.M)
 
 
@@ -406,6 +411,8 @@ def structural(path: Path, max_tokens: int = 400) -&gt; list[Chunk]:
             else _split_paragraph(body_text, int(max_tokens * 1.6))
         )
         for j, piece in enumerate(pieces):
+            <span class="cmt"># 关键：把标题路径拼回块文本（下面那句 text=）。</span>
+            <span class="cmt"># 不拼的话，「默认端口是 8080」这块脱离标题后，模型不知道在说哪台设备。</span>
             out.append(Chunk(
                 id=f"{path.stem}#s{len(out)}",
                 text=f"【{prefix}】\n{piece}" if prefix else piece,
@@ -416,6 +423,7 @@ def structural(path: Path, max_tokens: int = 400) -&gt; list[Chunk]:
     return out
 
 
+<span class="cmt"># 二次切分只按段落累积，不再往句子里切：宁可超一点，也别把一个条件句劈成两半</span>
 def _split_paragraph(text: str, limit: int) -&gt; list[str]:
     paras = [p for p in text.split("\n\n") if p.strip()]
     out: list[str] = []
@@ -529,18 +537,22 @@ STRATEGY = sys.argv[1] if len(sys.argv) &gt; 1 else "structural"
 
 def main() -&gt; None:
     model = SentenceTransformer(MODEL)
+    <span class="cmt"># 模型加载一次、整个循环复用：反复 load 是这个脚本最容易被写错的地方</span>
     files = sorted(Path("data/corpus").glob("*.md"))
     print(f"{len(files)} 个文件，策略 {STRATEGY}，模型 {MODEL}")
 
     with psycopg.connect(DSN) as conn:
         register_vector(conn)
         with conn.cursor() as cur:
+            <span class="cmt"># 先按策略删干净再插：这样重跑是幂等的，否则会插出一堆重复块</span>
             cur.execute("DELETE FROM chunks WHERE strategy = %s", (STRATEGY,))
             for f in files:
                 chunks = chunk_file(f, STRATEGY)
                 if not chunks:
                     continue
                 <span class="cmt"># 批量 embedding：一次 32 条，比逐条快一个量级</span>
+                <span class="cmt"># normalize 必须开：检索用的是余弦距离 &lt;=&gt;，不归一化的话距离会和向量长度</span>
+                <span class="cmt"># 耦合，相似度阈值就永远定不下来。</span>
                 vecs = model.encode(
                     [c.text for c in chunks],
                     batch_size=32, normalize_embeddings=True, show_progress_bar=False,
@@ -630,12 +642,14 @@ K = 5
 
 def main() -&gt; None:
     cases = json.loads(Path("evals/retrieval_v1.json").read_text(encoding="utf-8"))
+    <span class="cmt"># 只在有金标片段的题上算：没有 gold 的题算不出召回，混进来只会把数字稀释掉</span>
     answerable = [c for c in cases if c["gold_snippet"]]
     model = SentenceTransformer("BAAI/bge-m3")
 
     with psycopg.connect(DSN) as conn:
         register_vector(conn)
         with conn.cursor() as cur:
+            <span class="cmt"># 三种策略共用同一批题、同一个模型，唯一变量是分块方式——对照实验就该这样</span>
             for strategy in ("fixed", "recursive", "structural"):
                 hits, rr = 0, 0.0
                 for c in answerable:
@@ -650,10 +664,13 @@ def main() -&gt; None:
                     rank = next(
                         (i + 1 for i, d in enumerate(docs) if c["gold_snippet"] in d), None
                     )
+                    <span class="cmt"># rank 记的是「第一个命中的位置」：命中在第 1 位说明排得最准，MRR 就是 1/rank 的均值</span>
                     if rank:
                         hits += 1
                         rr += 1 / rank
                 n = len(answerable)
+                <span class="cmt"># recall@k 只看「前 k 条里有没有」，MRR 才看「排在第几」。</span>
+                <span class="cmt"># 两个都要看：只追 recall 会把精排该干的活漏掉。</span>
                 print(f"{strategy:&lt;12} recall@{K}={hits}/{n}={hits/n:.2f}  MRR={rr/n:.3f}")
 
 
@@ -740,12 +757,15 @@ def build(strategy: str = "structural") -&gt; None:
             rows = cur.fetchall()
     ids = [r[0] for r in rows]
     corpus = [tokenize(r[1]) for r in rows]
+    <span class="cmt"># BM25 的 IDF 依赖全库统计，所以只能整库重建：</span>
+    <span class="cmt"># 增量插一条会让所有旧分数漂移，检索结果莫名其妙地变。</span>
     bm25 = BM25Okapi(corpus)
     IDX.write_bytes(pickle.dumps({"ids": ids, "bm25": bm25}, protocol=5))
     print(f"索引 {len(ids)} 条")
 
 
 def search(query: str, k: int = 20) -&gt; list[tuple[str, float]]:
+<span class="cmt"># 每次 search 都重新 pickle.loads：几千条无所谓，上万条要改成启动时加载一次</span>
     data = pickle.loads(IDX.read_bytes())
     scores = data["bm25"].get_scores(tokenize(query))
     order = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
@@ -778,6 +798,8 @@ def search(query: str, k: int = 20) -&gt; list[tuple[str, float]]:
 from __future__ import annotations
 
 
+<span class="cmt"># 融合的是「名次」不是「分数」：向量余弦分和 BM25 分不在一个量纲上，</span>
+<span class="cmt"># 直接加权平均是没有意义的，这是 RRF 存在的全部理由。</span>
 def rrf(
     rankings: list[list[str]],
     k: int = 60,
@@ -793,9 +815,11 @@ def rrf(
     if weights is None:
         weights = [1.0] * len(rankings)
     scores: dict[str, float] = {}
+    <span class="cmt"># 用 dict 累加：同一块被两路同时召回时分数叠加——这就是混合检索变准的机制</span>
     for ranking, w in zip(rankings, weights, strict=True):
         for rank, doc_id in enumerate(ranking, start=1):
             scores[doc_id] = scores.get(doc_id, 0.0) + w / (k + rank)
+    <span class="cmt"># 只返回 id 和分数，不带正文：融合层不该关心内容，取正文是下一步的事</span>
     return sorted(scores.items(), key=lambda x: x[1], reverse=True)</code></pre>
 
         <h5>接上两路，量一次提升</h5>
@@ -813,6 +837,8 @@ DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
 _model = SentenceTransformer("BAAI/bge-m3")
 
 
+<span class="cmt"># 两路各取 30 条，不是 5 条：召回阶段要宽，精排阶段才收窄。</span>
+<span class="cmt"># 30 是候选池大小，5 是最终进 prompt 的数量，别把这两个数搞混。</span>
 def vector_search(query: str, k: int = 30, strategy: str = "structural") -&gt; list[str]:
     qv = _model.encode(query, normalize_embeddings=True)
     with psycopg.connect(DSN) as conn:
@@ -826,6 +852,8 @@ def vector_search(query: str, k: int = 30, strategy: str = "structural") -&gt; l
             return [r[0] for r in cur.fetchall()]
 
 
+<span class="cmt"># 三段式流水线：30 + 30 召回 → RRF 融合取 10 → rerank 取 5 进上下文。</span>
+<span class="cmt"># 每一段只做一次收窄，越靠后越贵。</span>
 def hybrid(query: str, k: int = 30, fetch_content: bool = False):
     v = vector_search(query, k)
     b = [doc_id for doc_id, _ in bm25.search(query, k)]
@@ -869,6 +897,7 @@ import time
 import psycopg
 from sentence_transformers import CrossEncoder
 
+<span class="cmt"># 模型全局只加载一次：每次调用都重新 load 要 2–3 秒，比你省下的那点延迟贵得多</span>
 _model: CrossEncoder | None = None
 
 
@@ -880,6 +909,8 @@ def get_model() -&gt; CrossEncoder:
     return _model
 
 
+<span class="cmt"># cross-encoder 把 query 和文档一起送进模型，所以比向量相似度准，也慢一个数量级。</span>
+<span class="cmt"># 只能在候选 30 条这一层用，不能拿去全库搜。</span>
 def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
     <span class="str">"""candidates: [(chunk_id, 融合分)] → 返回重排后的 [(id, score)] + 耗时"""</span>
     if not candidates:
@@ -890,7 +921,9 @@ def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
             cur.execute("SELECT id, content FROM chunks WHERE id = ANY(%s)", (ids,))
             content = dict(cur.fetchall())
     pairs = [(query, content[i][:1200]) for i in ids if i in content]
+    <span class="cmt"># 截到 1200 字：reranker 有 max_length，超长会被静默截断。主动截比被动截心里有数</span>
 
+    <span class="cmt"># 单独计 rerank 的耗时：它是这条链上最容易超出预算的一段（200–800ms 都算正常）</span>
     t0 = time.perf_counter()
     scores = get_model().predict(pairs)
     ms = (time.perf_counter() - t0) * 1000
@@ -1246,6 +1279,8 @@ from pydantic import BaseModel, Field
 from agentlab.llm import LLM
 
 
+<span class="cmt"># 两个 judge 判的是不同的事，不能合并：忠实度问「有没有编」，正确性问「对不对」。</span>
+<span class="cmt"># 一个高一个低时，要改的代码完全相反。</span>
 class Faithful(BaseModel):
     grounded: bool = Field(description="回答是否完全基于给定的引用块")
     unsupported: list[str] = Field(
@@ -1260,6 +1295,7 @@ class Correct(BaseModel):
 
 def faithfulness(llm: LLM, answer: str, contexts: list[str]) -&gt; Faithful:
     ctx = "\n\n".join(f"[{i}] {c}" for i, c in enumerate(contexts, 1))
+    <span class="cmt"># 给每块编号再喂进去：模型才能说「第 2 条支持」，你才查得动它的理由</span>
     return llm.structured([{"role": "user", "content": f"""资料：
 {ctx}
 
@@ -1270,6 +1306,8 @@ def faithfulness(llm: LLM, answer: str, contexts: list[str]) -&gt; Faithful:
 只评判依据，不评判语气、长度、是否好读。"""}, ], Faithful)
 
 
+<span class="cmt"># 正确性判官必须给标准答案。不给 gold 的话，它就退化成「另一个模型觉得对不对」，</span>
+<span class="cmt"># 测的是模型口味，不是你的系统。</span>
 def correctness(llm: LLM, question: str, gold: str, answer: str) -&gt; Correct:
     return llm.structured([{"role": "user", "content": f"""问题：{question}
 标准答案：{gold}

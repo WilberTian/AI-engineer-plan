@@ -439,12 +439,14 @@ HEADING = re.compile(r"^(#{1,6})\s+(.+)$")
 def parse_file(path: Path) -&gt; list[Node]:
     roots: list[Node] = []
     stack: list[Node] = []
+    <span class="cmt"># 用一个栈按层级挂父子：栈里始终是「当前可能的父节点链」</span>
     for line in path.read_text(encoding="utf-8").splitlines():
         m = HEADING.match(line)
         if not m:
             continue
         node = Node(level=len(m.group(1)), title=m.group(2).strip())
         while stack and stack[-1].level &gt;= node.level:
+        <span class="cmt"># 这条 while 就是全部算法：标题跳级（# 直接跳 ###）也能正确挂到父节点下</span>
             stack.pop()
         if stack:
             stack[-1].children.append(node)
@@ -477,6 +479,7 @@ def main() -&gt; int:
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
+    <span class="cmt"># 传目录就递归、传文件就单个：两个分支让它既能批量跑也能单文件调试</span>
     files = sorted(args.path.rglob("*.md")) if args.path.is_dir() else [args.path]
     result = {f.name: trim(parse_file(f), args.depth) for f in files}
 
@@ -533,9 +536,13 @@ from agentlab.config import MAX_OUTPUT_TOKENS, TEMPERATURE, ProviderConfig
 T = TypeVar("T", bound=BaseModel)
 
 
+<span class="cmt"># 全项目只有这个文件 import openai：换供应商、换模型、加重试，</span>
+<span class="cmt"># 都只改这里；业务代码永远不碰 SDK。</span>
 class LLM:
     def __init__(self, provider: ProviderConfig) -&gt; None:
         self.provider = provider
+        <span class="cmt"># 客户端只建一次、全局复用（底层是连接池）；</span>
+        <span class="cmt"># timeout 显式给死，SDK 默认值随版本变过，不写死会出现整条链挂住。</span>
         self.client = OpenAI(
             api_key=provider.api_key,
             base_url=provider.base_url,
@@ -561,6 +568,7 @@ class LLM:
             stream=True,
         )
         for chunk in stream:
+            <span class="cmt"># 有些供应商会插心跳块（choices 为空数组），跳过而不是让它崩</span>
             if not chunk.choices:
                 continue
             delta = chunk.choices[0].delta.content
@@ -575,6 +583,7 @@ class LLM:
         retries: int = 1,
     ) -&gt; T:
         fields = ", ".join(schema.model_fields)
+        <span class="cmt"># 把字段名逐个列进 system：只丢一个 schema 过去时模型常漏字段，列出来能少一半重试</span>
         sys = (
             "只输出一个 JSON 对象，不要 markdown 代码块，不要解释。"
             f"必须包含这些字段：{fields}。字段约束见 schema。"
@@ -582,6 +591,7 @@ class LLM:
         msgs = [{"role": "system", "content": sys}, *messages]
         last_err = ""
         for attempt in range(retries + 1):
+        <span class="cmt"># 重试循环里的温度必须是 0：同一个输入跑两次结果不同，评测就不可复现</span>
             if attempt &gt; 0:
                 <span class="cmt"># 关键：把校验错误喂回去，模型能自己修</span>
                 msgs.append({
@@ -594,9 +604,13 @@ class LLM:
                 temperature=0,
                 response_format={"type": "json_object"},
             )
+            <span class="cmt"># 开了 json_object 也只保证「是合法 JSON」，不保证「符合你的 schema」——</span>
+            <span class="cmt"># 所以下面必须再过一遍 pydantic 校验。</span>
             raw = resp.choices[0].message.content or "{}"
             try:
                 return schema.model_validate_json(raw)
+            <span class="cmt"># 错误信息截到 400 字符：完整 ValidationError 能占掉小半个上下文，</span>
+            <span class="cmt"># 喂回去反而把正事挤掉了。</span>
             except (ValidationError, json.JSONDecodeError) as exc:
                 last_err = str(exc)[:400]
         raise RuntimeError(f"结构化输出 {retries + 1} 次均失败: {last_err}")
@@ -608,6 +622,8 @@ class LLM:
         tools: list[dict[str, Any]],
         **kw: Any,
     ) -&gt; Any:
+        <span class="cmt"># 原样返回 SDK 响应，不在这里解析 tool_calls：解析、回填、截断都属于 loop 的职责，</span>
+        <span class="cmt"># 这一层只负责把协议搬回来。</span>
         return self.client.chat.completions.create(
             model=self.provider.model,
             messages=messages,  <span class="cmt"># type: ignore[arg-type]</span>
@@ -727,6 +743,7 @@ resp = client.chat.completions.create(
 )
 msg = resp.choices[0].message
 print("=== 第一轮 assistant 消息 ===")
+<span class="cmt"># 这个脚本的全部价值就在这一行：先看清协议长什么样，再看结果对不对</span>
 print(json.dumps(msg.model_dump(), ensure_ascii=False, indent=2))
 
 <span class="cmt"># 手动执行工具，再把结果喂回去</span>
@@ -741,6 +758,7 @@ for tc in msg.tool_calls or []:
         "content": json.dumps({"temp_c": 24, "desc": "晴"}, ensure_ascii=False),
     })
 
+<span class="cmt"># 第二轮仍然要带 tools：模型可能继续调工具，不带会 400</span>
 final = client.chat.completions.create(
     model=PRIMARY.model, messages=messages, tools=tools, temperature=0,
 )
@@ -784,6 +802,8 @@ from agentlab.config import PRIMARY
 client = OpenAI(api_key=PRIMARY.api_key, base_url=PRIMARY.base_url)
 
 
+<span class="cmt"># 统一只打三样：异常类型、HTTP 状态码、消息前 200 字——</span>
+<span class="cmt"># 这三样覆盖 90% 的线上定位。</span>
 def probe(label: str, **kwargs):
     try:
         client.chat.completions.create(model=PRIMARY.model, messages=[], **kwargs)
@@ -794,6 +814,7 @@ def probe(label: str, **kwargs):
         print(f"  message  = {str(exc)[:200]}")
 
 
+<span class="cmt"># 故意踩五种坑，把「错误长什么样」一次性看全。以后看到报错能一眼认出是哪类。</span>
 probe("空消息", messages=[])
 probe("超长输入", messages=[{"role": "user", "content": "啊" * 200000}], max_tokens=8)
 probe("错误模型名", model="not-a-real-model", messages=[{"role": "user", "content": "hi"}])
@@ -878,6 +899,8 @@ class Tool:
     parameters: dict[str, Any]
     fn: Callable[..., ToolResult]
 
+    <span class="cmt"># 这个方法返回的 dict 会原样发给模型。</span>
+    <span class="cmt"># 也就是说：description 和每个参数的 description，就是模型能看到的全部说明书。</span>
     def spec(self) -&gt; dict[str, Any]:
         return {
             "type": "function",
@@ -896,6 +919,7 @@ class Registry:
     def register(self, tool: Tool) -&gt; None:
         if tool.name in self._tools:
             raise ValueError(f"工具重名: {tool.name}")
+            <span class="cmt"># 重名必须当场报错。静默覆盖后的表现是「模型总是调错工具」，比崩溃难查十倍</span>
         self._tools[tool.name] = tool
 
     def specs(self) -&gt; list[dict[str, Any]]:
@@ -919,6 +943,7 @@ def search_notes(query: str, limit: int = 3) -&gt; ToolResult:
         if query.lower() in text.lower():
             idx = text.lower().index(query.lower())
             snippet = text[max(0, idx - 60): idx + 160].replace("\n", " ")
+            <span class="cmt"># 窗口前后不对称（60 / 160）：命中词后面通常才是答案，前面只是上下文</span>
             hits.append(f"[{p.name}] ...{snippet}...")
         if len(hits) &gt;= limit:
             break
@@ -955,6 +980,8 @@ def fetch_url(url: str, timeout: int = 10) -&gt; ToolResult:
 def read_file(path: str) -&gt; ToolResult:
     <span class="str">"""读取项目内的文本文件。path 必须是相对路径。"""</span>
     p = Path(path)
+    <span class="cmt"># 三道闸依次是：绝对路径、上跳目录、路径不存在。</span>
+    <span class="cmt"># 每一个都对应一次真实的越权尝试，别删。</span>
     if p.is_absolute():
         return ToolResult(ok=False, content="只接受相对路径，例如 notes/todo.md")
     if ".." in p.parts:
@@ -969,6 +996,8 @@ def read_file(path: str) -&gt; ToolResult:
     return ToolResult(ok=True, content=p.read_text(encoding="utf-8")[:4000])
 
 
+<span class="cmt"># 三份 description 都写「什么时候用」而不是「它做什么」——</span>
+<span class="cmt"># 模型就是靠这一句决定调不调，写错了它要么不用，要么每次都乱调。</span>
 def build_registry() -&gt; Registry:
     r = Registry()
     r.register(Tool(
@@ -1073,9 +1102,12 @@ class Step:
     result: str = ""
     ok: bool = True
     latency_ms: float = 0.0
+    <span class="cmt"># 每步都记耗时和 ok：P3 的看板直接读这几个字段，不用到时候重新埋点</span>
 
 
 @dataclass
+<span class="cmt"># 四态一定要分开。max_steps 多半是设计问题（预算太小或 prompt 没说清），</span>
+<span class="cmt"># timeout 是性能问题，error 才是 bug——混成一个 False，什么都查不出来。</span>
 class RunResult:
     status: Literal["done", "max_steps", "timeout", "error"]
     answer: str
@@ -1088,6 +1120,8 @@ class RunResult:
         return sum(1 for s in self.steps if s.kind == "tool")
 
 
+<span class="cmt"># 三个上限分别管三件不同的事：轮次（防死循环）、总时长（防挂死）、</span>
+<span class="cmt"># 单条工具结果长度（防上下文爆掉）。少任何一个都会跑飞。</span>
 def run(
     task: str,
     llm: LLM,
@@ -1103,6 +1137,8 @@ def run(
     ]
     steps: list[Step] = []
     tool_budget = 6
+    <span class="cmt"># 单独的工具预算是必须的：模型一轮可以并调多个工具，</span>
+    <span class="cmt"># 只卡 max_steps 卡不住工具调用总量。</span>
 
     for i in range(max_steps):
         <span class="cmt"># 停止条件 1：总时长</span>
@@ -1124,8 +1160,10 @@ def run(
         <span class="cmt"># 关键：assistant 消息（含 tool_calls）必须原样回填，</span>
         <span class="cmt"># 否则下一轮模型不知道自己要过什么，会重复调用或报错</span>
         messages.append(msg.model_dump(exclude_none=True))
+        <span class="cmt"># exclude_none 不能省：部分供应商收到 null 字段会直接 400</span>
 
         for tc in msg.tool_calls:
+            <span class="cmt"># 预算用完也必须回一条 role=tool：少一个 tool_call_id，下一轮请求直接 400</span>
             if tool_budget &lt;= 0:
                 messages.append({
                     "role": "tool",
@@ -1352,6 +1390,8 @@ class CaseResult:
     tags: list[str] = field(default_factory=list)
 
 
+<span class="cmt"># 判据写死在代码里，优先于用 LLM 当判官：能断言的就别让模型判，</span>
+<span class="cmt"># 否则每次跑分都不一样，评测本身失去意义。</span>
 def judge(case: dict, res) -&gt; tuple[bool, str]:
     expect = case.get("expect", {})
     answer = res.answer or ""
@@ -1400,8 +1440,10 @@ def main() -&gt; int:
             status, answer, calls = res.status, res.answer, res.tool_calls
         except Exception as exc:  <span class="cmt"># noqa: BLE001</span>
             passed, reason = False, f"异常: {type(exc).__name__}: {exc}"
+            <span class="cmt"># 单条崩了不能中断整轮：中断的话你只会看到第一个坏 case，后面全没跑</span>
             status, answer, calls = "error", "", 0
 
+        <span class="cmt"># 只落前 300 字：全量答案会让结果文件几十 MB，而且没有人会去读第二遍</span>
         results.append(CaseResult(
             id=c["id"], passed=passed, reason=reason, status=status,
             tool_calls=calls, latency_ms=(time.perf_counter() - t0) * 1000,
@@ -1411,6 +1453,7 @@ def main() -&gt; int:
 
     n = len(results)
     npass = sum(r.passed for r in results)
+    <span class="cmt"># 分组通过率比总通过率有用得多：总通过率掉 5 个点，分组能告诉你是哪一类掉的</span>
     by_tag: dict[str, list[bool]] = {}
     for r in results:
         for t in r.tags:
@@ -1435,6 +1478,7 @@ def main() -&gt; int:
         {"summary": summary, "results": [asdict(r) for r in results]},
         ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n已写入 {out}")
+    <span class="cmt"># 非零退出码让 CI 能自动卡住回归，不用人肉盯输出</span>
     return 0 if npass == n else 1
 
 
@@ -1471,6 +1515,8 @@ from pydantic import BaseModel, Field
 
 from agentlab.llm import LLM
 
+<span class="cmt"># 判分 prompt 必须显式写「不因风格、长度扣分」：不写的话，</span>
+<span class="cmt"># 判官会系统性偏爱啰嗦的回答，你的评测就在优化「话多」。</span>
 JUDGE_SYSTEM = """你是一个严格的任务完成度评审。
 
 只判断一件事：助手的回答是否完成了用户的任务。
@@ -1484,6 +1530,7 @@ JUDGE_SYSTEM = """你是一个严格的任务完成度评审。
 class Verdict(BaseModel):
     passed: bool = Field(description="是否完成任务")
     reason: str = Field(max_length=200, description="一句话理由，必须引用回答里的具体内容")
+    <span class="cmt"># 强制引用回答里的具体内容，理由才可核查；否则判官只会回「答得不错」</span>
 
 
 def judge_with_llm(llm: LLM, task: str, answer: str) -&gt; Verdict:
@@ -1494,6 +1541,8 @@ def judge_with_llm(llm: LLM, task: str, answer: str) -&gt; Verdict:
 {answer}
 
 请判断是否完成任务。"""
+    <span class="cmt"># 判官自己也走 structured()，输出不合法会自动重试一次——</span>
+    <span class="cmt"># 这就是这一层不需要写 try 的原因。</span>
     return llm.structured(
         [{"role": "user", "content": prompt}], Verdict, retries=1
     )</code></pre>

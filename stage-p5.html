@@ -75,6 +75,7 @@
       <a href="#p5-8">8 上线</a>
       <a href="#p5-9">9 限额与多租户</a>
       <a href="#p5-10">10 成本看板</a>
+      <a href="#p5-14">14 消融与开关</a>
     </nav>
     <h4 class="grp">W21 · 作品集打磨</h4>
     <nav>
@@ -102,6 +103,7 @@
         <span>公开可访问的产品链接</span>
         <span>生成式 UI 场景</span>
         <span>限额 + 成本看板</span>
+        <span>消融表：每个特性值多少</span>
         <span>3 个仓库的 README</span>
       </div>
       <p class="linepos"><span class="arw">上一阶段给了</span>可靠性与成本基线<span class="arw">→</span><b>本阶段交出：线上 demo + 作品集三件套</b><span class="arw">→</span><span class="arw">下一阶段</span>P6 面试就讲这三个作品，不另造素材</p>
@@ -252,12 +254,16 @@ export default function Page() {
   const [input, setInput] = useState("");
 
   const busy = status === "streaming" || status === "submitted";
+  <span class="cmt">// 两个状态都算忙：submitted 是「已发出、还没收到第一个字」，</span>
+  <span class="cmt">// 这段时间不锁输入，用户会连点三次，花三份钱。</span>
 
   return (
     &lt;main className="mx-auto max-w-2xl p-6 space-y-6"&gt;
       &lt;div className="space-y-4"&gt;
         {messages.map((m) =&gt; (
           &lt;div key={m.id} className={m.role === "user" ? "text-right" : ""}&gt;
+            <span class="cmt">// 消息不是一个字符串，是 parts 数组：文本、工具调用各占一段。</span>
+            <span class="cmt">// 只读 m.content 会把工具那一段整个丢掉。</span>
             {m.parts.map((p, i) =&gt; {
               if (p.type === "text") {
                 return (
@@ -270,6 +276,7 @@ export default function Page() {
         ))}
       &lt;/div&gt;
 
+      <span class="cmt">// 错误必须渲染到界面上：流式中断只打 console 的话，用户只会以为「卡了」，然后刷新重来</span>
       {error && (
         &lt;div className="rounded border border-red-300 bg-red-50 p-3 text-sm"&gt;
           请求失败：{error.message}
@@ -294,6 +301,7 @@ export default function Page() {
           onChange={(e) =&gt; setInput(e.target.value)}
           placeholder="问点什么…"
         /&gt;
+        <span class="cmt">// 流式期间必须给「停止」：不给的话用户只能刷新页面，而这次请求的 token 照样计费</span>
         {busy ? (
           &lt;button type="button" onClick={stop} className="rounded bg-neutral-800 px-4 text-white"&gt;
             停止
@@ -340,6 +348,8 @@ export default function Page() {
 import { tool, stepCountIs } from "ai";
 import { z } from "zod";
 
+<span class="cmt">// description 和参数说明会原样发给模型，和 P1 的 tools.py 是同一份协议，</span>
+<span class="cmt">// 只是这里用 zod 写、由 SDK 生成 JSON Schema。</span>
 const tools = {
   search_knowledge: tool({
     description: "在个人知识库中检索。适合回答「文档里怎么写的」类问题。",
@@ -347,6 +357,8 @@ const tools = {
       query: z.string().describe("检索关键词"),
       top_k: z.number().int().min(1).max(10).default(5),
     }),
+    <span class="cmt">// execute 里不要往外抛异常：返回 { ok: false } 让模型自己读错误、换策略，</span>
+    <span class="cmt">// 和后端 loop 的处理纪律保持一致。</span>
     execute: async ({ query, top_k }) =&gt; {
       // 调你的 Python 后端
       const r = await fetch(`${process.env.PY_API}/search`, {
@@ -362,6 +374,7 @@ const tools = {
   }),
 };
 
+<span class="cmt">// stepCountIs 是这一层唯一的预算闸：前端没有 max_steps，多轮工具调用只能靠它挡住</span>
 const result = streamText({
   model: openai("gpt-4.1-mini"),
   system: SYSTEM,
@@ -384,7 +397,9 @@ type AnyPart = {
 
 export function ToolPart({ part }: { part: AnyPart }) {
   const name = part.type.replace(/^tool-/, "");
+  <span class="cmt">// 工具段在 parts 里的 type 是 tool-&lt;名字&gt;，去掉前缀才对得上 Registry 里的工具名</span>
 
+  <span class="cmt">// 参数还没拼完就先显示「正在调用」：这几十毫秒决定了用户觉不觉得系统在动</span>
   if (part.state === "input-streaming" || part.state === "input-available") {
     return (
       &lt;div className="flex items-center gap-2 text-sm text-neutral-500"&gt;
@@ -394,6 +409,7 @@ export function ToolPart({ part }: { part: AnyPart }) {
     );
   }
 
+  <span class="cmt">// 工具失败要显式渲染出来，并且告诉用户「可以继续」：不显示的话，他会以为刚才那步成功了</span>
   if (part.state === "output-error" || part.errorText) {
     return (
       &lt;div className="rounded border border-amber-300 bg-amber-50 p-2 text-sm"&gt;
@@ -403,6 +419,8 @@ export function ToolPart({ part }: { part: AnyPart }) {
     );
   }
 
+  <span class="cmt">// 只按契约里的字段读，不做防御式兜底：契约变了要让它在这里报错，</span>
+  <span class="cmt">// 而不是静默渲染成空——空的卡片比崩溃更难查。</span>
   const out = part.output as { ok?: boolean; chunks?: { source: string; text: string }[] };
   if (out?.chunks?.length) {
     return (
@@ -560,6 +578,8 @@ useEffect(() =&gt; {
 <pre><code>// lib/blocks.ts
 import { z } from "zod";
 
+<span class="cmt">// 每种块一个 schema。.max(n) 是给模型的硬上限：不设上限，</span>
+<span class="cmt">// 它一次能生成 40 条引用，前端直接卡死。</span>
 export const blocks = {
   text: z.object({ body: z.string() }),
 
@@ -590,7 +610,10 @@ export const blocks = {
   code: z.object({ lang: z.string(), body: z.string() }),
 };
 
+<span class="cmt">// 类型名从 schema 反推：加一种块只改上面一处，这里自动跟着变</span>
 export type BlockName = keyof typeof blocks;
+<span class="cmt">// 外层 schema 故意写松（type 是 string、props 任意）：真正的校验在渲染时按 type 分派，</span>
+<span class="cmt">// 这样新增块类型不用改 prompt 里那份 schema。</span>
 export const BlockSchema = z.object({
   blocks: z.array(
     z.object({
@@ -625,6 +648,7 @@ const { object } = await generateObject({
 
 import { blocks } from "@/lib/blocks";
 
+<span class="cmt">// 一个 type 对应一个渲染函数：加块类型只在这里加一行，主流程不用动</span>
 const Registry: Record&lt;string, (p: any) =&gt; React.ReactNode&gt; = {
   text: (p) =&gt; &lt;p className="whitespace-pre-wrap"&gt;{String(p.body)}&lt;/p&gt;,
 
@@ -677,6 +701,7 @@ export function BlockRenderer({ blocks: list }: { blocks: { type: string; props:
         const render = Registry[b.type];
         // 关键：未知类型必须降级，不能白屏
         if (!render) return &lt;p key={i}&gt;{JSON.stringify(b.props)}&lt;/p&gt;;
+        <span class="cmt">// 渲染前按 type 再校一次：模型给的 props 不可信，schema 过了才交给组件</span>
         const parsed = blocks[b.type as keyof typeof blocks]?.safeParse(b.props);
         if (!parsed?.success) return &lt;p key={i}&gt;{JSON.stringify(b.props)}&lt;/p&gt;;
         return &lt;div key={i}&gt;{render(parsed.data)}&lt;/div&gt;;
@@ -813,7 +838,10 @@ CMD ["uv", "run", "uvicorn", "agentlab.api:app", "--host", "0.0.0.0", "--port", 
 import { sql } from "@/lib/db";
 
 export async function checkQuota(userKey: string, costUsd: number) {
+  <span class="cmt">// 用 UTC 日期切天：用本地时区的话，跨时区或夏令时会凭空多出、少掉一小时额度</span>
   const day = new Date().toISOString().slice(0, 10);
+  <span class="cmt">// 计数和判断压成一条 SQL：INSERT … ON CONFLICT DO UPDATE … RETURNING 拿到的是加完之后的值。</span>
+  <span class="cmt">// 「先查再写」在并发下会漏计。</span>
   const row = await sql`
     INSERT INTO usage_daily (user_key, day, calls, cost_usd)
     VALUES (${userKey}, ${day}, 1, ${costUsd})
@@ -824,6 +852,7 @@ export async function checkQuota(userKey: string, costUsd: number) {
   `;
   const { calls, cost_usd } = row[0];
 
+  <span class="cmt">// 双限额：只限次数会被「一次调用跑 20 轮」绕过；只限金额又挡不住刷接口</span>
   const LIMITS = { calls: 50, cost: 0.30 };   // 每用户每天
   if (calls &gt; LIMITS.calls || Number(cost_usd) &gt; LIMITS.cost) {
     return { ok: false, reason: "quota_exceeded" as const, calls, cost_usd };
@@ -885,6 +914,102 @@ export async function checkQuota(userKey: string, costUsd: number) {
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>没数据（只有自己用）</b>：跑 30 次脚本生成数据。看板的价值在「能算」，不在于数据多。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+<details class="task" id="p5-14">
+      <summary>
+        <span class="tid">P5-14</span>
+        <span class="tname">消融：证明每个特性真的有用（连带双层开关）</span>
+        <span class="tmin">周日 2.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：到 W20 你的系统已经上线，堆了七八个特性——查询改写、混合检索、重排、自检、缓存、路由。W17 只证明了「改完变便宜、变快」，没证明<b>每个特性各自值多少</b>。做真消融的三个前提这时才齐：<b>真实流量、成本看板、一套跑得动的 eval</b>。<b>「加了之后感觉更好了」是最常见的自欺</b>：可能真有效，也可能同时改了 prompt；可能这次样本运气好，也可能它在中位数上更好但尾部长了。消融是唯一能回答「这个特性到底值多少」的方法，也是面试里「你做的哪个优化最有效」这个问题的<b>唯一诚实答法</b>。</div>
+
+        <p class="muted">这一张先测最贵的四个（改写 / 重排 / 自检 / 缓存）——路由的质量代价在 P4-9 的分组对照表里已经单独验过，不重复测。AB 分流要真实用户，也正好从这一周开始才做得了。</p>
+
+        <h5>消融：一次只关一个，其余不动</h5>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>做法</th><th>能回答</th><th>不能回答</th></tr></thead>
+            <tbody>
+              <tr><td><b>全开 vs 全关</b></td><td>这套东西整体有没有用</td><td>哪个特性有用、哪个白花钱</td></tr>
+              <tr><td><b>单特性消融</b>（一次关一个）</td><td>每个特性的边际贡献</td><td>特性之间的耦合</td></tr>
+              <tr><td><b>AB 测试</b>（真实用户分流）</td><td>业务指标有没有变好</td><td>小流量下很难达到显著</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>顺序是固定的：<b>先消融定位，再 AB 验证</b>。跳过消融直接 AB，你会在结论里看到「整体变好了 2%」，然后完全不知道是该保留还是砍掉其中一半。</p>
+
+        <h5>双层开关：能关掉，才敢上线</h5>
+
+        <pre><code><span class="str">"""src/agentlab/flags.py — 任何特性都必须能被单独关掉"""</span>
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, replace
+
+
+@dataclass(frozen=True)
+class Flags:
+    query_rewrite: bool = True     <span class="cmt"># 查询改写</span>
+    rerank: bool = True            <span class="cmt"># 交叉编码器重排</span>
+    self_check: bool = False       <span class="cmt"># 答案自检（多一次调用，贵）</span>
+    cache_prefix: bool = True      <span class="cmt"># 稳定前缀缓存</span>
+
+
+def load(remote: dict[str, bool] | None = None) -&gt; Flags:
+    <span class="str">"""优先级：远程配置 &gt; 环境变量 &gt; 代码默认。
+
+    远程这一层是给「线上出问题、不想等发版」准备的。
+    没有这一层，回滚就要走一次发布流程。
+    """</span>
+    remote = remote or {}
+    kwargs = {}
+    for f in Flags.__dataclass_fields__:
+        if f in remote:
+            kwargs[f] = bool(remote[f])
+        elif os.getenv(f"AIP_{f.upper()}"):
+            kwargs[f] = os.getenv(f"AIP_{f.upper()}") == "1"
+    return replace(Flags(), **kwargs)</code></pre>
+
+        <pre><code><span class="str">"""scripts/ablate.py — 一次关一个，跑同样的测试集"""</span>
+from dataclasses import replace
+
+from agentlab.evals import run_eval
+from agentlab.flags import Flags
+
+BASE = Flags()
+
+for f in ("query_rewrite", "rerank", "self_check", "cache_prefix"):
+    on = run_eval(flags=BASE)
+    off = run_eval(flags=replace(BASE, **{f: False}))
+    d_pass5 = on.pass5 - off.pass5
+    d_cost = on.cost - off.cost
+    print(f"{f:14s} Pass@5 {d_pass5:+.3f}  成本 {d_cost:+.4f}  延迟 {on.p95 - off.p95:+.0f}ms")</code></pre>
+
+        <p class="muted">这套开关 W21 的「灰度与回滚」（P5-13）会直接复用：机制只建一次，那里只讲怎么用它放量和退回。</p>
+
+        <div class="callout warn">
+          <b>看三个数，不只看一个</b>
+          <p>一个特性「让 Pass@5 涨 2 个点、成本涨 60%、延迟涨 800ms」，那不叫有用，那叫<b>贵</b>。要求每个特性都同时给出 <b>质量 / 成本 / 延迟</b> 三个 delta，然后自己回答「这个交换值不值」。只报质量提升的消融是不完整的。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/flags.py</code> + <code>scripts/ablate.py</code> + <code>notes/ablation.md</code>：4 个特性的三列 delta 表 + 一句「哪个该砍」的结论</div>
+
+        <div class="verify"><b>验收</b>
+          表里必须有一个特性是<b>负作用或零作用</b>——真实系统里几乎总有。找到它、砍掉它、再跑一次 eval 确认没变差。<b>「我加的每个特性都有用」这句话本身就是没做消融的证据。</b>另外验收两条工程硬要求：① 所有特性都能用环境变量单独关掉；② 关掉后不需要改代码、不需要重新部署。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>每个特性都是正作用</b>：样本太少或噪声太大。先按 P2-16 把样本量提到 20 题 × 3 次。</li>
+            <li><b>关掉某特性后 eval 反而变好</b>：这是最好的发现，别怀疑数据。先确认不是评测器偏差（人工看 3 条轨迹），然后砍。</li>
+            <li><b>特性互相依赖，关不掉</b>：说明开关粒度不对。把「重排」和「混合检索」拆成两个独立开关——耦合的开关等于没开关。</li>
           </ul>
         </div>
       </div>

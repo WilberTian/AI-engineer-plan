@@ -407,6 +407,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+<span class="cmt"># 按「稳定性」分五段写，不写成一大坨：改一段不会牵动另一段，前缀也更容易命中缓存</span>
 IDENTITY = "你是一个可以使用工具的助手，服务于个人工程知识库。"
 
 BOUNDARIES = """能力边界：
@@ -429,6 +430,8 @@ OUTPUT = """输出要求：
 """
 
 
+<span class="cmt"># 时间、文件数这种东西每轮都变，所以只能放最后一段。</span>
+<span class="cmt"># 放到前面的话，整段前缀每轮都不同，缓存等于没开。</span>
 def build_system(extra: str = "") -&gt; str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     files = len(list(Path("data/corpus").glob("*.md")))
@@ -436,6 +439,7 @@ def build_system(extra: str = "") -&gt; str:
 - 时间：{now}
 - 语料文件数：{files}
 """
+    <span class="cmt"># 顺序有讲究：越靠前越稳定。稳定 → 半稳定 → 每轮全变，按这个梯度排</span>
     parts = [IDENTITY, BOUNDARIES, TOOL_RULES, OUTPUT, dynamic]
     if extra:
         parts.append(f"本次任务补充说明：\n{extra}")
@@ -551,6 +555,8 @@ import psycopg
 DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
 
 
+<span class="cmt"># 用 upsert 而不是「先查再插」：崩溃重放同一个 run_id 必须幂等，</span>
+<span class="cmt"># 否则恢复逻辑一跑就写出两条记录。</span>
 def save_run(run_id: str, task: str, status: str, step_idx: int) -&gt; None:
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
         cur.execute(
@@ -565,6 +571,8 @@ def save_run(run_id: str, task: str, status: str, step_idx: int) -&gt; None:
         conn.commit()
 
 
+<span class="cmt"># seq 由调用方给起点、(run_id, seq) 上做唯一约束：进程在第 7 步挂掉，</span>
+<span class="cmt"># 重启后从第 7 步重放，也不会写出重复消息。</span>
 def append_messages(run_id: str, start_seq: int, messages: list[dict[str, Any]]) -&gt; None:
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
         cur.executemany(
@@ -576,6 +584,8 @@ def append_messages(run_id: str, start_seq: int, messages: list[dict[str, Any]])
         conn.commit()
 
 
+<span class="cmt"># 恢复一个 run 只需要三样：原始 task、走到第几步、全部历史消息。</span>
+<span class="cmt"># 所以 checkpoint 存这三个，不要试图存内存对象。</span>
 def load_run(run_id: str) -&gt; tuple[str, str, int, list[dict[str, Any]]]:
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
         cur.execute("SELECT task, status, step_idx FROM runs WHERE run_id=%s", (run_id,))
@@ -650,11 +660,15 @@ DANGEROUS_PATTERNS = {
 }
 
 
+<span class="cmt"># 返回 True 只代表「要问人」，不代表「拒绝」。</span>
+<span class="cmt"># 这两件事混在一起，写出来的就是「一律拒绝」式的假安全。</span>
 def needs_approval(tool_name: str, args: dict) -&gt; bool:
     rule = DANGEROUS_PATTERNS.get(tool_name)
     return bool(rule and rule(args))
 
 
+<span class="cmt"># 登记后立刻返回，不阻塞等待：审批可能几小时后才有人点，</span>
+<span class="cmt"># run 必须能停下来、之后从 step_idx 原地续跑。</span>
 def request(run_id: str, step_idx: int, tool_name: str, args: dict) -&gt; str:
     <span class="str">"""登记待审批，返回 'pending'。调用方据此中断整个 run。"""</span>
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
@@ -668,6 +682,7 @@ def request(run_id: str, step_idx: int, tool_name: str, args: dict) -&gt; str:
     return "pending"
 
 
+<span class="cmt"># 决策单独查一次，而不是在 request 里轮询：这样 run 完全无状态，进程重启照样能续</span>
 def get_decision(run_id: str, step_idx: int) -&gt; str | None:
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
         cur.execute(
@@ -877,6 +892,7 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
     """</span>
     registry = Registry()
 
+    <span class="cmt"># 工具清单只在启动时取一次：schema 不会每轮都变，没必要每次调用都去问</span>
     async def _load() -&gt; list[tuple[str, str, dict]]:
         async with stdio_client(command) as (read, write):
             async with ClientSession(read, write) as session:
@@ -885,8 +901,12 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
                 return [(t.name, t.description or "", t.inputSchema) for t in listed.tools]
 
     for name, desc, schema in asyncio.run(_load()):
+        <span class="cmt"># 必须用工厂函数把 tool_name 绑进闭包。直接在循环里写内层函数，</span>
+        <span class="cmt"># 所有工具都会指向最后一个 name——Python 的 late binding，经典坑。</span>
         def make(tool_name: str):
             def call(**kwargs) -&gt; ToolResult:
+                <span class="cmt"># 每次调用都重开进程、重新 initialize：这是把代码留在同步世界要付的代价，</span>
+                <span class="cmt"># 单次多 100–300ms，而且拿不到 server 端的状态。</span>
                 async def _call() -&gt; ToolResult:
                     async with stdio_client(command) as (read, write):
                         async with ClientSession(read, write) as session:
@@ -895,6 +915,8 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
                             text = "\n".join(
                                 c.text for c in res.content if hasattr(c, "text")
                             )
+                            <span class="cmt"># MCP 用 isError 表达失败，不抛异常。翻译成 ok=False，</span>
+                            <span class="cmt"># loop 那边的错误回灌逻辑才能统一处理。</span>
                             return ToolResult(ok=not res.isError, content=text)
 
                 return asyncio.run(_call())
@@ -956,6 +978,7 @@ from contextlib import contextmanager
 
 from langfuse import Langfuse, observe
 
+<span class="cmt"># 三个 key 都给默认值：缺配置时应用要能跑（只是没有 trace），不能一启动就崩</span>
 langfuse = Langfuse(
     public_key=os.getenv("LANGFUSE_PUBLIC_KEY", ""),
     secret_key=os.getenv("LANGFUSE_SECRET_KEY", ""),
@@ -968,11 +991,13 @@ def trace_run(run_id: str, task: str):
     <span class="str">"""一次任务 = 一个 trace，每个 step = 一个 span。"""</span>
     with observe(name="agent_run", as_type="span") as span:
         span.update(input={"task": task}, metadata={"run_id": run_id})
+        <span class="cmt"># 拿自己的 run_id 当 trace 的业务锚点：排查时能在日志和 trace 之间直接对齐，不用猜时间</span>
         yield span
 
 
 def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
     <span class="str">"""手工打点：工具调用、上下文大小、token 用量。"""</span>
+    <span class="cmt"># 手工打点，不指望自动埋点：自动埋点通常只覆盖 LLM 调用，工具耗时和上下文大小它看不见</span>
     langfuse.create_event(name=name, metadata=payload)
     if usage:
         <span class="cmt"># 让成本列有数：必须把 usage 报给 Langfuse</span>
@@ -1071,6 +1096,8 @@ def assemble(
 
 def cached_ratio(usage: Any) -&gt; float:
     <span class="str">"""缓存命中率。第一轮一定是 0，从第二轮开始才有意义。"""</span>
+    <span class="cmt"># 字段名各家不同：OpenAI / DeepSeek 是 prompt_tokens_details.cached_tokens，</span>
+    <span class="cmt"># Anthropic 是 cache_read_input_tokens。换供应商只改这一行，别到处 grep。</span>
     details = getattr(usage, "prompt_tokens_details", None)
     hit = getattr(details, "cached_tokens", 0) if details else 0
     total = getattr(usage, "prompt_tokens", 0) or 1
@@ -1167,6 +1194,8 @@ def is_failure(r):
     if (r.get("user_score") or 1) &lt; 0.5:  return True   # 用户点踩
     return False
 
+<span class="cmt"># 挖矿脚本只干两件事：找出来、按失败类型去重。</span>
+<span class="cmt"># expected 一律留空——让模型填 expected，等于让出题人自己批改。</span>
 cases, seen = [], set()
 for line in LOG.read_text().splitlines():
     r = json.loads(line)

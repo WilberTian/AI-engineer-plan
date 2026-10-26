@@ -437,6 +437,8 @@ def main() -&gt; None:
     if not total:
         raise SystemExit("jd.csv 是空的")
 
+    <span class="cmt"># 三个累加器各管一件事：出现次数、我的自评分、按岗位类型拆分。</span>
+    <span class="cmt"># 分开存，后面才能算「出现率 × 我不会」这种组合指标。</span>
     counter: Counter[str] = Counter()
     scores: dict[str, list[int]] = defaultdict(list)
     by_type: dict[str, Counter[str]] = defaultdict(Counter)
@@ -469,9 +471,12 @@ def main() -&gt; None:
     print("\n=== 缺口排序（出现率高 × 我分数低）===")
     gaps = []
     for item, n in counter.items():
+        <span class="cmt"># 出现率低于 20%、或只出现 1 次的项直接不看：几十份 JD 的样本里，出现一次就是噪音</span>
         if n &lt; max(2, total * 0.2):
             continue
         avg = sum(scores[item]) / len(scores[item])
+        <span class="cmt"># 缺口权重 = 出现率 ×（3 − 我的分），用乘法而不是排序拼接：</span>
+        <span class="cmt"># 只有「常出现」和「我不会」同时成立，才会排到前面。</span>
         gaps.append((n / total * (3 - avg), item, n, avg))
     for weight, item, n, avg in sorted(gaps, reverse=True)[:8]:
         print(f"  {item:&lt;20} 出现{n:&gt;3} 均分{avg:.2f} 缺口权重{weight:.2f}")

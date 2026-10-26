@@ -80,6 +80,7 @@
       <a href="#p4-9">9 模型路由</a>
       <a href="#p4-10">10 prompt caching</a>
       <a href="#p4-11">11 延迟分解</a>
+      <a href="#p4-13">13 决策演练</a>
     </nav>
     <h4>参考（随时查）</h4>
     <nav>
@@ -202,10 +203,13 @@ class FaultSpec:
         return any([self.slow, self.timeout, self.dirty, self.exception, self.empty])
 
 
+<span class="cmt"># 模块导入时就固化：所以改 FAULTS 必须重启进程，热改环境变量不会生效</span>
 SPEC = FaultSpec.from_env()
 _rng = random.Random(42)          <span class="cmt"># 固定种子：故障可复现，这对排查至关重要</span>
 
 
+<span class="cmt"># 五种故障各抽一次随机数，不是「抽一次再分派」。</span>
+<span class="cmt"># 所以两个都开时，总故障率近似相加——别按乘法去估。</span>
 def maybe_fault(tool_name: str, result: ToolResult) -&gt; ToolResult:
     <span class="str">"""按概率把一个正常结果替换成故障结果。"""</span>
     if not SPEC.enabled:
@@ -220,6 +224,7 @@ def maybe_fault(tool_name: str, result: ToolResult) -&gt; ToolResult:
         return ToolResult(ok=True, content='{"data": null, "note": "未找到", "code": 500}')
     if _rng.random() &lt; SPEC.empty:
         return ToolResult(ok=True, content="")
+    <span class="cmt"># 顺序有讲究：slow 放最后。放前面的话，一个「慢」会把其它更值得测的故障盖掉</span>
     if _rng.random() &lt; SPEC.slow:
         import time
 
@@ -305,6 +310,7 @@ class LoopGuard:
 
     def check_call(self, name: str, args: dict) -&gt; str | None:
         <span class="cmt"># 第 1 层：重复调用检测（比步数限制更精准）</span>
+        <span class="cmt"># key 必须把参数算进去：只按工具名去重，会把「查 A」和「查 B」当成重复，误杀正常调用</span>
         key = name + ":" + hashlib.md5(
             json.dumps(args, sort_keys=True, ensure_ascii=False).encode()
         ).hexdigest()[:8]
@@ -388,8 +394,10 @@ CREATE TABLE IF NOT EXISTS tool_effects (
 """
 
 
+<span class="cmt"># key 里必须带 step_idx：同一个工具在同一个 run 的不同步骤调用，是两件事，合并了就会漏执行</span>
 def make_key(run_id: str, step_idx: int, tool_name: str, args: dict[str, Any]) -&gt; str:
     payload = json.dumps(args, sort_keys=True, ensure_ascii=False)
+    <span class="cmt"># sort_keys 不能省：参数顺序不同但语义相同，不加就会算出两个不同的 key，幂等直接失效</span>
     digest = hashlib.sha256(payload.encode()).hexdigest()[:16]
     return f"{run_id}:{step_idx}:{tool_name}:{digest}"
 
@@ -719,8 +727,12 @@ class Usage:
 
     def cost_usd(self) -&gt; float:
         p = PRICES.get(self.model)
+        <span class="cmt"># 价格表里没有就返回 0，不要猜一个默认价：看到成本突然归零，就回来补表。</span>
+        <span class="cmt"># 猜出来的数字比 0 更危险，它会让「便宜」变成假象。</span>
         if not p:
             return 0.0
+        <span class="cmt"># 命中缓存的那部分按 cached_in 计价，所以必须从 input_tokens 里减掉。</span>
+        <span class="cmt"># 不减就是同一批 token 算两遍，成本直接虚高一倍。</span>
         fresh = max(0, self.input_tokens - self.cached_tokens)
         return (
             fresh * p["in"] + self.cached_tokens * p["cached_in"] + self.output_tokens * p["out"]
@@ -733,6 +745,7 @@ def summarize(usages: list[Usage]) -> dict[str, float]:
         "total_usd": round(total, 6),
         "input_tokens": sum(u.input_tokens for u in usages),
         "output_tokens": sum(u.output_tokens for u in usages),
+        <span class="cmt"># 缓存命中率要单独报：它是成本的第一驱动，也直接反映上下文拼得对不对（见 P3-12）</span>
         "cache_hit_rate": round(
             sum(u.cached_tokens for u in usages)
             / max(1, sum(u.input_tokens for u in usages)), 3),
@@ -901,6 +914,7 @@ from dataclasses import dataclass
 
 
 @dataclass
+<span class="cmt"># 只存四个时间点，其余全部由属性算出来：多存一个字段，就多一处可能不一致的地方</span>
 class Timing:
     t_start: float = 0.0
     t_first_token: float = 0.0
@@ -920,10 +934,12 @@ class Timing:
         return (self.t_end - self.t_start) * 1000
 
 
+<span class="cmt"># 要报 p95 / p99，不要报平均值：平均值会把「1% 的人等 10 秒」这件事完全抹平</span>
 def percentile(values: list[float], p: float) -&gt; float:
     if not values:
         return 0.0
     s = sorted(values)
+    <span class="cmt"># 最近邻取分位，不做线性插值：样本只有几十条时，插值出来的 p95 是假精度</span>
     idx = min(len(s) - 1, int(round(p / 100 * (len(s) - 1))))
     return s[idx]</code></pre>
 
@@ -940,97 +956,7 @@ def percentile(values: list[float], p: float) -&gt; float:
       </div>
     </details>
 
-    <details class="task" id="p4-12">
-      <summary>
-        <span class="tid">P4-12</span>
-        <span class="tname">消融与双层开关：证明每个特性真的有用</span>
-        <span class="tmin">周日 3h</span>
-      </summary>
-      <div class="task-body">
-        <div class="why"><b>为什么</b>：到 W17 你的系统已经堆了七八个特性——查询改写、混合检索、重排、自检、缓存、路由。<b>「加了之后感觉更好了」是最常见的自欺</b>：可能是真的有效，也可能是同时改了 prompt；可能是这次样本运气好，也可能它在中位数上更好但尾部长了。消融是唯一能回答「这个特性到底值多少」的方法，也是面试里「你做的哪个优化最有效」这个问题的<b>唯一诚实答法</b>。</div>
-
-        <h5>消融：一次只关一个，其余不动</h5>
-
-        <div class="tw">
-          <table class="compact">
-            <thead><tr><th>做法</th><th>能回答</th><th>不能回答</th></tr></thead>
-            <tbody>
-              <tr><td><b>全开 vs 全关</b></td><td>这套东西整体有没有用</td><td>哪个特性有用、哪个白花钱</td></tr>
-              <tr><td><b>单特性消融</b>（一次关一个）</td><td>每个特性的边际贡献</td><td>特性之间的耦合</td></tr>
-              <tr><td><b>AB 测试</b>（真实用户分流）</td><td>业务指标有没有变好</td><td>小流量下很难达到显著</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p>顺序是固定的：<b>先消融定位，再 AB 验证</b>。跳过消融直接 AB，你会在结论里看到「整体变好了 2%」，然后完全不知道是该保留还是砍掉其中一半。</p>
-
-        <h5>双层开关：能关掉，才敢上线</h5>
-
-        <pre><code><span class="str">"""src/agentlab/flags.py — 任何特性都必须能被单独关掉"""</span>
-from __future__ import annotations
-
-import os
-from dataclasses import dataclass, replace
-
-
-@dataclass(frozen=True)
-class Flags:
-    query_rewrite: bool = True     <span class="cmt"># 查询改写</span>
-    rerank: bool = True            <span class="cmt"># 交叉编码器重排</span>
-    self_check: bool = False       <span class="cmt"># 答案自检（多一次调用，贵）</span>
-    cache_prefix: bool = True      <span class="cmt"># 稳定前缀缓存</span>
-
-
-def load(remote: dict[str, bool] | None = None) -&gt; Flags:
-    <span class="str">"""优先级：远程配置 &gt; 环境变量 &gt; 代码默认。
-
-    远程这一层是给「线上出问题、不想等发版」准备的。
-    没有这一层，回滚就要走一次发布流程。
-    """</span>
-    remote = remote or {}
-    kwargs = {}
-    for f in Flags.__dataclass_fields__:
-        if f in remote:
-            kwargs[f] = bool(remote[f])
-        elif os.getenv(f"AIP_{f.upper()}"):
-            kwargs[f] = os.getenv(f"AIP_{f.upper()}") == "1"
-    return replace(Flags(), **kwargs)</code></pre>
-
-        <pre><code><span class="str">"""scripts/ablate.py — 一次关一个，跑同样的测试集"""</span>
-from dataclasses import replace
-
-from agentlab.evals import run_eval
-from agentlab.flags import Flags
-
-BASE = Flags()
-
-for f in ("query_rewrite", "rerank", "self_check", "cache_prefix"):
-    on = run_eval(flags=BASE)
-    off = run_eval(flags=replace(BASE, **{f: False}))
-    d_pass5 = on.pass5 - off.pass5
-    d_cost = on.cost - off.cost
-    print(f"{f:14s} Pass@5 {d_pass5:+.3f}  成本 {d_cost:+.4f}  延迟 {on.p95 - off.p95:+.0f}ms")</code></pre>
-
-        <div class="callout warn">
-          <b>看三个数，不只看一个</b>
-          <p>一个特性「让 Pass@5 涨 2 个点、成本涨 60%、延迟涨 800ms」，那不叫有用，那叫<b>贵</b>。要求每个特性都同时给出 <b>质量 / 成本 / 延迟</b> 三个 delta，然后自己回答「这个交换值不值」。只报质量提升的消融是不完整的。</p>
-        </div>
-
-        <div class="out"><b>产物</b><code>src/agentlab/flags.py</code> + <code>scripts/ablate.py</code> + <code>notes/ablation.md</code>：4 个特性的三列 delta 表 + 一句「哪个该砍」的结论</div>
-
-        <div class="verify"><b>验收</b>
-          表里必须有一个特性是<b>负作用或零作用</b>——真实系统里几乎总有。找到它、砍掉它、再跑一次 eval 确认没变差。<b>「我加的每个特性都有用」这句话本身就是没做消融的证据。</b>另外验收两条工程硬要求：① 所有特性都能用环境变量单独关掉；② 关掉后不需要改代码、不需要重新部署。
-        </div>
-
-        <div class="stuck"><b>卡住怎么办</b>
-          <ul>
-            <li><b>每个特性都是正作用</b>：样本太少或噪声太大。先按 P2-16 把样本量提到 20 题 × 3 次。</li>
-            <li><b>关掉某特性后 eval 反而变好</b>：这是最好的发现，别怀疑数据。先确认不是评测器偏差（人工看 3 条轨迹），然后砍。</li>
-            <li><b>特性互相依赖，关不掉</b>：说明开关粒度不对。把「重排」和「混合检索」拆成两个独立开关——耦合的开关等于没开关。</li>
-          </ul>
-        </div>
-      </div>
-    </details>
+    
 
     <details class="task" id="p4-13">
       <summary>
@@ -1109,6 +1035,7 @@ def breakdown(trace) -&gt; list[tuple[str, float, int]]:
         </div>
       </div>
     </details>
+    <p class="muted">消融（证明每个特性到底值多少）不在这一周：它要真实流量、成本看板和一套稳的 eval，三样到 W20 才齐，书里那一节也是 W20 读 → <a href="stage-p5.html#p5-14">P5-14 消融与开关</a>。这一周你只需要证明「改完确实便宜了、确实快了」。</p>
 
     <h2 id="selftest"><span class="num">5</span>闭卷自测</h2>
 
