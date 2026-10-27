@@ -116,7 +116,7 @@
         <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
         <tbody>
           <tr><td><b>岗位不是一种</b></td><td>“Agent 工程师”底下至少有 7 种细分，匹配度、门槛、供需都不一样</td><td>不先选靶心就开课，会在“要不要学微调”这类问题上反复摇摆；同一份简历投七个方向，每个方向都显得不专注</td><td><a href="#p0-1">P0-1</a> · <a href="#p0-2">P0-2</a></td></tr>
-          <tr><td><b>可迁移能力要盘清</b></td><td>十年前端里：工程化、状态管理、调试、性能优化能直接复用；模型行为、评测、成本不算</td><td>盘不清就会把时间花在已经会的东西上，或者低估自己已有的优势——你的起点不是零</td><td><a href="#p0-4">P0-4</a></td></tr>
+          <tr><td><b>可迁移能力要盘清</b></td><td>前端的工程化、状态管理、调试、性能优化能直接复用；模型行为、评测、成本不算</td><td>盘不清就会把时间花在已经会的东西上，或者低估自己已有的优势——你的起点不是零</td><td><a href="#p0-4">P0-4</a></td></tr>
           <tr><td><b>六域 × 四级自评</b></td><td>模型 / 检索 / 运行时 / 评测 / 工程 / 产品，每域写清四个等级长什么样</td><td>自评的意义不是打分，是把“我缺什么”变成能逐项消灭的清单；分数毫无价值，缺口列表才有</td><td><a href="#p0-4">P0-4</a></td></tr>
           <tr><td><b>JD 反解</b></td><td>把招聘要求逐条翻成“面试会考什么、我用什么证明”</td><td>“熟悉 RAG”和“召回率怎么量”不是一回事；翻不过来，就会把“了解”当成“会”</td><td><a href="#p0-2">P0-2</a></td></tr>
           <tr><td><b>作品 > 证书</b></td><td>一个有评测、有取舍的项目，胜过十个教程 demo</td><td>面试官判断的是你独立做过什么，不是你学过什么；教程复现他一眼能看出来</td><td><a href="#p0-5">P0-5</a></td></tr>
@@ -157,7 +157,7 @@
 
     <div class="tw wide">
       <table>
-        <thead><tr><th style="width:30%">你已有的（十年工程经验）</th><th>对应的 AI 工程能力</th><th style="width:19%">迁移强度</th></tr></thead>
+        <thead><tr><th style="width:30%">你已有的（前端工程经验）</th><th>对应的 AI 工程能力</th><th style="width:19%">迁移强度</th></tr></thead>
         <tbody>
           <tr><td>TypeScript 类型 / Zod 校验</td><td>Python 类型注解 + Pydantic；LLM 结构化输出校验</td><td><span class="pill ok">直接迁移</span></td></tr>
           <tr><td>async / await、Promise 链</td><td>Python asyncio、并发调用多个模型 / 工具</td><td><span class="pill ok">直接迁移</span></td></tr>
@@ -201,7 +201,7 @@
         <ul>
           <li>Agent 失败案例里，技术不行只占一部分</li>
           <li>更常见的是：对话流不自然、错误提示看不懂、用户不知道怎么纠偏</li>
-          <li>这种直觉很难速成，而你已经练了十年</li>
+          <li>这种直觉很难速成，而你已经练了几年</li>
         </ul>
       </div>
     </div>
@@ -516,7 +516,7 @@ if __name__ == "__main__":
         <span class="tmin">2h（周六上午）</span>
       </summary>
       <div class="task-body">
-        <div class="why"><b>为什么</b>：你已有十年工程经验，很多能力是「有但没意识到」，也有很多是「以为自己有其实没有」。评分表的作用是逼你给每条找证据——找不到证据的，就是 0 分。<b>打分前先看 <a href="#asset">能力地图</a></b>，那里写清了每一级具体长什么样。</div>
+        <div class="why"><b>为什么</b>：你已有几年工程经验，很多能力是「有但没意识到」，也有很多是「以为自己有其实没有」。评分表的作用是逼你给每条找证据——找不到证据的，就是 0 分。<b>打分前先看 <a href="#asset">能力地图</a></b>，那里写清了每一级具体长什么样。</div>
 
         <h5>怎么做</h5>
         <ol>
@@ -575,7 +575,7 @@ if __name__ == "__main__":
     <details class="task" id="p0-5">
       <summary>
         <span class="tid">P0-5</span>
-        <span class="tname">简历 v0：把十年经验翻译成 AI 语言</span>
+        <span class="tname">简历 v0：把工程经验翻译成 AI 语言</span>
         <span class="tmin">2h（周六下午）</span>
       </summary>
       <div class="task-body">
@@ -623,7 +623,7 @@ if __name__ == "__main__":
           <li>对每条剩下的，按「背景 → 动作 → 结果 → 可迁移性」四段重写。可迁移性是最后一句，点明它和 AI 系统的关系（不要硬拗，拗不出来说明这条不相关，删掉）。</li>
           <li>加一个 <b>「项目」区块</b>放 <code>agentlab</code> 仓库。现在它只有环境自检脚本，先如实写「进行中：agent loop + eval 基础设施」，P1 结束后更新为真实数据。<b>不做假，但可以把在建的东西写清楚在建。</b></li>
           <li>结构按这个顺序（中文简历）：一句话定位 → 技能（按域分，不按熟练度打分）→ 工作经历（倒序，每条 3–4 个 bullet）→ 项目 → 教育。</li>
-          <li>一句话定位模板：<code>10 年前端工程经验，专注复杂交互与性能优化；近 6 个月转向 LLM 应用工程，手写 agent runtime 与评测体系。</code>——注意它同时给了「旧优势」和「新动作」。</li>
+          <li>一句话定位模板：<code>N 年前端工程经验，专注复杂交互与性能优化；近半年转向 LLM 应用工程，手写 agent runtime 与评测体系。</code>——注意它同时给了「旧优势」和「新动作」。</li>
         </ol>
 
         <div class="out"><b>产物</b><code>notes/resume-v0.md</code>（纯文本版即可，排版留到 P6）</div>
