@@ -1232,7 +1232,7 @@ Mcp-Name: search
 
     <h3 id="book-prio">14.1 章节优先级：109 个实验跑不完，先按这张表挑</h3>
 
-    <p>全书正文约 90 万字节，通读保守 40 小时；109 个实验全做 300 小时以上。而这份计划总共只有 250–290 小时——所以<b>必须挑，而且要挑得很狠</b>。</p>
+    <p>全书正文约 103 万字节（27.9 万汉字），通读保守 40 小时；109 个实验全做 300 小时以上。而这份计划总共只有 250–290 小时——所以<b>必须挑，而且要挑得很狠</b>。</p>
 
     <div class="tw wide">
       <table>
@@ -1240,12 +1240,12 @@ Mcp-Name: search
           <tr><th>优先级</th><th>章节</th><th>为什么值得先读</th><th>读到什么程度</th></tr>
         </thead>
         <tbody>
-          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 2 章 上下文</td><td>把 KV Cache 讲成<b>架构约束</b>而不是优化技巧；Skills 的渐进披露、Agent 状态栏、上下文压缩都在这一章</td><td>精读，跑 2-4、2-6</td></tr>
-          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 7 章 评估</td><td>计划里最薄的一块。任务定义四要素、Pass@k 与 Pass^k、验证器深度、失败归因、统计显著性、消融与 AB 测试</td><td>精读，跑 7-2、7-3、7-6</td></tr>
-          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 9 章 持续进化</td><td>计划里完全没有。四种更新载体、在线与离线双循环、睡眠学习、证据与指令隔离</td><td>精读，跑 9-1</td></tr>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 2 章 上下文</td><td>把 KV Cache 讲成<b>架构约束</b>而不是优化技巧；还讲了「保留思考」——前缀一变，之前的 thinking 一起失效，不只是变慢变贵。Skills 的渐进披露、Agent 状态栏、上下文压缩都在这一章</td><td>精读，跑 2-4、2-6</td></tr>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 7 章 评估</td><td>计划里最薄的一块，W09 起才开始补。任务定义四要素、Pass@k 与 Pass^k、验证器深度、失败归因、统计显著性、消融与 AB 测试</td><td>精读，跑 7-2、7-3、7-6</td></tr>
+          <tr><td style="white-space:nowrap"><b>必读</b></td><td>第 9 章 持续进化</td><td>计划只选到「四种更新载体」这一步，双循环、睡眠学习、证据与指令隔离仍是空白</td><td>精读，跑 9-1</td></tr>
           <tr><td style="white-space:nowrap">高价值</td><td>第 1 章 入门</td><td>把公式拆成可操作的工程框架；Harness 五要素的出处。W01 就该读完</td><td>速读</td></tr>
           <tr><td style="white-space:nowrap">高价值</td><td>第 4 章 工具</td><td>工具对应<b>目标</b>而不是 API 端点；工具超过 100 个最先进模型也开始选错，按需加载让 token 降 46.9%</td><td>精读 §通用原则、§工具太多</td></tr>
-          <tr><td style="white-space:nowrap">高价值</td><td>第 3 章 记忆与知识库</td><td>RAG 完整链路，以及「超越扁平文本」：结构化索引、文件系统范式、智能体化 RAG</td><td>W06–W09 边做边读</td></tr>
+          <tr><td style="white-space:nowrap">高价值</td><td>第 3 章 记忆与知识库</td><td><b>前一半是用户记忆</b>（三层次评估框架、四种存储格式）；后一半是 RAG 完整链路，以及「超越扁平文本」：结构化索引、文件系统范式、智能体化 RAG</td><td>W06–W09 边做边读</td></tr>
           <tr><td style="white-space:nowrap">选读</td><td>第 5 章 Coding Agent</td><td>harness 工程在真实产品里的落法；故障与错误恢复、Coding Agent 的安全</td><td>W10–W11 读 §整体流程、§故障恢复</td></tr>
           <tr><td style="white-space:nowrap">选读</td><td>第 6 章 交互</td><td>异步与事件驱动、语音、Computer Use 的共享原语</td><td>W18 读前半，其余跳过</td></tr>
           <tr><td style="white-space:nowrap">选读</td><td>第 10 章 多 Agent</td><td>唯一有效判据：协作是否引入了单 Agent 生成时拿不到的新信息</td><td>W23 只读「何时真正优于单 Agent」+ 六种失败模式</td></tr>
@@ -1264,7 +1264,7 @@ Mcp-Name: search
           <tr><th>周</th><th>主题</th><th>读哪一节</th><th>实验</th></tr>
         </thead>
         <tbody>
-          <tr><td>W01</td><td>定位</td><td>第 1 章 §现代 Agent、§Harness 工程</td><td>1-1 ★</td></tr>
+          <tr><td>W01</td><td>定位</td><td>第 1 章 §现代 Agent、§Harness 工程</td><td>1-1 ★★</td></tr>
           <tr><td>W02</td><td>Python</td><td>第 1 章 §贯穿全书的设计模式</td><td>—</td></tr>
           <tr><td>W03</td><td>API 深度</td><td>第 2 章 §Agent 如何调用大模型（消息四种角色、多轮工具调用）</td><td>2-1 ★</td></tr>
           <tr><td>W04</td><td>手写 loop</td><td>第 2 章 §从 API 看上下文构成；第 4 章 §工具设计的通用原则</td><td>2-3 ★★</td></tr>
@@ -1272,7 +1272,7 @@ Mcp-Name: search
           <tr><td>W06</td><td>解析分块</td><td>第 3 章 §RAG 基础（分块、稠密与稀疏嵌入）</td><td>3-4 ★★</td></tr>
           <tr><td>W07</td><td>混合检索</td><td>第 3 章 §混合检索：两全其美的艺术</td><td>3-6 ★★</td></tr>
           <tr><td>W08</td><td>生成侧</td><td>第 3 章 §超越扁平文本（结构化索引、知识更新、智能体化 RAG）</td><td>3-10 ★★</td></tr>
-          <tr><td>W09</td><td>eval v2</td><td>第 7 章 §数据集设计、§LLM-as-a-Judge、§失败归因</td><td>7-3 ★★、7-6 ★★</td></tr>
+          <tr><td>W09</td><td>eval v2</td><td>第 7 章 §数据集设计、§LLM-as-a-Judge、§失败归因；第 3 章 §记忆能力的评估</td><td>7-3 ★★、7-6 ★★、3-1 ★</td></tr>
           <tr><td>W10</td><td>读 harness</td><td>第 5 章 §Coding Agent 整体流程、§Harness 工程实践</td><td>—（先读代码）</td></tr>
           <tr><td>W11</td><td>上下文</td><td>第 2 章 §KV Cache 友好设计、§提示工程、§Skills、§状态栏</td><td>2-4 ★★、2-6 ★★</td></tr>
           <tr><td>W12</td><td>持久化</td><td>第 9 章 §从轨迹获得学习信号、§四种进化方法</td><td>9-1 ★★</td></tr>
@@ -1280,7 +1280,7 @@ Mcp-Name: search
           <tr><td>W14</td><td>故障</td><td>第 5 章 §故障与错误恢复、§Coding Agent 的安全</td><td>5-2 ★★</td></tr>
           <tr><td>W15</td><td>安全</td><td>第 2 章 §提示注入；第 9 章 §持续进化的安全边界</td><td>2-5 ★★</td></tr>
           <tr><td>W16</td><td>复盘</td><td><b>不读新章</b>：回读自己 W01–W15 的笔记</td><td>—</td></tr>
-          <tr><td>W17</td><td>成本延迟</td><td>第 7 章 §评估驱动的模型选型（成本分析）、§成本与延迟</td><td>7-10 ★</td></tr>
+          <tr><td>W17</td><td>成本延迟</td><td>第 7 章 §评估驱动的模型选型（含 §Agent 系统的成本分析、§选型的关键维度）</td><td>7-10 ★</td></tr>
           <tr><td>W18</td><td>流式</td><td>第 6 章 §异步与事件驱动（前半：为什么异步、事件触发工具）</td><td>6-2 ★★★（选做）</td></tr>
           <tr><td>W19</td><td>生成式 UI</td><td>第 5 章 §代码：通用 Agent 的元能力（生成式 UI、系统适配器）</td><td>—</td></tr>
           <tr><td>W20</td><td>部署</td><td>第 7 章 §Agent 的可观测性、§生产级评估基础设施（消融、AB、双层开关）</td><td>—</td></tr>
@@ -1292,14 +1292,14 @@ Mcp-Name: search
       </table>
     </div>
 
-    <h3 id="book-gap">14.3 它补上了计划里的三个短板</h3>
+    <h3 id="book-gap">14.3 它补上了计划里的四个短板</h3>
 
-    <p>这三块不是「多知道一点」，而是<b>面试里最能拉开差距的地方</b>——因为大多数人只做到跑通，做不到可度量、可迭代。</p>
+    <p>这四块不是「多知道一点」，而是<b>面试里最能拉开差距的地方</b>——因为大多数人只做到跑通，做不到可度量、可迭代。</p>
 
     <div class="tw wide">
       <table>
         <thead>
-          <tr><th>短板</th><th>计划原来的位置</th><th>书里的层次</th><th>补完能答的追问</th></tr>
+          <tr><th>短板</th><th>补之前计划里是什么</th><th>书里的层次</th><th>补完能答的追问</th></tr>
         </thead>
         <tbody>
           <tr>
@@ -1320,13 +1320,19 @@ Mcp-Name: search
             <td>第 9 章：四种更新载体（知识 / 指令 / 程序 / 参数）、三层验证器、睡眠学习、<b>证据与指令隔离</b></td>
             <td>「上线后怎么让它自己变好？」</td>
           </tr>
+          <tr>
+            <td><b>用户记忆</b></td>
+            <td>P3-4 里「读一遍 s09」的一行表格</td>
+            <td>第 3 章前半：<b>三层次评估框架</b>（基础回忆 / 多会话检索 / 主动服务）、<b>四种存储格式</b>（Simple Notes → Advanced JSON Cards）、轨迹与长期记忆的分层</td>
+            <td>「换一个会话，你的 agent 还认识这个用户吗？」</td>
+          </tr>
         </tbody>
       </table>
     </div>
 
     <div class="callout ok">
-      <b>这三块已经落成任务卡，不用对着书空想</b>
-      <p><a href="stage-p1.html#p1-5">P1-5</a> 把 KV Cache 三原则写进 <code>llm.py</code> 的设计约束；<a href="stage-p2.html#p2-15">P2-15</a> 是 ACI 工具设计（切在目标上，不切在接口上）；<a href="stage-p2.html#p2-16">P2-16</a> 是评估 v2 的科学方法（Pass^k、失败归因、显著性）；<a href="stage-p3.html#p3-12">P3-12</a> 是上下文的三条线索与压缩；<a href="stage-p5.html#p5-14">P5-14</a> 是消融、AB 与双层特性开关（放在 W20，因为真实流量和看板那时才有）；<a href="stage-p4.html#p4-13">P4-13</a> 是成本、延迟、质量的限时决策演练；<a href="stage-p5.html#p5-13">P5-13</a> 是四种更新载体与灰度回滚。</p>
+      <b>上表是补之前的状态。这四块现在都落成任务卡了，不用对着书空想</b>
+      <p><a href="stage-p1.html#p1-5">P1-5</a> 把 KV Cache 三原则写进 <code>llm.py</code> 的设计约束；<a href="stage-p2.html#p2-15">P2-15</a> 是 ACI 工具设计（切在目标上，不切在接口上）；<a href="stage-p2.html#p2-16">P2-16</a> 是评估 v2 的科学方法（Pass^k、失败归因、显著性）；<a href="stage-p3.html#p3-12">P3-12</a> 是上下文的三条线索与压缩；<a href="stage-p5.html#p5-14">P5-14</a> 是消融、AB 与双层特性开关（放在 W20，因为真实流量和看板那时才有）；<a href="stage-p4.html#p4-13">P4-13</a> 是成本、延迟、质量的限时决策演练；<a href="stage-p5.html#p5-13">P5-13</a> 是四种更新载体与灰度回滚；<a href="stage-p2.html#p2-17">P2-17</a> 是用户记忆（三层次评估 + 四种存储格式，W09 与 eval v2 同周）。</p>
       <p>读完一章就回到对应卡片改代码，别攒着。攒到最后一定忘——这是这类书最常见的白读方式。</p>
     </div>
 
@@ -1383,6 +1389,7 @@ Mcp-Name: search
           <tr><td><b>Context engineering</b></td><td>管理模型每次看到的所有 token（提示、检索、历史、工具结果），目标是「最少的高信号 token」</td></tr>
           <tr><td><b>Context rot</b></td><td>上下文填得越满、模型越不准的现象（不只是「装不下」）</td></tr>
           <tr><td><b>Compaction</b></td><td>把历史压缩成高保真摘要，腾出窗口继续干活</td></tr>
+          <tr><td><b>用户记忆</b></td><td>跨会话提炼并持久化与「人」相关的事实（偏好、身份、主体关系）。和 RAG 的区别：它记的是这个人，不是这份资料</td></tr>
           <tr><td><b>Eval</b></td><td>评测：用固定测试集 + 评分器衡量系统质量，并做回归</td></tr>
           <tr><td><b>LLM-as-judge</b></td><td>用模型当评分员；要防位置偏好、长度偏好、自我偏好三种偏差</td></tr>
           <tr><td><b>Trace</b></td><td>一次任务全链路的分步记录：每步输入输出、耗时、token</td></tr>

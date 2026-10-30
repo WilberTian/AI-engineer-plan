@@ -1311,8 +1311,8 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
     <details class="task" id="p1-12" open>
       <summary>
         <span class="tid">P1-12</span>
-        <span class="tname">10 条测试集：7 条正常 + 3 条故意应该失败</span>
-        <span class="tmin">周六 2h</span>
+        <span class="tname">10 条测试集 + 一个能重复运行的评估环境</span>
+        <span class="tmin">周六 2.5h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：测试集的质量决定 eval 的价值。「3 条应该失败」是关键设计——如果你的测试集全是能通过的，它会给你虚假的安全感。</div>
@@ -1334,8 +1334,30 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
           <p><code>t08</code> 测抗注入、<code>t09</code> 测能力边界（agent 应该诚实说做不到而不是瞎编一个流程）、<code>t10</code> 测输入校验。<b>这三条大概率现在会失败</b>——这是好事，它们给了你 P4 要修的具体目标，也证明了你的 eval 不是摆设。</p>
         </div>
 
-        <div class="out"><b>产物</b><code>evals/v1.jsonl</code>（10 行）</div>
-        <div class="verify"><b>验收</b>每条都能说出「它测的是什么能力」；至少 3 条当前会失败。</div>
+        <h5>再往前一步：十条 JSONL 算不算一个「评估环境」</h5>
+
+        <p>写完这十条，你手上是一份<b>用例集</b>，还不是一个<b>能重复运行的评估环境</b>。区别在这五个要素上——少任何一个，两次跑出来的数就没法比，而「能比」才是 eval 的全部意义：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th style="width:96px">要素</th><th>在你这里是什么</th><th>缺了会怎样</th></tr></thead>
+            <tbody>
+              <tr><td><b>数据集</b></td><td><code>evals/v1.jsonl</code> 本身。一条记录 = 一个用例（初始状态 + 输入 + 验收标准打包在一起）</td><td>每轮跑用的题不一样，通过率之间不可比</td></tr>
+              <tr><td><b>环境状态</b></td><td>agent 能看到的 <code>notes/</code> 目录、那几个假 URL、当前工作目录。<b>必须可重置</b></td><td>上一轮写进去的文件留在下一轮，同一个用例两种结果</td></tr>
+              <tr><td><b>工具接口</b></td><td><code>search_notes</code> / <code>read_file</code> / <code>fetch_url</code> 三个原子工具</td><td>工具做成「帮我把项目整理一下」这种大抽象，评估就退化成考一次函数调用——规划和推理被工具本身吞掉了</td></tr>
+              <tr><td><b>评分标准</b></td><td><code>expect</code> 里那套断言，以及怎么把它们聚合成一个数</td><td>只能靠人眼看，跑一次 eval 要一下午</td></tr>
+              <tr><td><b>执行协议</b></td><td>最多几轮、单题超时几秒、什么情况算终止</td><td>有的题 3 轮就停、有的跑 15 轮，最后比的是耐心不是能力</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <b>最常被漏掉的是「环境状态可重置」</b>
+          <p>十条用例里只要有一条会让 agent 写文件（<code>t06</code> 读完不存在的文件后自己建了一个，很常见），第二遍跑的结果就和第一遍不一样。做法很简单：<b>每次运行前把 <code>notes/</code> 从一份只读模板拷进临时目录，跑完删掉</b>。这一步不加，W09 要做的「改动前后对比」就做不干净——你分不清是 prompt 改了还是目录脏了。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>evals/v1.jsonl</code>（10 行）+ <code>scripts/reset_env.py</code>（把 <code>notes/</code> 从模板重置到干净状态）</div>
+        <div class="verify"><b>验收</b>每条都能说出「它测的是什么能力」；至少 3 条当前会失败；<b>连着跑两次，两次的通过数完全一样</b>（不一样说明环境没重置干净）。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>「想不出 edge case」</b>：按这个清单凑——空输入、超长输入、格式错误、不存在的东西、超出能力范围、要求它撒谎、要求它忽略指令、同一问题换个说法。</li>

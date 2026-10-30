@@ -319,7 +319,7 @@
       <summary>
         <span class="tid">P3-4</span>
         <span class="tname">s07–s09：skill 加载 / 上下文压缩 / 记忆</span>
-        <span class="tmin">周六 2.5h</span>
+        <span class="tmin">周六 3h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：s08（compact）是整个仓库最值钱的一节。所有长任务 agent 都绕不开「上下文总会满」这个物理事实，而压缩策略的选择直接决定「长任务能不能不迷失」。</div>
@@ -359,8 +359,25 @@
           <li><b>压缩后怎么衔接</b>：直接替换？还是插入一条「以下是之前对话的摘要」？后者模型更容易接上。</li>
         </ol>
 
-        <div class="out"><b>产物</b><code>notes/harness.md</code> 里 s07–s09 三段，s08 那段要写清上面四个决策点各自的做法</div>
-        <div class="verify"><b>验收</b>能说出「压缩时绝对不能丢的四样东西」（用户约束、已确认结论、未完成待办、失败过的路径）。</div>
+        <h5>读完 s09，还差一个设计决定</h5>
+
+        <p>s09 给的是<b>最小的能跑版本</b>：一段文本、一次抽取、一个检索入口。它不回答两件事——<b>一条记忆的粒度该多细</b>、<b>同一个用户有多个身份时怎么区分</b>（给他自己记的、给他爸记的，全是「张医生」就分不清了）。这两件事属于设计层，在 <a href="stage-p2.html#p2-17">P2-17</a> 里已经定过，这张卡只需要把那份设计落进 s09 的三个位置：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>P2-17 里定下的</th><th>落到 s09 的哪个位置</th></tr></thead>
+            <tbody>
+              <tr><td>存哪种格式（Simple Notes / Enhanced Notes / JSON Cards / Advanced JSON Cards）</td><td>写入之后序列化成什么结构</td></tr>
+              <tr><td>写入触发条件（什么该记、什么不该记）</td><td>决定「这次会话结束后要不要抽取」的那个判断</td></tr>
+              <tr><td>冲突怎么处理（用户改主意了）</td><td>写入前的「按同一个键查一遍，再决定覆盖还是追加」</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="muted">时间紧就先只补第二行。<b>触发条件</b>是记忆污染的主要来源——默认实现往往把整段对话都当素材，于是一条「今天先这样」被永久记住，之后每次会话都被读出来。</p>
+
+        <div class="out"><b>产物</b><code>notes/harness.md</code> 里 s07–s09 三段，s08 那段要写清上面四个决策点各自的做法；s09 那段要写清「格式 / 触发条件 / 冲突处理」三个决定各自怎么做的</div>
+        <div class="verify"><b>验收</b>能说出「压缩时绝对不能丢的四样东西」（用户约束、已确认结论、未完成待办、失败过的路径）；能说出 s09 里「什么时候该写记忆」的判断条件，并指出它对应 P2-17 的哪一条设计。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>「压缩逻辑看不懂」</b>：先只读 README（中文的），读懂「什么时候压、压掉什么」，代码里找对应的 if 和字符串拼接就行。</li>
@@ -1037,7 +1054,7 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
       <summary>
         <span class="tid">P3-12</span>
         <span class="tname">上下文的三条线索：稳定前缀、按需加载、状态栏</span>
-        <span class="tmin">周日 2h</span>
+        <span class="tmin">周日 3h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：W13 结束你现在接了 MCP，工具从 3 个变成 20 个，光 system 加工具 schema 就上万 token，而且<b>每一轮都在重发</b>。这是 Agent 里唯一真正稀缺的资源——不是钱，是上下文窗口和它的成本。更要紧的是：<b>KV Cache 不是优化技巧，是架构约束</b>。前缀一变，缓存全废，延迟和成本一起回来。所以上下文的排布必须在写第一行 prompt 时就定下来。</div>
@@ -1070,6 +1087,14 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
         <div class="callout warn">
           <b>「为什么不把余额写进系统提示？」</b>
           <p>这是面试里最常见的一道检验题。答案是：余额每轮都变，写进 system 就等于<b>每轮换一个前缀</b>，缓存命中率归零，成本翻倍、首字延迟变差。正确做法是把它放进最末轮的用户消息，或者用一个短的状态栏。</p>
+        </div>
+
+        <div class="callout danger">
+          <b>前缀一变，不只是变慢变贵——还可能把它之前的推理一起丢掉</b>
+          <p>上面讲的是缓存：前缀变了，请求变慢、变贵，但结果仍然正确。2026 年的主流模型给这条加了第二层后果。<b>保留思考</b>（preserved thinking，Anthropic 从 Claude Fable 5.1 / Opus 5.5 起引入）：服务端用签名把每个 thinking block 绑定到产生它时的前缀，也就是 system、tools，以及它之前的全部消息。只要这段前缀有任何改动，<b>这个 thinking block 和它后面的所有 thinking 一起失效</b>。</p>
+          <p>失效之后有两种表现：新账户默认直接返回 <code>400</code>；如果配成静默丢弃，请求能成功，但<b>这一轮用不上之前的推理，模型只能从头想</b>——长任务里的体感就是「昨天想明白的计划今天又没了」。</p>
+          <p>官方文档说得很直白：<b>让 thinking 失效的改动，正是让缓存从头计算的那些改动</b>。所以这不是需要单独记的第二条规则，它是同一条纪律的两种后果。踩坑的写法还是那几个熟面孔：每轮重建 system（写入当前时间、模式开关）、每轮重新渲染首条用户消息里的环境信息、中途增删 <code>tools</code>、原地截短旧的工具结果。</p>
+          <p><b>自查方法</b>：把 system 里那个时间戳改成写死的值，跑两轮，看 <code>cached_tokens</code> 和上一轮的 thinking 是不是都回来了。一次改动同时验证两件事——这也是这条纪律为什么值得单独列出来。</p>
         </div>
 
         <pre><code><span class="str">"""src/agentlab/context.py — 组装顺序决定缓存命中率"""</span>
@@ -1140,10 +1165,30 @@ STATE_BAR = <span class="str">"""## 当前状态
           </table>
         </div>
 
-        <div class="out"><b>产物</b><code>src/agentlab/context.py</code> + <code>src/agentlab/skills/</code>（至少 2 个按需加载的 skill）+ <code>notes/context.md</code>（三条线索各写一条「违反会怎样」）</div>
+        <p class="muted">这三层都是<b>信息已经进来之后做减法</b>。还有一条更彻底的路：让它根本别进来。</p>
+
+        <h5>压缩之外的第四条路：让大块信息根本不进主上下文</h5>
+
+        <p>压缩是<b>有损的、要多调一次模型的事后补救</b>。另一种做法是釜底抽薪——把「在代码库里大范围搜索」这类会产生海量中间内容的任务，委派给一个独立的子 agent；子 agent 在自己的上下文里翻完，只回传几百 token 的结论。</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>做法</th><th>主上下文多出什么</th><th>代价</th></tr></thead>
+            <tbody>
+              <tr><td>主 agent 自己去搜</td><td>十几个文件、数万 token 原始内容。找到目标后<b>全部变成永久噪声</b>，还得靠压缩清理</td><td>窗口被占掉一块，清理还要再花一次钱</td></tr>
+              <tr><td>委派给子 agent</td><td>两条消息：一条任务描述 + 一条结论（「函数在 <code>src/payment/callbacks.py</code> 的 <code>handle_callback</code>，另有两处调用点」）</td><td>子 agent 看不到主上下文，<b>任务描述必须自包含</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>关键差别在缓存上：压缩要<b>重写历史</b>，KV Cache 前缀跟着一起废；隔离则让噪声从一开始就没进过主上下文，前缀完全不受影响。所以顺序是<b>先隔离、再压缩</b>——能委派出去的先委派，只剩非进来不可的再压。</p>
+
+        <p>Claude Code 的 Task 工具、各类 Deep Research 系统的检索子 agent，走的都是这个模式。判断要不要拆子 agent 的问题也因此变得很具体：<b>不是「任务复杂不复杂」，而是「中间过程值不值得留在主窗口」</b>。</p>
+
+        <div class="out"><b>产物</b><code>src/agentlab/context.py</code> + <code>src/agentlab/skills/</code>（至少 2 个按需加载的 skill）+ <code>src/agentlab/subagent.py</code>（一个搜索子 agent）+ <code>notes/context.md</code>（三条线索各写一条「违反会怎样」，外加压缩与隔离的取舍，以及「前缀一变，thinking 会怎样」）</div>
 
         <div class="verify"><b>验收</b>
-          三个数都要有：① 同一个任务跑第二轮起，<code>cached_ratio</code> <b>大于 0.7</b>；② 接完 skill 后常驻工具数<b>下降而任务成功率不降</b>；③ 人为把上下文灌到 70% 触发压缩，<b>压缩后 token 降一半且通过率不掉超过 5 个点</b>。三个数缺一个都不算过——只讲「我做了压缩」而不报数字，面试官会继续追问到答不出。
+          三个数都要有：① 同一个任务跑第二轮起，<code>cached_ratio</code> <b>大于 0.7</b>；② 接完 skill 后常驻工具数<b>下降而任务成功率不降</b>；③ 人为把上下文灌到 70% 触发压缩，<b>压缩后 token 降一半且通过率不掉超过 5 个点</b>；④ 子 agent 回传给主 agent 的内容 <b>不超过 500 token 且结论完整</b>（拿同一个搜索任务跟「主 agent 自己搜」对比主上下文的增量）。四个数缺一个都不算过——只讲「我做了压缩」而不报数字，面试官会继续追问到答不出。
         </div>
 
         <div class="stuck"><b>卡住怎么办</b>

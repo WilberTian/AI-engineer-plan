@@ -54,7 +54,7 @@
     <h4>本页目录</h4>
     <h4 class="grp">开始之前</h4>
     <nav>
-      <a href="#concepts">要懂的 9 个概念</a>
+      <a href="#concepts">要懂的 11 个概念</a>
     </nav>
     <h4 class="grp">W06 · 解析与入库</h4>
     <nav>
@@ -100,18 +100,19 @@
     <div class="phasehead">
       <div class="ph-tag">P2 · Week 06–09</div>
       <h2>检索与上下文：让答案有依据、可溯源、可评测</h2>
-      <p><b>目标：</b>做一个「每个答案都有引用、没依据会说不知道」的问答系统，并且能分别报出<b>检索质量</b>和<b>生成质量</b>。</p>
+      <p><b>目标：</b>做一个「每个答案都有引用、没依据会说不知道」的问答系统，并且能分别报出<b>检索质量</b>和<b>生成质量</b>；换一个新会话，它还记得这个人。</p>
       <p>这四周的隐含主题是：<b>先把尺子造出来，再改东西</b>。顺序反了你会一直在盲调。</p>
       <div class="deliv">
         <span>200–500 页语料的索引</span>
         <span>三种分块的 recall@5 对比</span>
         <span>带引用的问答接口</span>
         <span>30 条 eval + 分组指标</span>
+        <span>跨会话用户记忆</span>
       </div>
-      <p class="linepos"><span class="arw">上一阶段给了</span>一个能跑通、可评测的 loop<span class="arw">→</span><b>本阶段交出：带引用与拒答的 RAG 服务</b><span class="arw">→</span><span class="arw">下一阶段</span>P3 把「检索」当成一个工具挂到 harness 上</p>
+      <p class="linepos"><span class="arw">上一阶段给了</span>一个能跑通、可评测的 loop<span class="arw">→</span><b>本阶段交出：带引用、拒答与跨会话记忆的问答服务</b><span class="arw">→</span><span class="arw">下一阶段</span>P3 把「检索」当成一个工具挂到 harness 上</p>
     </div>
 
-    <p class="bookhint"><b>书</b><span>第 3 章 §RAG 基础、§混合检索、§超越扁平文本 · 第 7 章 §数据集设计、§失败归因</span><span class="bx">实验 3-4 ★★、3-6 ★★、7-3 ★★、7-6 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
+    <p class="bookhint"><b>书</b><span>第 3 章 §用户记忆系统、§RAG 基础、§混合检索、§超越扁平文本 · 第 7 章 §数据集设计、§失败归因</span><span class="bx">实验 3-1 ★、3-4 ★★、3-6 ★★、7-3 ★★、7-6 ★★</span><a href="resources.html#book-weeks">按周读法 →</a></p>
     <div class="resweek">
       <p class="rw-h"><b>本阶段该看什么</b><span>一周一行；完整条目（含坑）在<a href="resources.html">资源库</a>，每条都标着周次</span></p>
       <div class="tw">
@@ -121,12 +122,12 @@
             <tr><td><b>W06</b></td><td>解析分块</td><td>Docling / Chonkie 文档；pgvector README</td><td>HF Unit 3 agentic RAG</td></tr>
             <tr><td><b>W07</b></td><td>混合检索</td><td>RRF 原论文（十分钟）；bge-m3 模型卡</td><td>Qdrant 混合检索教程</td></tr>
             <tr><td><b>W08</b></td><td>生成侧</td><td>引用与拒答的实践文章；OWASP 的「过度代理」条目</td><td>Claude cookbook 的 citation 示例</td></tr>
-            <tr><td><b>W09</b></td><td>eval v2</td><td>RAGAS 指标定义（读文档不是读代码）</td><td>inspect_ai 的实验设计</td></tr>
+            <tr><td><b>W09</b></td><td>eval v2 + 记忆</td><td>RAGAS 指标定义（读文档不是读代码）；书第 3 章 §用户记忆系统</td><td>inspect_ai 的实验设计</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <h2 id="concepts">开始之前：这一阶段要懂的 9 个概念</h2>
+    <h2 id="concepts">开始之前：这一阶段要懂的 11 个概念</h2>
 
     <p class="lead">这一页不只有动手。下面每张卡都会用到这几个心智模型——<b>概念先立住，命令才不是照抄</b>；概念没立住，改一行代码就不知道会牵动哪里。</p>
 
@@ -143,6 +144,8 @@
           <tr><td><b>拒答要两层</b></td><td>检索侧阈值（最高分低于阈值直接拒）+ 生成侧指令（资料不足就说不知道）</td><td>只靠 prompt 不可靠，只靠阈值会误杀可答问题；两层缺一层都有洞</td><td><a href="#p2-10">P2-10</a></td></tr>
           <tr><td><b>权限必须在检索前过滤</b></td><td>把租户/文档权限写进查询条件，而不是检索出 10 条再筛掉没权限的</td><td>先检索后过滤，会让“有权限的文档一条都没进前 10”，模型于是拒答或者编造</td><td><a href="#p2-11">P2-11</a></td></tr>
           <tr><td><b>引用让答案可验证</b></td><td>每句结论挂回原文块，能点击回原文</td><td>没有引用，「答案对不对」只能靠感觉；面试问「怎么证明它没编」，答的就是引用和拒答这两层</td><td><a href="#p2-9">P2-9</a></td></tr>
+              <tr><td><b>记忆要分三层</b></td><td>轨迹（流水账，按时间追加、只增不改）· 用户长期记忆（档案，会被反复改写和淘汰）· 业务状态（任务阶段），三者生命周期完全不同</td><td>混成一层就出问题：把轨迹当记忆存，检索被历史噪音淹没；把记忆当轨迹存，用户改主意了就没法更新——档案必须能改，流水账不能</td><td>P2-17</td></tr>
+              <tr><td><b>记忆格式按价值分档</b></td><td>Simple Notes → Enhanced Notes → JSON Cards → Advanced JSON Cards，粒度和成本逐级上升</td><td>关键且少量的事实（人物关系、健康约束）值得用最贵的格式保证查得准；大量非关键的事实必须用最便宜的压住成本。全用一种，必然在某一头吃亏</td><td>P2-17</td></tr>
         </tbody>
       </table>
     </div>
@@ -1398,7 +1401,7 @@ for i, (cid, s) in enumerate(bm25.search(q, 10), 1):
       <summary>
         <span class="tid">P2-16</span>
         <span class="tname">一个通过率说明不了任何事：Pass@k、Pass^k、失败归因、显著性</span>
-        <span class="tmin">周日 3h</span>
+        <span class="tmin">周日 4.5h</span>
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：W09 你已经能跑出一个通过率了，但它回答不了面试里真正会问的那句——<b>「你怎么证明这次改动真的有用？」</b> 一个数字同时混了四件事：任务难度、模型随机性、样本量、评测器本身的偏差。不改，你会长期陷在「改了 prompt 感觉好了、上线又不行」的循环里。这张卡把通过率拆成能被追问的数字。</div>
@@ -1485,10 +1488,68 @@ def paired_delta(a: dict[str, bool], b: dict[str, bool]) -&gt; tuple[int, int]:
           <p>配对比较里，<code>a_only + b_only &lt; 10</code> 时差异基本是噪声——20 道题里 3 道变好、2 道变差，说明不了任何事。经验线：<b>至少 20 题 × 3 次</b>才敢说「有提升」，要写进简历就 <b>≥ 30 题 × 5 次</b>。跑得慢就把并发开到 5，别用「样本少所以跑得快」自我安慰。</p>
         </div>
 
-        <div class="out"><b>产物</b><code>evals/metrics.py</code> + <code>notes/eval-v2-report.md</code>：同一个 eval 集上 A/B 两版 prompt 的 Pass@5、Pass^5、归因分布、差值置信区间</div>
+        <h5>第三个分裂：验证器要同时证明「修好了」和「没修坏」</h5>
+
+        <p>前面两个数都建立在一个默认前提上——<b>你知道什么叫「通过」</b>。这个前提在真实基准里是要专门设计的，而且它决定了通过率能不能被骗。</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th>组</th><th>定义</th><th>证明什么</th><th>只做这一组的后果</th></tr></thead>
+            <tbody>
+              <tr><td><b>FAIL_TO_PASS</b></td><td>改动前失败、改动后通过</td><td>问题<b>确实解决了</b></td><td>agent 可以删掉碍事的断言蒙混过关</td></tr>
+              <tr><td><b>PASS_TO_PASS</b></td><td>改动前后<b>都</b>通过</td><td>没有<b>引入新缺陷</b></td><td>等于没检验——它天生就是过的</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>这个拆分来自 SWE-bench Verified 对「修复完成」的定义，后来成了代码类 agent 的通用做法。它还有一个副产品：能顺带筛出<b>时好时坏的不稳定用例</b>——一条 PASS_TO_PASS 反复摇摆，那是测试本身的问题，不是 agent 的问题，得先修测试。</p>
+
+        <p>你的 eval 集里其实已经有这两组的雏形：<code>must_contain</code> 那几条是 PASS_TO_PASS（改完不许坏），P1-12 的三条 <code>should_fail</code> 是 FAIL_TO_PASS（改完必须能拦住）。<b>缺的是把它们分别算成一个数</b>——现在只有一个总通过率，所以「修好两条」和「改坏两条」会互相抵消，你看不出来。</p>
+
+        <pre><code><span class="cmt"># ---------- 4. 验证器双层：分四态记，不合并成一个总数 ----------</span>
+def tally(cases: list[dict], before: dict[str, bool], after: dict[str, bool]) -&gt; dict[str, int]:
+    <span class="str">"""原本对/现在对、原本错/现在对……四种状态分别计数。
+
+    合并成总通过率会掩盖 regressed —— 它才是唯一需要立刻回滚的信号。
+    """</span>
+    out = {"held": 0, "fixed": 0, "regressed": 0, "still_broken": 0}
+    for c in cases:
+        b, a = before[c["id"]], after[c["id"]]
+        if b and a:
+            out["held"] += 1           <span class="cmt"># PASS_TO_PASS 该守住的，守住了</span>
+        elif b and not a:
+            out["regressed"] += 1      <span class="cmt"># 原本对、现在坏：优先级最高的报警</span>
+        elif a:
+            out["fixed"] += 1          <span class="cmt"># FAIL_TO_PASS 该修好的，修好了</span>
+        else:
+            out["still_broken"] += 1   <span class="cmt"># 还没轮到它，不算退步</span>
+    return out</code></pre>
+
+        <h5>第四个分裂：你改的东西，和你关心的东西，不是一回事</h5>
+
+        <p>前面三条都在讲「怎么把数算准」。这一条更隐蔽——<b>数算对了，但算的是错的东西</b>。</p>
+
+        <div class="callout danger">
+          <b>机制指标 ≠ 目标指标</b>
+          <p>你直接动手改变的那个量叫<b>机制指标</b>；你真正希望变好的那个量叫<b>目标指标</b>。两者经常不是同一个，而且「机制改善了、目标反而变差」很常见。</p>
+          <p>书里那个例子值得记住：为了让 agent 更快，你把计划文件<b>缩短</b>了——计划长度是机制指标，确实降了；真正的目标是<b>会话级成本</b>，它涨了。因为计划不够详细，多出了几轮「编辑 → 检查 → 再编辑」的循环，总输出量反而更高。</p>
+          <p>所以每次做对比实验前先问一句：<b>我改变的东西，和我真正关心的东西，是同一个吗？</b> 如果不是，以目标为准。</p>
+        </div>
+
+        <p>放到你这个项目上，这类错最容易出在三处：</p>
+
+        <ul>
+          <li><b>把「重排后 MRR 涨了」当成「答得更准了」</b>——MRR 是机制，答案正确率才是目标。有些 query 重排后排序更好看，但把唯一正确的那篇挤出了 top-3，整体准确率反而掉。</li>
+          <li><b>把「压缩后 token 少了」当成「成本降了」</b>——压缩本身要额外调一次模型，压完可能还要重跑，账单未必更低。</li>
+          <li><b>把「拒答率上升」当成「更严谨了」</b>——要看拒掉的里面有多少是真不可答。拒答率是个机制指标，它的目标指标是「该答的答对、不该答的别瞎编」这两个数。</li>
+        </ul>
+
+        <p>顺带配一组<b>护栏指标</b>：目标变好的同时，如果延迟、成本、拒答率里有任何一项明显变差，这次改动也不算成功。<b>护栏是「不能变差的底线」，不是优化目标</b>——它和机制指标的区别是：护栏不需要被改善，只需要不被击穿。W20 做消融时会真正用上这两类指标。</p>
+
+        <div class="out"><b>产物</b><code>evals/metrics.py</code> + <code>notes/eval-v2-report.md</code>：同一个 eval 集上 A/B 两版 prompt 的 Pass@5、Pass^5、归因分布、四态计数、差值置信区间</div>
 
         <div class="verify"><b>验收</b>
-          交一份对比报告，必须能回答四个问题：① 两版 prompt 的 Pass@5 与 Pass^5 各是多少；② <b>失败里 tool_error / bad_args / answer_format 各占多少</b>（这个分布直接告诉你下一步该改哪一层）；③ 差值是否落在置信区间之外；④ 如果重跑一次，你敢不敢保证结论不变。<b>四个都答得出才算过</b>——只报一个通过率的，等于没做。
+          交一份对比报告，必须能回答四个问题：① 两版 prompt 的 Pass@5 与 Pass^5 各是多少；② <b>失败里 tool_error / bad_args / answer_format 各占多少</b>（这个分布直接告诉你下一步该改哪一层）；③ 差值是否落在置信区间之外；④ 如果重跑一次，你敢不敢保证结论不变；⑤ 四态计数里 <code>regressed</code> 是不是 0（不是 0 就别急着报提升）。<b>五个都答得出才算过</b>——只报一个通过率的，等于没做。
         </div>
 
         <div class="stuck"><b>卡住怎么办</b>
@@ -1497,6 +1558,161 @@ def paired_delta(a: dict[str, bool], b: dict[str, bool]) -&gt; tuple[int, int]:
             <li><b>归因写不出来</b>：说明你的轨迹里没记「每步的输入输出」。先回去把 loop 的日志补全（tool 名、参数、返回、耗时），这是 P3-11 全链路 trace 的前置。</li>
             <li><b>20 题跑 5 次太慢</b>：把 eval 并发写到 <code>asyncio.Semaphore(5)</code>，同时给每题设 90 秒超时——超时算失败，不要挂死。</li>
             <li><b>两次跑结论不一样</b>：模型有温度。评测时 <code>temperature=0</code> 只降低方差，不消除——所以要多跑几次取分布，而不是相信单次。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="task" id="p2-17">
+      <summary>
+        <span class="tid">P2-17</span>
+        <span class="tname">用户记忆：换一个会话，还认识这个人吗</span>
+        <span class="tmin">周日 2.5h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：到 W09 你的系统对「文档」已经很有办法了——切块、检索、引用、拒答，全都在。但它对<b>人</b>一个字都不记得：用户上周说过「我不吃辣」「我只有周日下午有空」，新开一个会话全部归零。<b>RAG 记住的是资料，用户记忆记住的是这个人</b>，这是两件事，技术栈有交集但设计问题完全不同——粒度、身份、冲突，这三样 RAG 一个都不用管。作品集里带不带它，是「检索 demo」和「有人用的产品」之间最明显的一道分界。</div>
+
+        <p class="muted">这张卡排在 W09 而不是 W06：它的评估方式要复用你刚建好的 eval 能力（跨会话构造用例、Pass^k、失败归因），提前做会做不干净。</p>
+
+        <h5>先分清三个「记得」</h5>
+
+        <p>「记忆」这个词在 agent 里被用得很松，实际指三样东西，生命周期完全不同：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th style="width:110px">层</th><th>是什么</th><th style="width:120px">活多久</th></tr></thead>
+            <tbody>
+              <tr><td><b>轨迹</b></td><td>一次运行里的完整事件（用户消息、模型回复、工具结果），按时间追加、<b>只增不改</b></td><td>单次会话</td></tr>
+              <tr><td><b>用户长期记忆</b></td><td>跨会话提炼出来的稳定信息，键值对绑在用户 ID 上，会被反复改写、合并、淘汰</td><td>长期，跨会话</td></tr>
+              <tr><td><b>业务状态</b></td><td>你自己定义的高层阶段：「需要澄清」「处理中」「等待付款」</td><td>一个任务</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>一句话分开它们：<b>轨迹是流水账，长期记忆是档案。</b>流水账为了追溯和调试，只追加；档案为了使用，必须能被改写——用户改主意了，旧那条就得让位。你这张卡做的是第二层。</p>
+
+        <h5>怎么算「记得好」：先定尺子再动手</h5>
+
+        <p>记忆最容易做成「感觉挺智能」的东西，所以先立三层判据。三层是递进的，上一层过不了，下一层的分数没有意义：</p>
+
+        <div class="tw">
+          <table class="compact">
+            <thead><tr><th style="width:104px">层</th><th>要求</th><th style="width:38%">对照的例子</th></tr></thead>
+            <tbody>
+              <tr><td><b>基础回忆</b></td><td>用户<b>直接给出</b>的、结构化的、无歧义的信息，能精确存取</td><td>「我的会员号是 12345」→ 三天后问起来能报出 12345，不是「大概是 1 万多」</td></tr>
+              <tr><td><b>多会话检索</b></td><td>跨多个会话、多个对象，检索出<b>全部</b>相关信息并做判断</td><td>「帮我约个保养」→ 用户有两辆车，得问是哪一辆，而不是随便挑一辆</td></tr>
+              <tr><td><b>主动服务</b></td><td>没有指令，主动关联很久以前的信息做预警或整合</td><td>订国际航班时联想到几个月前存的护照信息，发现快过期，主动提醒</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>第三层是「助理」和「工具」的分界线。你不需要做到第三层才算过，但<b>要能说清自己做到第几层</b>——面试里问「你的记忆做了多少」，答「能记住用户偏好」是模糊的，答「第一层 12 条用例全过，第二层 8 条里过了 5 条，第三层没做」是可信的。</p>
+
+        <h5>存成什么样：四种格式，从便宜到贵</h5>
+
+        <div class="tw wide">
+          <table>
+            <thead><tr><th style="width:130px">格式</th><th>一条存成什么</th><th>优势</th><th>代价</th><th style="width:16%">什么时候选</th></tr></thead>
+            <tbody>
+              <tr><td><b>Simple Notes</b></td><td>一个不可再分的最小事实</td><td>读写 O(1)，最便宜</td><td>关联全丢：「在 A 公司做推荐系统」被拆成三条独立事实，要综合才能答的问题得重新拼</td><td>大量、非关键的对话事实</td></tr>
+              <tr><td><b>Enhanced Notes</b></td><td>一段带完整上下文的叙述</td><td>语义完整，人和模型都读得懂</td><td>冗余；改一个属性要重写好几段</td><td>需要叙述性理解的场景</td></tr>
+              <tr><td><b>JSON Cards</b></td><td>类别 → 子类 → 键值，三层嵌套</td><td>支持<b>部分更新</b>：改职位不影响公司名</td><td>刚性分类：一件事同时属于三类时，塞进哪一格都丢信息</td><td>结构清楚的事实（联系方式、偏好）</td></tr>
+              <tr><td><b>Advanced JSON Cards</b></td><td>在 JSON Cards 上再加来源背景、主体、关系、时间戳</td><td>能<b>消歧</b>：「张医生」可能是自己的牙医，也可能是父亲的心内科医生</td><td>生成和维护最贵，每轮多一次调用</td><td>关键且少量（人物关系、健康史）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <b>选型只有一句判据</b>
+          <p><b>关键且少量</b>的（人物关系、长期偏好、健康约束）用 Advanced JSON Cards，保证能准确检索；<b>大量且非关键</b>的（随口提过的行程、一次性的项目背景）用 Simple Notes，压住成本。<b>生产系统两种一起用</b>——同一个 agent 里不同类别的信息走不同路径，这不算不一致，这才是设计。</p>
+        </div>
+
+        <h5>实现：写入、改主意、按需注入</h5>
+
+        <pre><code><span class="str">"""src/agentlab/memory.py — 抽取 → 存储 → 检索 → 注入"""</span>
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, asdict
+from pathlib import Path
+
+
+@dataclass
+class Memory:
+    key: str        <span class="cmt"># 稳定的键，如 personal.diet / family.father.doctor</span>
+    value: str      <span class="cmt"># 一句话就能独立读懂的事实</span>
+    kind: str       <span class="cmt"># preference / fact / todo</span>
+    source: str     <span class="cmt"># 哪次会话写进来的，出问题能回溯</span>
+
+
+def upsert(store: dict[str, Memory], m: Memory) -&gt; str:
+    <span class="str">"""同一个键已存在时，覆盖还是并存——必须显式决定，别留给默认行为。"""</span>
+    old = store.get(m.key)
+    if old is None:
+        store[m.key] = m
+        return "added"
+    if old.value == m.value:
+        return "noop"           <span class="cmt"># 重复写入不制造噪音</span>
+    store[m.key] = m            <span class="cmt"># 后写的覆盖先写的：用户改主意了</span>
+    return "updated"            <span class="cmt"># 单独计数，冲突率是记忆质量第一指标</span>
+
+
+def recall(store: dict[str, Memory], query: str, k: int = 5) -&gt; str:
+    <span class="str">"""按需注入：只取相关的几条拼进本轮，不要全量塞进 system。
+
+    这里用关键词匹配示意；上生产换成向量检索，复用 P2 的 embedder。
+    """</span>
+    hits = [m for m in store.values() if any(w in m.value for w in query.split())]
+    hits.sort(key=lambda m: m.kind != "preference")   <span class="cmt"># 偏好排在一般事实前面</span>
+    return "\n".join(f"- {m.value}" for m in hits[:k])
+
+
+def load(path: Path) -&gt; dict[str, Memory]:
+    <span class="str">"""启动时读一次。文件不存在就当新用户，这不是错误。"""</span>
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {k: Memory(**v) for k, v in raw.items()}
+
+
+def save(path: Path, store: dict[str, Memory]) -&gt; None:
+    <span class="str">"""每次 upsert 之后整份写回。这个量级够用，上量再换 SQLite。"""</span>
+    path.write_text(
+        json.dumps({k: asdict(v) for k, v in store.items()}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )</code></pre>
+
+        <h5>抽取三原则：写什么比怎么写更重要</h5>
+
+        <p>会话结束后要额外调一次模型去提炼。这次调用的产出必须同时满足三条，否则宁可不写：</p>
+
+        <ol>
+          <li><b>选择性</b>：丢掉短期细节。「搜索返回了 3 个选项」不该进记忆，「用户不吃辣」该进。</li>
+          <li><b>抽象化</b>：把这一次的具体行为归纳成长期属性。「这次要了靠窗」→「偏好靠窗座位」。</li>
+          <li><b>结构化</b>：用可检索的字段存，不要存一整段自由文本——否则冲突检测和过期处理都做不了。</li>
+        </ol>
+
+        <div class="callout danger">
+          <b>三个最容易做错的地方</b>
+          <ul>
+            <li><b>把整段对话当记忆存</b>。那不是记忆，只是换了个地方存历史。记忆的价值在于「提炼」，存原文只会让检索变差、成本变高。</li>
+            <li><b>把记忆写进 system prompt</b>。记忆内容每次会话都可能变，写进 system 就等于每轮换一个前缀，<b>KV Cache 全灭</b>。正确做法见 <a href="stage-p3.html#p3-12">P3-12</a>：记忆按需加载，拼在本轮用户消息前面。</li>
+            <li><b>用进程内的 dict 验证「跨会话」</b>。那不是跨会话，那是同一进程里的两个函数调用。真要测，得开两个进程、中间把状态落盘。</li>
+          </ul>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/memory.py</code> + <code>evals/memory_v1.jsonl</code>（三层各 3 条，共 9 条跨会话用例）+ <code>notes/memory.md</code>（选了哪种格式、为什么、换另一种会差在哪）</div>
+
+        <div class="verify"><b>验收</b>
+          四条都要过：① <b>开两个进程</b>跑同一条用例——第一个进程写入，第二个进程启动后能答对，说明它是真落盘而不是内存里；② 冲突用例：用户先说「不吃辣」、后说「微辣可以」，第三次提问用的是<b>新的</b>那条，且 <code>updated</code> 计数为 1 而不是两条并存；③ 能说出选这个格式的理由，以及换另一种会差在哪（答不出说明只是抄了别人的方案）；④ 9 条用例按三层次分别报通过数，<b>不许合并成一个率</b>。
+        </div>
+
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>「不知道选哪种格式」</b>：一律先 Simple Notes。只有真的出现「同名不同人」这类消歧问题时，才升级到 Advanced JSON Cards。为想象中的复杂性付出成本，是这一块最常见的浪费。</li>
+            <li><b>「跨会话用例怎么造」</b>：把 3 条会话串成一条链——每条会话结束后只保留记忆文件、丢掉原始对话，再进入下一条。这样才测得出「只靠记忆能不能回答」。</li>
+            <li><b>「抽取用哪个模型」</b>：用便宜的那个。抽取是分类任务，不需要推理；贵模型在这一步的边际收益远低于它多花的钱。</li>
+            <li><b>「记太多了怎么办」</b>：先看 <code>noop</code> 占比。重复写入多，说明触发条件太松；<code>updated</code> 占比高，说明用户在频繁改主意，那是产品问题不是技术问题。</li>
           </ul>
         </div>
       </div>
@@ -1553,6 +1769,7 @@ def paired_delta(a: dict[str, bool], b: dict[str, bool]) -&gt; tuple[int, int]:
           <tr><td>☐</td><td>拒答</td><td><code>rag/answer.py</code></td><td>「阈值不是拍的，是从分数分布定的」</td></tr>
           <tr><td>☐</td><td>30 条 eval</td><td><code>evals/rag_v2.jsonl</code></td><td>「五类问题，含 6 条不可答」</td></tr>
           <tr><td>☐</td><td>诊断脚本</td><td><code>scripts/diagnose.py</code></td><td>「五步定位法，3 分钟能判断是检索还是生成」</td></tr>
+          <tr><td>☐</td><td>用户记忆</td><td><code>src/agentlab/memory.py</code></td><td>「四种格式对比过，关键事实走 Advanced JSON Cards；冲突率 1/9」</td></tr>
         </tbody>
       </table>
     </div>
