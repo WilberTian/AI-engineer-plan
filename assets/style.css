@@ -209,10 +209,29 @@ pre{
   border:1px solid var(--code-line);
 }
 pre code{background:none;padding:0;color:inherit;font-size:inherit;white-space:pre}
+/* 语法高亮 token。代码块在浅色/深色两套主题下都是深底，所以只有一套配色；
+   色相控制在七个：灰(注释) / 绿(字符串) / 紫(关键字) / 蓝(调用) / 橙(数字) /
+   暖橙(字面量) / 黄(装饰器与段名)，再多就成彩灯了。 */
+pre .t-cmt{color:#8a92ad}
+pre .t-str{color:#a5e8b8}
+pre .t-kw{color:#a5a6ff}
+pre .t-fn{color:#8fd3ff}
+pre .t-cmd{color:#8fd3ff}
+pre .t-num{color:#ffca7a}
+pre .t-var{color:#ffca7a}
+pre .t-lit{color:#ffa07a}
+pre .t-dec{color:#ffd479}
+pre .t-sec{color:#ffd479}
+pre .t-key{color:#9fd8e8}
+pre .t-const{color:#9fd8e8}
+pre .t-opt{color:#a9b0c8}
+/* 旧的手工标注类：新代码走 t-* 前缀，这几个留着兜底，
+   万一某个页面脚本没跑起来，原来的灰绿紫蓝至少还在。 */
 pre .cmt{color:#8a92ad}
 pre .str{color:#a5e8b8}
 pre .kw{color:#a5a6ff}
 pre .fn{color:#8fd3ff}
+pre .num{color:#ffca7a}
 .copybtn{
   position:absolute;top:8px;right:8px;opacity:0;transition:.15s;
   background:#2b3044;color:#c9cfe4;border:1px solid #3a4160;border-radius:6px;
@@ -665,7 +684,10 @@ html[data-theme="dark"] .note-fab{color:#14161d}
   .task > summary{border-bottom:1px solid #ccc}
   body{font-size:11pt;background:#fff;color:#000}
   pre{background:#f2f2f2;color:#000;border:1px solid #ccc}
-  pre .cmt,pre .str,pre .kw,pre .fn{color:#333}
+  pre .cmt,pre .str,pre .kw,pre .fn,
+  pre .t-cmt,pre .t-str,pre .t-kw,pre .t-fn,pre .t-cmd,
+  pre .t-num,pre .t-var,pre .t-lit,pre .t-dec,pre .t-sec,
+  pre .t-key,pre .t-opt{color:#333}
   h2{break-after:avoid}
 }
 

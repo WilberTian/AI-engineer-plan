@@ -706,6 +706,143 @@
     syncMarks();
   }
 
+  /* ---------- 语法高亮 ----------
+     纯本地词法着色，不引任何外部库：仓库定位是「clone 下来本地打开也能看」，
+     挂 CDN 会让离线打开变成一片黑白。代价是比不过真正的语言服务器，
+     好处是 100 多个代码块不用写任何标注，以后加新块也不用管。
+
+     铁律：着色只允许插入 <span>，不得增删任何一个字符。
+     校验办法：同一块取着色前后的 textContent，必须逐字相等。
+
+     想手工指定语言，在 code 上写 data-lang="python|shell|toml|json|ts|text"，
+     自动判定不背这个责任。 */
+
+  /* 每条规则 = [sticky 正则, token 后缀]，顺序即优先级。
+     注释和字符串必须排在数字、标识符之前，否则 # 和引号会被从中间切开，
+     后面整行都会错色。 */
+  var HL_RULES = {
+    python: [
+      [/#[^\n]*/y, 'cmt'],
+      [/(?:[rRbBuUfF]{0,2})(?:"""[\s\S]*?"""|'''[\s\S]*?''')/y, 'str'],
+      [/(?:[rRbBuUfF]{0,2})(?:"(?:\\[\s\S]|[^"\\\n])*"|'(?:\\[\s\S]|[^'\\\n])*')/y, 'str'],
+      [/@[A-Za-z_][\w.]*/y, 'dec'],
+      [/\b(?:def|class|return|yield|if|elif|else|for|while|try|except|finally|with|as|import|from|raise|lambda|pass|break|continue|and|or|not|in|is|assert|global|nonlocal|async|await|del)\b/y, 'kw'],
+      [/\b(?:None|True|False|self|cls|str|int|float|bool|list|dict|tuple|set|bytes|bytearray|Any|Optional|Callable|Literal|TypedDict|BaseModel|Enum)\b/y, 'lit'],
+      [/\b[A-Z][A-Z0-9_]{2,}\b/y, 'const'],
+      [/\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?\b/y, 'num'],
+      [/\b[A-Za-z_]\w*(?=\s*\()/y, 'fn']
+    ],
+    shell: [
+      [/#[^\n]*/y, 'cmt'],
+      [/"(?:\\[\s\S]|[^"\\])*"|'[^'\n]*'/y, 'str'],
+      [/\$\{[^}\n]*\}|\$[\w!?#@*$]+/y, 'var'],
+      [/(?:^|\s)(?:uv|pip3?|npm|pnpm|npx|git|cd|mkdir|rm|cp|mv|ls|cat|curl|wget|export|source|echo|python3?|node|docker|chmod|touch|find|grep|sed|awk|ssh|brew|make|tar|sh|sleep|kill|wait|tail|head|tee|wc|sort|uniq|cut|diff|jq|rsync|scp|which|env|nohup|ps)(?=\s|$)/my, 'cmd'],
+      [/--?[A-Za-z][\w-]*/y, 'opt'],
+      [/\b\d+\b/y, 'num']
+    ],
+    /* SQL 走大写关键字，但列类型常写小写，所以两组都收进来。
+       注释规则必须排在最前面：-- 后面整行都是人话，别去分词。 */
+    sql: [
+      [/--[^\n]*/y, 'cmt'],
+      [/\/\*[\s\S]*?\*\//y, 'cmt'],
+      [/'[^'\n]*'/y, 'str'],
+      [/\b(?:CREATE|TABLE|EXTENSION|IF|NOT|EXISTS|PRIMARY|KEY|FOREIGN|SELECT|FROM|WHERE|ORDER|GROUP|BY|LIMIT|OFFSET|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|IN|IS|NULL|AS|ASC|DESC|DEFAULT|VALUES|INSERT|INTO|UPDATE|SET|DELETE|ALTER|DROP|INDEX|UNIQUE|REFERENCES|ANY|ALL|CASE|WHEN|THEN|ELSE|END|DISTINCT|BETWEEN|LIKE|WITH|NOW)\b/y, 'kw'],
+      [/\b(?:text|integer|bigserial|bigint|serial|timestamptz|timestamp|boolean|jsonb|json|uuid|vector|real|numeric|varchar)\b/y, 'lit'],
+      [/\b\d+\b/y, 'num'],
+      [/\b[A-Za-z_]\w*(?=\s*\()/y, 'fn']
+    ],
+    docker: [
+      [/#[^\n]*/y, 'cmt'],
+      [/\b(?:FROM|RUN|CMD|LABEL|EXPOSE|ENV|ADD|COPY|ENTRYPOINT|VOLUME|USER|WORKDIR|ARG|SHELL|HEALTHCHECK|AS)\b/y, 'kw'],
+      [/"(?:\\[\s\S]|[^"\\\n])*"|'[^'\n]*'/y, 'str'],
+      [/\b\d+(?:\.\d+)?\b/y, 'num']
+    ],
+    toml: [
+      [/#[^\n]*/y, 'cmt'],
+      [/^[ \t]*\[[^\]\n]*\]/my, 'sec'],
+      [/"(?:\\[\s\S]|[^"\\\n])*"|'[^'\n]*'/y, 'str'],
+      [/\b(?:true|false)\b/y, 'lit'],
+      [/\b\d[\d_]*(?:\.\d+)?\b/y, 'num'],
+      [/[A-Za-z_][\w.-]*(?=\s*=)/y, 'key']
+    ],
+    json: [
+      [/"(?:\\[\s\S]|[^"\\\n])*"(?=\s*:)/y, 'key'],
+      [/"(?:\\[\s\S]|[^"\\\n])*"/y, 'str'],
+      [/\b(?:true|false|null)\b/y, 'lit'],
+      [/-?\b\d[\d.]*(?:[eE][+-]?\d+)?\b/y, 'num']
+    ],
+    ts: [
+      [/\/\/[^\n]*/y, 'cmt'],
+      [/\/\*[\s\S]*?\*\//y, 'cmt'],
+      [/`(?:\\[\s\S]|[^`\\])*`/y, 'str'],
+      [/"(?:\\[\s\S]|[^"\\\n])*"|'(?:\\[\s\S]|[^'\\\n])*'/y, 'str'],
+      [/\b(?:const|let|var|function|return|if|else|for|while|await|async|new|class|extends|import|from|export|default|interface|type|as|implements|public|private|readonly|void|number|string|boolean|any|unknown|true|false|null|undefined)\b/y, 'kw'],
+      [/\b\d+(?:\.\d+)?\b/y, 'num'],
+      [/\b[A-Za-z_$][\w$]*(?=\s*\()/y, 'fn']
+    ],
+    /* 目录树、.env、纯文本说明：只认注释，别的一律不动。
+       强加关键字会上错色，比不着色更难看。 */
+    text: [
+      [/#[^\n]*/y, 'cmt'],
+      [/"(?:[^"\\\n]|\\.)*"/y, 'str']
+    ]
+  };
+
+  /* 语言判定：只认「这一段不可能属于别的语言」的硬特征，判不出就退成 text。
+     退错成 text 的代价只是少几种颜色，退错成 python 会把整段中文注释切碎。 */
+  function hlLang(code) {
+    if (/[├└]──/.test(code)) return 'text';
+    if (/^[ \t]*(?:from\s+[\w.]+\s+import|import\s+[A-Za-z_][\w.]*|def\s+\w+\s*\(|class\s+\w+)/m.test(code)) return 'python';
+    if (/^[ \t]*(?:--|CREATE\s|INSERT\s|SELECT\s|UPDATE\s|ALTER\s|WITH\s)/m.test(code)) return 'sql';
+    if (/^[ \t]*\[[A-Za-z_][\w.-]*\][ \t]*$/m.test(code)) return 'toml';
+    if (/^[ \t]*[[{]/m.test(code) && /["']\s*:/.test(code)) return 'json';
+    /* JSX 与 TS 一起判：有箭头函数或 ES 关键字，再加尖括号/泛型之一 */
+    if (/^[ \t]*(?:const|let|function|export|interface|type)\s/m.test(code) ||
+        (/=>/.test(code) && /<[A-Za-z][\w.]*[\s/>]/.test(code)) ||
+        /use (?:client|server)/.test(code)) return 'ts';
+    if (/^[ \t]*(?:FROM|RUN|COPY|WORKDIR|ENV|EXPOSE|CMD|ENTRYPOINT|ARG)\s+\S/m.test(code)) return 'docker';
+    if (/(?:^|\n)[ \t]*(?:\$ |(?:uv|pip3?|npm|pnpm|npx|git|cd|mkdir|rm|cp|mv|ls|cat|curl|wget|export|source|echo|python3?|node|docker|chmod|touch|find|grep|sed|awk|ssh|brew|make|tar|sh)\s)/.test(code)) return 'shell';
+    return 'text';
+  }
+
+  /* 单遍扫描：能匹配规则就吐一个 token，匹配不上就攒进 plain，
+     最后一次性转义。返回的 HTML 去掉标签后必须等于入参。 */
+  function hlCode(src, lang) {
+    var rules = HL_RULES[lang] || HL_RULES.text;
+    var out = '', plain = '', i = 0, len = src.length;
+    while (i < len) {
+      var hit = null, cls = '';
+      for (var k = 0; k < rules.length; k++) {
+        var re = rules[k][0];
+        re.lastIndex = i;
+        var m = re.exec(src);
+        if (m && m[0].length) { hit = m[0]; cls = rules[k][1]; break; }
+      }
+      if (hit) {
+        if (plain) { out += esc(plain); plain = ''; }
+        out += '<span class="t-' + cls + '">' + esc(hit) + '</span>';
+        i += hit.length;
+      } else {
+        plain += src.charAt(i);
+        i++;
+      }
+    }
+    if (plain) out += esc(plain);
+    return out;
+  }
+
+  function initHighlight() {
+    [].slice.call(document.querySelectorAll('pre > code')).forEach(function (code) {
+      if (code.getAttribute('data-hl') === '1') return;
+      var src = code.textContent;
+      if (!src || !/\S/.test(src)) return;
+      var lang = code.getAttribute('data-lang') || hlLang(src);
+      code.setAttribute('data-lang', lang);
+      code.setAttribute('data-hl', '1');
+      code.innerHTML = hlCode(src, lang);
+    });
+  }
+
   /* ---------- bootstrap ---------- */
   function ready() {
     syncBtn();
@@ -723,6 +860,7 @@
 
     initToc();
     initCopy();
+    initHighlight();
     initMenu();
     initExpand();
     initNotes();
