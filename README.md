@@ -114,6 +114,9 @@ python3 -m http.server 8000
 │   ├── style.css       设计系统（明暗主题、响应式、笔记面板）
 │   ├── app.js          主题、进度条、目录高亮、代码复制、深链展开、学习笔记
 │   └── readme/         本文档用到的截图
+├── labs/               配套判分器（不放代码副本，参考实现从 HTML 现抽）
+│   ├── README.md       为什么不放、四条扩展约束
+│   └── p1-10/          接口约定 + 14 条离线判分 + 13 条决策点核对表
 ├── .nojekyll           告诉 GitHub Pages 不要走 Jekyll
 └── README.md
 ```

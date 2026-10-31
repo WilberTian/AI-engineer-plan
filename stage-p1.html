@@ -1257,6 +1257,7 @@ print(f"\n总消息数: {len(res.messages)}")</code></pre>
         <div class="out"><b>产物</b><code>src/agentlab/loop.py</code>（约 130 行）+ <code>scripts/run_agent.py</code></div>
         <div class="verify"><b>验收</b>
           ① 三个不同任务能选对工具（「查笔记」「读某文件」「抓一个网页」）；② <code>res.messages</code> 里能看到完整的 user → assistant(tool_calls) → tool → assistant 序列；③ 故意给一个不存在的文件路径，模型能根据「同目录候选」自我修正。
+          <br><b>自检</b>：<code>labs/p1-10/</code> 有 14 条离线判分，判的是协议层（②这一类）；① 和 ③ 要真模型才判得了，别以为全绿就算过。
         </div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>

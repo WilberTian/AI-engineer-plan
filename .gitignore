@@ -9,3 +9,7 @@
 
 # 本地预览可能生成的临时文件
 *.log
+
+# Python（labs 判分器运行产物）
+__pycache__/
+*.pyc
