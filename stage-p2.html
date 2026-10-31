@@ -442,9 +442,23 @@ def _split_paragraph(text: str, limit: int) -&gt; list[str]:
             cur = p[:limit]
     if cur:
         out.append(cur)
-    return out</code></pre>
+    return out
 
-        <div class="out"><b>产物</b><code>src/agentlab/rag/chunk.py</code> + 一份对比表（chunk 数 / 平均字符 / 后续填 recall）</div>
+
+<span class="cmt"># 统一入口：三种策略一个名字对外。P2-4 的 ingest.py 和后面 P3-9 要用的 retrieve
+# 都调这一个函数——别在调用方写 if strategy == "fixed"，
+# 那等于把同一份分派逻辑复制到每个调用处，加第四种策略时要改的地方就散了。</span>
+STRATEGIES = {"fixed": fixed, "recursive": recursive, "structural": structural}
+
+
+def chunk_file(path: Path, strategy: str = "structural") -&gt; list[Chunk]:
+    <span class="cmt"># 早失败比晚失败好：拼错策略名如果在几百个文件之后才炸，
+    # 你会分不清这是数据问题还是代码问题。</span>
+    if strategy not in STRATEGIES:
+        raise ValueError(f"未知策略 {strategy!r}，可选：{sorted(STRATEGIES)}")
+    return STRATEGIES[strategy](path)</code></pre>
+
+        <div class="out"><b>产物</b><code>src/agentlab/rag/chunk.py</code>：三个策略函数 + 统一入口 <code>chunk_file(path, strategy)</code>（P2-4 的 ingest、后面所有调用都走这一个名字）+ 一份对比表（chunk 数 / 平均字符 / 后续填 recall）</div>
         <div class="verify"><b>验收</b>三种策略各自的 chunk 数、平均长度打印出来；<code>structural</code> 的每条 chunk 文本开头能看到 <code>【标题 &gt; 子标题】</code>。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -937,6 +951,103 @@ def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
                     key=lambda x: float(x[1]), reverse=True)
     return [(i, float(s)) for i, s in ranked[:top_k]], ms</code></pre>
 
+        <h5>收口：给整条管线一个唯一入口</h5>
+        <p>前面三张卡各产出一个零件（<code>bm25.py</code> / <code>fusion.py</code> / <code>rerank.py</code>）。这里把它们拼成<b>一个函数</b>：<b>P2-15 把它包成本地工具，P3-9 把同一个函数名包成 MCP 工具</b>——两条路都不用再各自拼一遍「先融合、再重排」。这就是 Index 那张三段倚赖表里「P3 把检索当成一个工具挂上去」落地的地方。</p>
+<pre><code><span class="str">"""src/agentlab/rag/retrieve.py — P2 检索管线的唯一对外入口"""</span>
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import psycopg
+from pgvector.psycopg import register_vector
+from sentence_transformers import SentenceTransformer
+
+from agentlab.rag import bm25
+from agentlab.rag.fusion import rrf
+from agentlab.rag.rerank import rerank
+
+DSN = "postgresql://postgres:devpass@localhost:5432/agentlab"
+<span class="cmt"># 模型加载一次全局复用：每次检索都重新 load 等于多花 2–3 秒，和优化方向正好相反</span>
+_model = SentenceTransformer("BAAI/bge-m3")
+
+<span class="cmt"># 三个阶段的宽度必须分开：召回 30 → 融合后取 10 → 重排完留 5 进 prompt。
+# 候选池小于 20 时 RRF 基本没得发挥；大于 50 时延开始失控。
+# 别把「候选数」和「最终条数」合成一个参数，那样你就没法单独调召回宽度了。</span>
+RECALL_K = 30
+FUSE_K = 10
+
+
+<span class="cmt"># 返回带字段的对象，而不是裸 tuple：下游要 source / section 做引用和溯源，
+# 用 tuple 的话以后每加一个字段都得改所有调用处。</span>
+@dataclass
+class Retrieved:
+    id: str
+    text: str
+    source: str    <span class="cmt"># 文档标题，给用户看的出处</span>
+    section: str   <span class="cmt"># 标题路径，P2-9 引用的锚点</span>
+    score: float
+
+
+def vector_search(query: str, k: int = RECALL_K, strategy: str = "structural",
+                  tenant_id: str = "demo") -&gt; list[str]:
+    qv = _model.encode(query, normalize_embeddings=True)
+    with psycopg.connect(DSN) as conn:
+        register_vector(conn)
+        with conn.cursor() as cur:
+            <span class="cmt"># tenant 过滤写在 WHERE 里，而不是检索完在应用层筛：
+            # HNSW 取满 k 条就停，应用层再筛会让「要 10 条」实际只剩 3 条。细节见 P2-11</span>
+            cur.execute(
+                """SELECT id FROM chunks
+                   WHERE strategy = %s AND tenant_id = %s
+                   ORDER BY embedding &lt;=&gt; %s LIMIT %s""",
+                (strategy, tenant_id, qv, k),
+            )
+            return [r[0] for r in cur.fetchall()]
+
+
+def _fetch(ids: list[str], tenant_id: str) -&gt; dict[str, tuple[str, str, str]]:
+    <span class="cmt"># BM25 那一路用的是全库 pkl（索引里没有租户维度），所以最后这一道复核不能省：
+    # 融合阶段完全可能把别的租户的块排进来，这里统一把门。</span>
+    if not ids:
+        return {}
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute(
+            """SELECT id, content, doc_title, section FROM chunks
+               WHERE id = ANY(%s) AND tenant_id = %s""",
+            (ids, tenant_id),
+        )
+        return {r[0]: (r[1], r[2], r[3] or "") for r in cur.fetchall()}
+
+
+def hybrid_retrieve(query: str, top_k: int = 5, strategy: str = "structural",
+                    tenant_id: str = "demo", use_rerank: bool = True) -&gt; list[Retrieved]:
+    """向量 + 关键词 → RRF → 可选重排 → 带溯源字段的 top_k 条。
+
+    score 的口径要留意：开着重排时它是 cross-encoder 的 logits（不是 0–1），
+    关掉重排时是 RRF 融合分（上限只有 1/(60+1)≈0.016）。
+    所以 P2-10 定拒答阈值时必须单独去算未归一化的余弦相似度，
+    不能拿这个字段去比 0.35——量纲根本不是一回事。
+    """
+    v = vector_search(query, RECALL_K, strategy, tenant_id)
+    b = [i for i, _ in bm25.search(query, RECALL_K)]
+    fused = rrf([v, b])[:FUSE_K]
+
+    if use_rerank:
+        order, _ms = rerank(query, fused, top_k)
+    else:
+        order = fused[:top_k]
+
+    fetched = _fetch([i for i, _ in order], tenant_id)
+    out: list[Retrieved] = []
+    for cid, score in order:
+        if cid not in fetched:      <span class="cmt"># 被租户过滤掉的块直接丢，不留占位</span>
+            continue
+        text, source, section = fetched[cid]
+        out.append(Retrieved(
+            id=cid, text=text, source=source, section=section, score=float(score),
+        ))
+    return out</code></pre>
+
         <h5>必须量三个数（不是两个）</h5>
         <div class="tw">
           <table>
@@ -956,7 +1067,7 @@ def rerank(query: str, candidates: list[tuple[str, float]], top_k: int = 5):
           ③ <b>候选只有 5 条</b>——重排的收益来自「从 30 条里挑 5 条」，候选太少就没得挑。</p>
         </div>
 
-        <div class="out"><b>产物</b><code>rerank.py</code> + 一张三列对比表（纯向量 / 混合 / 混合+重排，各自 recall@5、MRR、P95 延迟）</div>
+        <div class="out"><b>产物</b><code>rerank.py</code> + <code>src/agentlab/rag/retrieve.py</code>（统一入口 <code>hybrid_retrieve</code>；P2-15 包成本地工具、P3-9 包成 MCP 工具都走它）+ 一张三列对比表（纯向量 / 混合 / 混合+重排，各自 recall@5、MRR、P95 延迟）</div>
         <div class="verify"><b>验收</b>能回答「重排让 MRR 从多少到多少，代价是多少毫秒」；能说清为什么 recall 可能下降。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1031,7 +1142,13 @@ def check(answer: str, n_chunks: int) -&gt; CiteCheck:
     return CiteCheck(cited=cited, invalid=invalid, uncited_sentences=uncited)</code></pre>
 
         <div class="out"><b>产物</b>带引用的 <code>generate.py</code> + <code>cite.py</code> 校验器</div>
-        <div class="verify"><b>验收</b>随机抽 20 条回答，<code>invalid</code> 为空，<code>uncited_sentences</code> ≤1；人工核对 5 条，引用编号指向的块确实包含该结论。</div>
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 2 条</b>
+          <p>手册正文这份代码，在 <code>labs/p2-9/</code> 的 14 条判分里有 <b>2 条是红的</b>——这是实测，不是放水。引用编号与覆盖率这两条没真正生效。<br>
+          跑 <code>python3 labs/p2-9/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p2-9/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
+        </div>
+
+<div class="verify"><b>验收</b>随机抽 20 条回答，<code>invalid</code> 为空，<code>uncited_sentences</code> ≤1；人工核对 5 条，引用编号指向的块确实包含该结论。<br><b>自检</b><code>labs/p2-9/</code> 有 14 条离线判分（编号基数、块间分隔、超范围引用、未引用句覆盖），跑 <code>python3 labs/p2-9/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>模型不标编号</b>：先说「编号必须对应资料块序号」还不够，加一个 few-shot 例子（一条带 [1][2] 的示范）。示例比规则有效。</li>
@@ -1083,7 +1200,15 @@ def answer(question: str, top_score: float, chunks: list) -&gt; tuple[str, str]:
         </div>
 
         <div class="out"><b>产物</b>两层拒答实现 + 一张分数分布表（12 条可答 / 3 条不可答各自的 top_score）</div>
-        <div class="verify"><b>验收</b>3 条 unanswerable 全部被拒；12 条 answerable 至少 10 条正常回答（拒答率 ≤17%）。</div>
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 1 条</b>
+          <p>手册正文这份代码，在 <code>labs/p2-10/</code> 的 13 条判分里有 <b>1 条是红的</b>——这是实测，不是放水。拒答的某一层没按要求实现。<br>
+          跑 <code>python3 labs/p2-10/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p2-10/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
+        </div>
+
+<div class="verify"><b>验收</b>3 条 unanswerable 全部被拒；12 条 answerable 至少 10 条正常回答（拒答率 ≤17%）。
+<br><b>并且你要说得出 0.35 这个数是拿哪一列分数定出来的</b>：必须是<b>归一化后的余弦相似度</b>。不能直接拿 RRF 融合分（上限只有 1/(60+1)≈0.016）或 reranker 的 logits 去比 0.35——<b>量纲不是一回事，喂错分数会 100% 拒答</b>。定法：把这 15 条的 top_score 打出来（可答一组、不可答一组），找两条分布之间的空档，把这个数和定法一起写进 <code>rag/answer.py</code> 的注释里。
+<br><b>自检</b><code>labs/p2-10/</code> 有 13 条离线判分（硬门槛不调模型、边界 0.35 放行、两种拒答归一），跑 <code>python3 labs/p2-10/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>分数完全重叠，无法设阈值</b>：改用「重排分」而不是「向量分」做门槛，交叉编码器的分数区分度通常更好。</li>
@@ -1120,12 +1245,32 @@ LIMIT 10;</code></pre>
           <li><b>做一次越权测试</b>：用 A 租户的身份，问一个只有 B 租户文档能回答的问题，期望结果是拒答，而不是答出来。</li>
         </ol>
 
-        <div class="out"><b>产物</b>带 <code>tenant_id</code> 过滤的检索函数 + 一次越权测试记录</div>
+        <div class="callout warn">
+          <b>第 4 条（最容易漏）：WHERE 写对了，HNSW 仍可能少给你结果</b>
+          <p>这是 pgvector 上最反直觉的一处，也是多租户 RAG 的第一事故源：<b>HNSW 是近似索引，它先按向量距离取 <code>hnsw.ef_search</code>（默认 40）个候选，<u>再</u>对这批候选套 WHERE</b>。如果 WHERE 筛掉了 90%，你能拿到的就只剩 4 条左右——<b>SQL 不报错，只是安静地少返回</b>。表面看是「检索效果变差」，实际是索引扫描顺序的问题，往 prompt 或分块上找原因会白费一周。</p>
+        </div>
+<pre><code><span class="cmt">-- 判据：ef_search 要按「过滤后还剩多少」放大
+--   ef_search ≥ 你要的条数 ÷ 预计通过过滤的比例
+--   要 10 条、预计只有 25% 的块属于本租户 → ef_search ≥ 40</span>
+SET LOCAL hnsw.ef_search = 120;
+
+<span class="cmt">-- pgvector 0.8.0+ 才有这个开关：让索引迭代扫描直到凑够 LIMIT，
+-- 而不是扫完固定候选就交差。必须同时给一个上限，否则最坏情况会退化成全表扫。</span>
+SET LOCAL hnsw.iterative_scan = 'relaxed_order';
+SET LOCAL hnsw.max_scan_tuples = 4000;
+
+SELECT id, content FROM chunks
+WHERE tenant_id = ANY(%s)
+ORDER BY embedding &lt;=&gt; %s
+LIMIT 10;</code></pre>
+        <p><b>怎么确认自己踩到了这个坑</b>：同一条 query，把 WHERE 去掉能返回 10 条、加上只剩 3 条——就是这个。<b>反过来，<code>ef_search</code> 不是越大越好</b>，它直接换召回质量以外的东西：扫描时间。调到够用就行，把「我按什么比例定的」写进注释。</p>
+
+        <div class="out"><b>产物</b>带 <code>tenant_id</code> 过滤的检索函数（含 <code>ef_search</code> 的取值理由）+ 一次越权测试记录 + 一份「加/不加 WHERE 各返回几条」的对照</div>
         <div class="verify"><b>验收</b>越权测试返回「资料中没有相关信息」；日志里能看到过滤条件。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>只有一份语料，没法测越权</b>：造两个 tenant，各放 3 个文件，A 问只有 B 有的内容。</li>
-            <li><b>过滤后结果太少</b>：正常。这时应该提高 <code>LIMIT</code>（因为过滤会砍掉一部分），而不是放宽权限。</li>
+            <li><b>过滤后结果太少</b>：<b>不是提高 <code>LIMIT</code></b>——LIMIT 只是从「已经被 WHERE 筛过」的那批里取，加大它拿不到更多。要调的是 <code>hnsw.ef_search</code>，或打开 <code>iterative_scan</code>（见上一节）。两个都调过仍然少，才说明是语料本身没覆盖。</li>
           </ul>
         </div>
       </div>
@@ -1203,7 +1348,8 @@ LIMIT 10;</code></pre>
 
         <div class="verify"><b>验收</b>
           拿 12 条真实问句（含 3 条「不该检索」的）跑一遍，看模型选对工具的比例：<b>12/12 才算过</b>。其中「不该检索」那 3 条最能说明描述写得好不好——模型如果每次都去搜，说明「何时别用」那段没起作用。再手动把 <code>search</code> 的描述删掉触发条件那一句，重跑一次，记录选错率上升多少（这个数字面试可以讲）。
-        </div>
+        
+<br><b>自检</b><code>labs/p2-15/</code> 有 14 条离线判分（描述三段齐、参数收紧、没按接口拆名字），跑 <code>python3 labs/p2-15/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1244,7 +1390,8 @@ LIMIT 10;</code></pre>
 <pre><code>{"id":"v2-07","type":"multi_hop","question":"...","gold_answer":"...","gold_snippets":["...","..."],"must_refuse":false}</code></pre>
 
         <div class="out"><b>产物</b><code>evals/rag_v2.jsonl</code>（30 行）</div>
-        <div class="verify"><b>验收</b>五类都有；每条 <code>gold_answer</code> 是你从语料里抄的、不是自己编的。</div>
+        <div class="verify"><b>验收</b>五类都有；每条 <code>gold_answer</code> 是你从语料里抄的、不是自己编的。
+<br><b>自检</b><code>labs/p2-12/</code> 有 14 条离线判分（五类条数卡死、多跳跨两段、没有占位符），跑 <code>python3 labs/p2-12/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>「凑不出 6 条不可答」</b>：问「未来预测」「语料没覆盖的相邻领域」「需要实时数据」「关于内部人员」。这四类各来一两条就够。</li>
@@ -1550,7 +1697,7 @@ def tally(cases: list[dict], before: dict[str, bool], after: dict[str, bool]) -&
 
         <div class="verify"><b>验收</b>
           交一份对比报告，必须能回答四个问题：① 两版 prompt 的 Pass@5 与 Pass^5 各是多少；② <b>失败里 tool_error / bad_args / answer_format 各占多少</b>（这个分布直接告诉你下一步该改哪一层）；③ 差值是否落在置信区间之外；④ 如果重跑一次，你敢不敢保证结论不变；⑤ 四态计数里 <code>regressed</code> 是不是 0（不是 0 就别急着报提升）。<b>五个都答得出才算过</b>——只报一个通过率的，等于没做。
-        </div>
+        <br><b>自检</b><code>labs/p2-16/</code> 有 16 条离线判分（pass@k / pass^k / 归因 / 四态 / delta），跑 <code>python3 labs/p2-16/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1625,6 +1772,7 @@ def tally(cases: list[dict], before: dict[str, bool], after: dict[str, bool]) -&
         <div class="callout">
           <b>选型只有一句判据</b>
           <p><b>关键且少量</b>的（人物关系、长期偏好、健康约束）用 Advanced JSON Cards，保证能准确检索；<b>大量且非关键</b>的（随口提过的行程、一次性的项目背景）用 Simple Notes，压住成本。<b>生产系统两种一起用</b>——同一个 agent 里不同类别的信息走不同路径，这不算不一致，这才是设计。</p>
+          <p class="muted">这张表说的是「<b>存成什么形状</b>」。<a href="stage-p3.html#p3-12">P3-12</a> 会从另一个角度看同一件事：<b>写入代价</b>（全量追加 → 摘要压缩 → 结构化抽取）。两者是同一个阶梯的两个面，不是两套分类——原文留存对应 Simple / Enhanced Notes，结构化抽取对应 JSON Cards。</p>
         </div>
 
         <h5>实现：写入、改主意、按需注入</h5>
@@ -1703,9 +1851,15 @@ def save(path: Path, store: dict[str, Memory]) -&gt; None:
 
         <div class="out"><b>产物</b><code>src/agentlab/memory.py</code> + <code>evals/memory_v1.jsonl</code>（三层各 3 条，共 9 条跨会话用例）+ <code>notes/memory.md</code>（选了哪种格式、为什么、换另一种会差在哪）</div>
 
-        <div class="verify"><b>验收</b>
-          四条都要过：① <b>开两个进程</b>跑同一条用例——第一个进程写入，第二个进程启动后能答对，说明它是真落盘而不是内存里；② 冲突用例：用户先说「不吃辣」、后说「微辣可以」，第三次提问用的是<b>新的</b>那条，且 <code>updated</code> 计数为 1 而不是两条并存；③ 能说出选这个格式的理由，以及换另一种会差在哪（答不出说明只是抄了别人的方案）；④ 9 条用例按三层次分别报通过数，<b>不许合并成一个率</b>。
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 1 条</b>
+          <p>手册正文这份代码，在 <code>labs/p2-17/</code> 的 14 条判分里有 <b>1 条是红的</b>——这是实测，不是放水。有一条写入/读取行为不达标。<br>
+          跑 <code>python3 labs/p2-17/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p2-17/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
         </div>
+
+<div class="verify"><b>验收</b>
+          四条都要过：① <b>开两个进程</b>跑同一条用例——第一个进程写入，第二个进程启动后能答对，说明它是真落盘而不是内存里；② 冲突用例：用户先说「不吃辣」、后说「微辣可以」，第三次提问用的是<b>新的</b>那条，且 <code>updated</code> 计数为 1 而不是两条并存；③ 能说出选这个格式的理由，以及换另一种会差在哪（答不出说明只是抄了别人的方案）；④ 9 条用例按三层次分别报通过数，<b>不许合并成一个率</b>。
+        <br><b>自检</b><code>labs/p2-17/</code> 有 14 条离线判分（写对、读对、跨进程落盘），跑 <code>python3 labs/p2-17/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>

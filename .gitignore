@@ -13,3 +13,8 @@
 # Python（labs 判分器运行产物）
 __pycache__/
 *.pyc
+
+# labs 判分器跑起来时建的临时目录（随机短名，跑完可能残留）
+*-lab-*/
+lab-mut-*/
+.unlink_probe

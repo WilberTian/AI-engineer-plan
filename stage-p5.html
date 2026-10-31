@@ -135,7 +135,7 @@
         <thead><tr><th style="width:15%">概念</th><th style="width:28%">一句话它是什么</th><th>为什么这样设计 / 关键约束</th><th style="width:92px">落在哪张卡</th></tr></thead>
         <tbody>
           <tr><td><b>流式改的是感知</b></td><td>首字时间（TTFT）从 3 秒降到 0.5 秒，总时长没变，但用户不再觉得卡</td><td>总延迟决定成本，TTFT 决定留存；两个数要分开优化</td><td><a href="#p5-2">P5-2</a> · <a href="#p5-4">P5-4</a></td></tr>
-          <tr><td><b>SSE 而不是 WebSocket</b></td><td>单向推送用 SSE：协议简单、能过代理、断线浏览器自动重连</td><td>WebSocket 适合双向；为“以后可能要双向”上 WS，是最常见的过度设计</td><td><a href="#p5-2">P5-2</a></td></tr>
+          <tr><td><b>SSE 而不是 WebSocket</b></td><td>单向推送用 SSE：协议简单、能过代理。<b>断线时浏览器会自动重连「连接」，但不会自动恢复中断的生成</b>——生成状态要靠 <code>Last-Event-ID</code> 或应用层自己续传（见 P5-2）</td><td>WebSocket 适合双向；为「以后可能要双向」上 WS，是最常见的过度设计。以为 SSE 自动重连 = 答案会自动接着出，是另一种常见误解</td><td><a href="#p5-2">P5-2</a></td></tr>
           <tr><td><b>三态都要有出路</b></td><td>中断、重试、错误——每种状态都要给用户一个能点的按钮</td><td>只做 loading 和 done，用户遇到错误时只能刷新页面，前面全白跑</td><td><a href="#p5-5">P5-5</a></td></tr>
           <tr><td><b>生成式 UI 的边界</b></td><td>让模型选“渲染哪个组件”，不让它写代码</td><td>组件注册表就是安全边界：模型只能在白名单里挑，不能引入任意 HTML/JS</td><td><a href="#p5-6">P5-6</a> · <a href="#p5-7">P5-7</a></td></tr>
           <tr><td><b>什么时候不该用</b></td><td>结构固定、需要一致性的场景（表单、设置页）用它只会更难维护</td><td>生成式 UI 的价值在“不确定该展示什么”；确定的地方用它纯属增加不确定性</td><td><a href="#p5-7">P5-7</a></td></tr>
@@ -216,7 +216,8 @@ node -v   <span class="cmt"># 必须 ≥ 22，v7 不再支持 CJS require()</spa
           <p><b>流式改的是感知，不是总时长。</b> 生成 500 字，流式和非流式的总耗时都是 8 秒。差别在用户多久看到第一个字：非流式是 8 秒后一次性出现，流式是 0.5 秒开始逐字出现。前者让人怀疑卡死并刷新页面，后者让人愿意等——这就是为什么它值得做。</p>
           <ul>
             <li><b>两个指标要分开优化</b>：TTFT（首字时间）决定留存，总时长决定成本与并发占用。把两者混成「加载时间」，就不知道该往哪改。</li>
-            <li><b>为什么选 SSE 不选 WebSocket</b>：单向推送用 SSE 就是一条不关闭的 HTTP 响应，能过大多数代理、断线浏览器自动重连、实现只要几十行。为「以后可能要双向」上 WebSocket，是典型的过度设计。</li>
+            <li><b>为什么选 SSE 不选 WebSocket</b>：单向推送用 SSE 就是一条不关闭的 HTTP 响应，能过大多数代理、实现只要几十行。为「以后可能要双向」上 WebSocket，是典型的过度设计。</li>
+            <li><b>「SSE 会自动重连」只说对了一半</b>：浏览器重连的是<b>这条连接</b>，不是<b>这次生成</b>。断线发生在第 200 个 token 时，重连回来服务端并不会接着吐第 201 个——SSE 的重连靠 <code>Last-Event-ID</code> 请求头，而它只能回放<b>服务端还留着的事件</b>。生成结果要能续传，得自己存一份（run_id → 已生成内容），或者干脆接受「断了就重跑」并把这个行为明确告诉用户。<b>别把这个当成 SSE 免费送的能力</b>。</li>
             <li><b>必须处理的细节</b>：流式下的错误发生在中途——HTTP 状态码早就是 200 了，错误只能放在流里传（最后一个 event 带 <code>error</code> 字段），前端要能识别并给出出路（P5-5）。</li>
           </ul>
         </div>
@@ -713,7 +714,9 @@ export function BlockRenderer({ blocks: list }: { blocks: { type: string; props:
 }</code></pre>
 
         <div class="out"><b>产物</b><code>lib/blocks.ts</code> + <code>BlockRenderer.tsx</code> + 至少 3 种组件在真实问答里被触发</div>
-        <div class="verify"><b>验收</b>同一个问题，换成「有哪些资料提到 X」时会出 <code>source_list</code>，换成「这个月花了多少」时会出 <code>metric_row</code>；手工塞一个非法 props，界面降级为文本而不是崩。</div>
+        <div class="verify"><b>验收</b>两类分开判，因为它们的性质不同：
+          <br>① <b>统计性</b>（测的是模型）：「有哪些资料提到 X」问 10 次，≥7 次出 <code>source_list</code>；「这个月花了多少」问 10 次，≥7 次出 <code>metric_row</code>。<b>别用「问一次出对了就算过」——模型本来就会抖，单次结果既不能证成也不能证伪。</b>
+          <br>② <b>确定性</b>（测的是你的代码）：手工塞一个非法 props 或未知组件名，界面降级为文本而不是崩。<b>这条必须 100% 过</b>，它测的是兜底，跟模型无关。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>模型总是只返回 text</b>：system prompt 里给 2 个具体例子（「问资料 → source_list」），比列类型更有效。或者在 tool description 里写清触发条件。</li>
@@ -796,6 +799,101 @@ export function BlockRenderer({ blocks: list }: { blocks: { type: string; props:
           </table>
         </div>
 
+        <h5>先有 HTTP 入口：<code>src/agentlab/api.py</code></h5>
+        <p>下面的 Dockerfile 最后一行是 <code>agentlab.api:app</code>——这个模块得先存在，否则镜像能构建、容器一起就 <code>ModuleNotFoundError</code>。这一层只做协议转换，<b>判断逻辑一行都不写在这里</b>：写进去的东西前端改不动、测试也覆盖不到。</p>
+<pre><code>"""src/agentlab/api.py —— 把 agent 暴露成 HTTP 服务。"""
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+from collections.abc import AsyncIterator
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+
+from agentlab.config import PRIMARY
+from agentlab.llm import LLM
+from agentlab.loop import run
+from agentlab.rag.retrieve import hybrid_retrieve
+from agentlab.tools import build_registry
+
+app = FastAPI(title="agentlab")
+
+# CORS 只放行你自己的前端域名。写 "*" 等于把你的 key 和额度送给任何人的网页。
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.environ.get("WEB_ORIGIN", "http://localhost:3000")],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["content-type", "x-api-key"],
+)
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    # 这里绝不能调模型或查数据库：它们挂了 health 也跟着挂，平台就会不停重启
+    # 一个其实是好的容器，你也因此分不清到底是哪一层坏了。
+    return {"status": "ok"}
+
+
+def sse(event: str, data: dict) -> str:
+    # SSE 一帧是 "event: ...\ndata: ...\n\n"。少掉最后的空行，客户端收不到这条事件，
+    # 表现为「界面一直转、永远等不到结束」——比报错难查得多。
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@app.post("/chat")
+async def chat(payload: dict) -> StreamingResponse:
+    question = (payload.get("question") or "").strip()
+    if not question:
+        # 空输入在入口就挡掉：放它走到模型那里，是白白花一次调用还多等两秒
+        raise HTTPException(status_code=400, detail="question 不能为空")
+
+    async def stream() -> AsyncIterator[str]:
+        try:
+            hits = hybrid_retrieve(question, top_k=6)
+            # 先推引用再推答案：前端才有东西在等待期显示（P5-3 的过程可视化）
+            yield sse("sources", {"n": len(hits), "items": [h.source for h in hits]})
+
+            context = "\n\n".join(f"[{h.source}] {h.text}" for h in hits)
+            llm = LLM(PRIMARY)
+            # loop.run 是同步阻塞的：在 async 函数里直接调会把整个事件循环卡死，
+            # 第二个用户要等第一个跑完才动。丢线程池是这里唯一要做的事。
+            result = await asyncio.to_thread(
+                run, f"参考：\n{context}\n\n问题：{question}", llm, build_registry()
+            )
+            yield sse("answer", {"text": result.answer, "status": result.status})
+        except Exception as exc:  # noqa: BLE001
+            # 流已经以 200 开头，状态码改不了，错误只能塞进流里。前端必须有解析
+            # error 这一帧的分支，否则用户只看到「卡住」（P5-5）
+            yield sse("error", {"message": f"{type(exc).__name__}: {exc}"})
+
+    return StreamingResponse(stream(), media_type="text/event-stream")</code></pre>
+
+        <h5>tenant 是谁：不做登录，但必须有一个确定的解析点</h5>
+        <p>P5-9 的隔离、P2-11 的 <code>WHERE tenant_id = %s</code> 都要这个值。这里明确一次它的来源，并且<b>全站只在这一处决定</b>——如果每个 route handler 各写一遍 <code>headers.get(...)</code>，迟早有一处漏掉，而漏掉的表现是「A 能查到 B 的文档」。</p>
+<pre><code>"""src/agentlab/tenant.py —— 全站唯一一处决定「这次请求是谁」"""
+from __future__ import annotations
+
+import hashlib
+import os
+
+# 这一版不做登录：作品集是公开的，做账号体系会吃掉一周，而面试官问的其实是
+# 「你怎么保证 A 看不到 B 的文档」，不是「你有没有 OAuth」。
+DEMO = "demo"
+
+
+def resolve_tenant(x_api_key: str | None = None) -> str:
+    """把「谁在调」压成一个字符串，一路传到检索和记账。"""
+    if x_api_key:
+        # 存 hash 不存原文：日志和 usage_events 里留下的是指纹，不是凭据
+        return hashlib.sha256(x_api_key.encode()).hexdigest()[:16]
+    return os.environ.get("AGENTLAB_TENANT", DEMO)</code></pre>
+        <div class="callout">
+          <p><b>路由里这样用</b>：<code>async def chat(payload: dict, tenant: str = Depends(resolve_tenant))</code>，然后 <code>hybrid_retrieve(question, tenant_id=tenant)</code>、<code>usage_events.tenant_id = tenant</code> 全用这一个值。<b>不要在 SQL 里写死 <code>'demo'</code></b>——那是 P2 阶段的默认参数，不是上线配置。</p>
+        </div>
+
         <h5>后端的 Dockerfile（Python 服务）</h5>
 <pre><code>FROM python:3.12-slim
 
@@ -836,6 +934,39 @@ CMD ["uv", "run", "uvicorn", "agentlab.api:app", "--host", "0.0.0.0", "--port", 
       <div class="task-body">
         <div class="why"><b>为什么</b>：一个公开链接 + 免费 API key = 有人会写脚本刷你。限额不是防坏人，是防你自己破产。同时它是「生产级」的标志之一。</div>
 
+        <h5>先建表：没有唯一约束，<code>ON CONFLICT</code> 根本跑不起来</h5>
+<pre><code><span class="cmt">-- scripts/schema_usage.sql
+-- 坑在这：ON CONFLICT (user_key, day) 要求这两列上存在唯一约束，
+-- 忘了加会得到 42809 there is no unique or exclusion constraint matching the ON CONFLICT specification——
+-- 而且报错不指向缺索引，只说 "constraint matching the ON CONFLICT specification"，第一次遇到要排查半天。
+-- 用复合主键而不是另建 UNIQUE 索引：自然键本来就是这两列，主键顺带把索引也对上了。</span>
+CREATE TABLE IF NOT EXISTS usage_daily (
+  user_key   text           NOT NULL,
+  tenant_id  text           NOT NULL DEFAULT 'demo',
+  day        date           NOT NULL,
+  calls      int            NOT NULL DEFAULT 0,
+  cost_usd   numeric(12, 6) NOT NULL DEFAULT 0,   <span class="cmt">-- 钱用 numeric，别用 float</span>
+  <span class="cmt">-- calls / cost 的累加全靠这个主键做 UPSERT；每个用户每天一行，天然幂等</span>
+  PRIMARY KEY (user_key, day)
+);
+
+<span class="cmt">-- 明细表：P5-10 的 P95 延迟 / 失败率 / 拒答率，分子分母都是「每次请求」，
+-- 日汇总表里只有当天合计数，算不出分位数。两张表粒度不同，别指望一张表搞定两种口径。</span>
+CREATE TABLE IF NOT EXISTS usage_events (
+  id            bigserial PRIMARY KEY,
+  user_key      text        NOT NULL,
+  tenant_id     text        NOT NULL DEFAULT 'demo',
+  ts            timestamptz NOT NULL DEFAULT now(),
+  latency_ms    int         NOT NULL,
+  status        text        NOT NULL,             <span class="cmt">-- ok | error</span>
+  refused       boolean     NOT NULL DEFAULT false,
+  input_tokens  int         NOT NULL DEFAULT 0,
+  cached_tokens int         NOT NULL DEFAULT 0,
+  cost_usd      numeric(12, 6) NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS usage_events_ts_idx ON usage_events (ts DESC);</code></pre>
+
+        <h5>计数与判断压成一条 SQL</h5>
 <pre><code>// lib/ratelimit.ts —— 用 Postgres 做计数（不引入 Redis 也能跑）
 import { sql } from "@/lib/db";
 
@@ -875,7 +1006,22 @@ export async function checkQuota(userKey: string, costUsd: number) {
           </table>
         </div>
 
-        <div class="out"><b>产物</b>限额表 + <code>checkQuota</code> 接入 + 一次「超额被拒」的截图</div>
+        <h5>SLA 与降级线：数字要从 P4 的数据里来，不要拍脑袋</h5>
+        <p>P4 交付了两份东西，到这里才第一次被真正用上：<b>P4-11 的 p50/p95 延迟</b>和<b>P4-8 的单任务成本分布</b>。<code>LIMITS</code> 里的两个数应该是<b>从那两张表算出来的</b>，不是「看着差不多」写的——这也是 Index 里「P5 拿这组数据定配额和降级线」这句话落地的地方。</p>
+        <div class="tw">
+          <table>
+            <thead><tr><th>这条线</th><th>定在哪一格</th><th>依据来自</th><th>超了做什么（降级动作）</th></tr></thead>
+            <tbody>
+              <tr><td>单任务成本上限</td><td>P4-8 实测分布的 <b>P95</b></td><td>同一批示样、同一套记账口径</td><td>自动降级到小模型，而不是拒绝服务</td></tr>
+              <tr><td>延迟目标</td><td>P4-11 实测 <b>p50 / p95</b></td><td>四段埋点（路由 / 检索 / 生成 / 渲染）</td><td>超过 p95 就跳过重排（<code>use_rerank=False</code>）</td></tr>
+              <tr><td>每用户日配额</td><td>上面的 <code>LIMITS</code></td><td>单任务成本 × 你愿意承担的每天次数</td><td>429 + 明确文案（不是空白页）</td></tr>
+              <tr><td>错误预算</td><td>失败率 &gt; 5% 持续 10 分钟</td><td>P5-10 看板里的失败率</td><td>降级到只读 / 静态兜底答案</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><b>降级 ≠ 拒绝。</b> 限额用完了才拒绝，其它越线场景先降级「活下去」：先掉重排、再掉模型、最后才是拒答。这三档要明确写在 README 的「局限」里——面试官问「流量突增怎么办」时，能说出三档降级顺序的人不多。</p>
+
+        <div class="out"><b>产物</b><code>scripts/schema_usage.sql</code>（两张表）+ 限额表 + <code>checkQuota</code> 接入 + <b>一页写清「成本 P95 / 延迟 p95 / 每日配额 / 错误预算」四条线和对应的降级动作</b> + 一次「超额被拒」的截图</div>
         <div class="verify"><b>验收</b>连续调用超过 50 次后被拒绝，提示文案友好；数据库里能看到累计花费。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -894,6 +1040,8 @@ export async function checkQuota(userKey: string, costUsd: number) {
       </summary>
       <div class="task-body">
         <div class="why"><b>为什么</b>：这是最容易被面试官记住的小细节——大多数个人项目只有一个聊天框，你有一个真实的运营视图。</div>
+
+        <p>下面<b>六个指标全部来自请求级明细表 <code>usage_events</code></b>（建表 SQL 见 P5-9）。别试图从 <code>usage_daily</code> 算：<b>日汇总表里只有合计数，算不出 P95</b>——分位数必须有每次请求的样本。<code>sum(cost)/sum(calls)</code> 这类可以从汇总表来，六个指标里只有它和一个 <code>sum</code> 类的能共用。</p>
 
         <div class="tw">
           <table>
@@ -1007,9 +1155,16 @@ for f in ("query_rewrite", "rerank", "self_check", "cache_prefix"):
 
         <div class="out"><b>产物</b><code>src/agentlab/flags.py</code> + <code>scripts/ablate.py</code> + <code>notes/ablation.md</code>：4 个特性的三列 delta 表 + 一句「哪个该砍」的结论</div>
 
-        <div class="verify"><b>验收</b>
-          表里必须有一个特性是<b>负作用或零作用</b>——真实系统里几乎总有。找到它、砍掉它、再跑一次 eval 确认没变差。<b>「我加的每个特性都有用」这句话本身就是没做消融的证据。</b>另外验收两条工程硬要求：① 所有特性都能用环境变量单独关掉；② 关掉后不需要改代码、不需要重新部署。
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 2 条</b>
+          <p>手册正文这份代码，在 <code>labs/p5-14/</code> 的 15 条判分里有 <b>2 条是红的</b>——这是实测，不是放水。基线在循环内被重算、以及默认值让某次对比变成空操作。<br>
+          跑 <code>python3 labs/p5-14/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p5-14/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
         </div>
+
+<div class="verify"><b>验收</b>
+          表里必须给出每个特性的 <b>delta 和结论，正负都接受</b>。找到零作用或负作用的那个就砍掉，再跑一次 eval 确认没变差。<b>「我加的每个特性都有用」本身就是没做消融的证据。</b><br><b>但别为了凑「必须有一个负作用」去人为改造实验</b>——真实系统里确实常见，前提是它是<b>测出来的</b>，不是做出来的。另外验收两条工程硬要求：① 所有特性都能用环境变量单独关掉；② 关掉后不需要改代码、不需要重新部署。
+        
+<br><b>自检</b><code>labs/p5-14/</code> 有 15 条离线判分（开关优先级、一次只关一个、基线只算一次），跑 <code>python3 labs/p5-14/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1101,11 +1256,11 @@ for f in ("query_rewrite", "rerank", "self_check", "cache_prefix"):
           <table>
             <thead><tr><th style="width:60px">秒</th><th>画面</th><th>你要说什么</th></tr></thead>
             <tbody>
-              <tr><td>0–8</td><td>首页 + 一句话标题</td><td>「这是一个基于我个人 200 页工程文档的问答助手。」</td></tr>
+              <tr><td>0–8</td><td>首页 + 一句话标题</td><td>「这是一个基于我个人 240 页工程文档的问答助手。」</td></tr>
               <tr><td>8–20</td><td>问一个需要跨两段回答的问题</td><td>「这个问题需要跨两个章节，注意它在查什么。」（让工具卡片可见）</td></tr>
               <tr><td>20–32</td><td>答案出现 + 引用卡片展开</td><td>「每个结论都能回到原文，点开能看到来源和原文片段。」</td></tr>
               <tr><td>32–44</td><td>问一个文档里没有的问题</td><td>「没有依据时它明确拒答，而不是编一个。」</td></tr>
-              <tr><td>44–54</td><td>后台的成本看板</td><td>「每次问答大约 3 厘钱，首字 1.1 秒，这两块是实时统计的。」</td></tr>
+              <tr><td>44–54</td><td>后台的成本看板</td><td>「每次问答 $0.0031（约 2 分钱），首字 1.1 秒，这两块是实时统计的。」</td></tr>
               <tr><td>54–60</td><td>架构图</td><td>「整体五个组件，评测集 30 条，正确率 78%，剩下 22% 的失败我做了归因。」</td></tr>
             </tbody>
           </table>
@@ -1206,7 +1361,7 @@ def rollback() -&gt; None:
         <div class="out"><b>产物</b><code>src/agentlab/rollout.py</code> + <code>notes/evolution.md</code>：一条真实改进的完整记录（轨迹证据 → 候选经验 → eval 验证 → 灰度 → 全量或回滚）</div>
 
         <div class="verify"><b>验收</b>
-          走完一次完整升级并留下四个证据：① 支撑改动的<b>至少 3 条失败轨迹 id</b>；② 改动前后的 eval 对比（20 题 × 3 次，含 Pass@5 与 Pass^5）；③ 灰度 5% 时的指标截图（成功率、P95 延迟、成本三项）；④ <b>真的回滚一次</b>并把回滚耗时记下来。<b>没做过回滚演练的回滚等于没有回滚</b>——第一次执行回滚不该发生在出事的时候。
+          走完一次完整升级并留下四个证据：① 支撑改动的<b>至少 3 条失败轨迹 id</b>；② 改动前后的 eval 对比（20 题 × 3 次，含 Pass@5 与 Pass^5）；③ <b>用 A/B 题集模拟分流</b>：把 20 条 eval 随机分成 5% / 95% 两组，跑出两组指标对比（成功率、P95、成本）。<b>别去凑一张「灰度 5% 的线上截图」</b>——一个人做的项目没有真实用户流量，那张图只能是编的；模拟分流真正证明的是「分流逻辑通、两组指标可比」，这才是这里要练的东西；④ <b>真的回滚一次</b>并把回滚耗时记下来。<b>没做过回滚演练的回滚等于没有回滚</b>——第一次执行回滚不该发生在出事的时候。
         </div>
 
         <div class="stuck"><b>卡住怎么办</b>

@@ -82,6 +82,7 @@
       <a href="#p4-9">9 模型路由</a>
       <a href="#p4-10">10 prompt caching</a>
       <a href="#p4-11">11 延迟分解</a>
+      <a href="#p4-12">12 并行工具调用</a>
       <a href="#p4-13">13 决策演练</a>
     </nav>
     <h4>参考（随时查）</h4>
@@ -236,7 +237,7 @@ def maybe_fault(tool_name: str, result: ToolResult) -&gt; ToolResult:
         <p>在 <code>loop.py</code> 的工具调用处包一层：<code>result = maybe_fault(name, result)</code>。</p>
 
         <div class="out"><b>产物</b><code>resilience/faults.py</code> + loop 里接入</div>
-        <div class="verify"><b>验收</b><code>FAULTS=exception=1.0</code> 时所有工具调用都抛异常，<code>FAULTS=</code> 空时行为完全不变（跑一次 eval 通过率一致）。</div>
+        <div class="verify"><b>验收</b><code>FAULTS=exception=1.0</code> 时所有工具调用都抛异常，<code>FAULTS=</code> 空时行为完全不变（跑一次 eval 通过率一致）。<br><b>自检</b><code>labs/p4-1/</code> 有 13 条离线判分（五类注入、关闭时零影响、可复现），跑 <code>python3 labs/p4-1/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>故障注入让 eval 结果不可比</b>：这正是要的。<b>故障模式和正常模式必须分开跑、分开存结果</b>，别混在一起看通过率。</li>
@@ -342,8 +343,64 @@ def check_result_schema(result_text: str, required_keys: list[str]) -&gt; tuple[
         return False, f"返回数据缺少字段 {missing}，不能作为事实使用。"
     return True, ""</code></pre>
 
-        <div class="out"><b>产物</b><code>resilience/guards.py</code> + <code>notes/failure-report.md</code>：五类各一段（注入方式 / 现象 / 根因层 / 修法 / 修后表现）</div>
-        <div class="verify"><b>验收</b>五类故障下系统都不抛未捕获异常；每类的错误信息都能回答「下一步该做什么」。<b>脏数据那一类必须能挡住</b>——如果 <code>{"data": null}</code> 被当成答案用了，说明缺校验层。</div>
+        <h5>第四层：降级是一条有顺序的链，不是「换个模型」</h5>
+        <p>上表第 4 类把「降级到备用模型」当成期望行为，但降级不止换模型这一件事，而且<b>顺序本身就是策略</b>。这里只做机制；每一档的阈值由 P5-9 从 P4-8 的成本分布和 P4-11 的延迟分布算出来——机制必须早于阈值，反过来就变成「先拍一个数，再想办法让它成立」。</p>
+<pre><code>"""src/agentlab/resilience/degrade.py —— P4 只定机制，P5-9 定阈值"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from agentlab.tools import Registry
+
+# 有副作用的工具名单。只读模式靠它收窄能力，
+# 不要靠在 prompt 里求模型「别调用」——那是软约束，压力测试下一定会被突破（P4-4）。
+SIDE_EFFECTING = {"write_file", "send_email", "create_ticket"}
+
+
+@dataclass
+class Mode:
+    """一次运行的行为开关集合。全站只有这一处定义「降级意味着什么」。"""
+    name: str
+    use_rerank: bool = True       # 关掉 = 省掉 cross-encoder 那 200–800ms
+    model_tier: str = "primary"   # primary | cheap
+    readonly: bool = False        # 只读：仍然回答，但不执行任何有副作用的工具
+    refuse: bool = False          # 拒答：最后手段，不是第一手段
+
+
+# 顺序就是策略：先掉「用户几乎无感」的，再掉「能感觉到但还能用」的，最后才拒答。
+# 把 refuse 放第一档是最常见的错——它省的钱最多，代价是用户什么也拿不到。
+CHAIN = [
+    Mode("normal"),
+    Mode("no_rerank", use_rerank=False),
+    Mode("cheap_model", use_rerank=False, model_tier="cheap"),
+    Mode("readonly", use_rerank=False, model_tier="cheap", readonly=True),
+    Mode("refuse", use_rerank=False, model_tier="cheap", readonly=True, refuse=True),
+]
+
+
+def degrade_to(level: int) -> Mode:
+    # level 越界时钳到两端：降级链走到头也不能让调用方拿到 None，
+    # 否则「降级」这个动作自己就变成了新的故障源。
+    if level < 0:
+        return CHAIN[0]
+    return CHAIN[min(level, len(CHAIN) - 1)]
+
+
+def registry_for(mode: Mode, registry: Registry) -> Registry:
+    """只读模式的落地方式：换一个不含副作用工具的注册表，而不是新写一套工具。"""
+    if not mode.readonly:
+        return registry
+    kept = Registry()
+    for name, tool in registry._tools.items():  # noqa: SLF001
+        if name not in SIDE_EFFECTING:
+            kept.register(tool)
+    return kept</code></pre>
+        <div class="callout">
+          <p><b>回滚是另一件事，别和降级混在一起。</b>降级是「同一个版本在压力下少做点事」，回滚是「换回上一个版本」。回滚能不能一键完成，取决于 P5-14 的双层开关：特性开关能关的走开关，开关关不掉的才走重新部署。没有开关，回滚的最短时间就是一次 CI + 部署，那不叫一键。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>resilience/guards.py</code> + <code>resilience/degrade.py</code> + <code>notes/failure-report.md</code>：五类各一段（注入方式 / 现象 / 根因层 / 修法 / 修后表现）</div>
+        <div class="verify"><b>验收</b>五类故障下系统都不抛未捕获异常；每类的错误信息都能回答「下一步该做什么」。<b>脏数据那一类必须能挡住</b>——如果 <code>{"data": null}</code> 被当成答案用了，说明缺校验层。<br><b>自检</b><code>labs/p4-2/</code> 有 16 条离线判分（重复调用、预算边界、脏数据校验），跑 <code>python3 labs/p4-2/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>「注入超时后整个任务卡住」</b>：<code>time.sleep</code> 在同步代码里会真等。改成 <code>raise TimeoutError</code> 更接近真实（网络超时是抛异常不是睡）。</li>
@@ -542,7 +599,13 @@ def safe_url(raw: str) -&gt; str:
     return raw</code></pre>
 
         <div class="out"><b>产物</b><code>resilience/safety.py</code>（路径/URL/参数校验）+ prompt 里的隔离标记</div>
-        <div class="verify"><b>验收</b>四个攻击输入全部被拦：<code>../../../etc/passwd</code>、<code>http://127.0.0.1:5432</code>、<code>file:///etc/hosts</code>、一段带 <code>&lt;/untrusted&gt;</code> 的内容。</div>
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 5 条</b>
+          <p>手册正文这份代码，在 <code>labs/p4-4/</code> 的 15 条判分里有 <b>5 条是红的</b>——这是实测，不是放水。其中含<b>路径前缀绕过</b>这类真越权——照抄会把缺口原样带进你的权限模块。<br>
+          跑 <code>python3 labs/p4-4/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p4-4/NOTES §2</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
+        </div>
+
+<div class="verify"><b>验收</b>四个攻击输入全部被拦：<code>../../../etc/passwd</code>、<code>http://127.0.0.1:5432</code>、<code>file:///etc/hosts</code>、一段带 <code>&lt;/untrusted&gt;</code> 的内容。<br><b>自检</b><code>labs/p4-4/</code> 有 15 条离线判分（路径前缀绕过、内网 URL、标签逃逸），跑 <code>python3 labs/p4-4/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>「校验太严，正常用例也被拦」</b>：白名单制天然偏严。收集被误拦的输入，逐条加白，别改成黑名单。</li>
@@ -584,7 +647,7 @@ def safe_url(raw: str) -&gt; str:
           <p>新手会写「已解决」。资深会写「已缓解，残留风险是 X」。因为安全没有 100%，能说清残留风险的人才被认为真的理解系统。<b>面试时主动说残留风险，比强调「我全防住了」更可信。</b></p>
         </div>
 
-        <div class="out"><b>产物</b><code>notes/threat-model.md</code>：10 条清单 + **你自己系统的**前 3 条优先修复项</div>
+        <div class="out"><b>产物</b><code>notes/threat-model.md</code>：10 条清单 + <b>你自己系统的</b>前 3 条优先修复项</div>
         <div class="verify"><b>验收</b>每条都有「对策 + 残留风险」；能指出「我的系统当前最危险的是第 N 条，因为它有 X 权限」。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -764,7 +827,7 @@ def summarize(usages: list[Usage]) -> dict[str, float]:
 </code></pre>
 
         <div class="out"><b>产物</b><code>cost.py</code> + eval 报告里带成本四行 + 一张「哪一步最贵」的排序</div>
-        <div class="verify"><b>验收</b>能说出「我的成本里 X% 来自输入 token」，并能指出最贵的那个环节（通常是某一轮带着完整上下文的模型调用）。</div>
+        <div class="verify"><b>验收</b>能说出「我的成本里 X% 来自输入 token」，并能指出最贵的那个环节（通常是某一轮带着完整上下文的模型调用）。<br><b>自检</b><code>labs/p4-8/</code> 有 16 条离线判分（单位、缓存扣减、缺价处理），跑 <code>python3 labs/p4-8/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>拿不到 <code>cached_tokens</code></b>：部分厂商在 <code>usage.prompt_tokens_details.cached_tokens</code>，部分没有。没有就记 0，别编。</li>
@@ -817,10 +880,16 @@ def route(task: str, history_len: int, has_tools: bool) -&gt; Route:
         </div>
 
         <div class="out"><b>产物</b><code>routing.py</code> + 分组对照表（每档：降级后通过率 / 全大模型通过率 / 成本差）</div>
-        <div class="verify"><b>验收</b>整体成本降 ≥30%，整体通过率掉 ≤2 个点，且每一档的掉点都在 5 以内。</div>
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 1 条</b>
+          <p>手册正文这份代码，在 <code>labs/p4-9/</code> 的 14 条判分里有 <b>1 条是红的</b>——这是实测，不是放水。分类边界有一条站不住。<br>
+          跑 <code>python3 labs/p4-9/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p4-9/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
+        </div>
+
+<div class="verify"><b>验收</b>整体成本降 ≥30%。通过率<b>每一档各跑 3 次</b>，报三次的中位数与范围，<b>阈值放宽到 5 个点</b>——30 条样本里 1 条 case 就值 3.3 个点，「掉 ≤2 个点」在统计上根本分辨不出来，硬判只会让你误读自己的改动。<b>「三次跑完没观测到显著下降」也是一个合格结论</b>，别说「掉了 1 个点所以更安全」。<br><b>自检</b><code>labs/p4-9/</code> 有 14 条离线判分（三档可达、分类边界、难度标记），跑 <code>python3 labs/p4-9/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
-            <li><b>「降级后质量掉太多」</b>：把那一档收回大模型，只保留确实没掉的档。**不要为了达成 30% 硬降级**——「我试了，只有 18% 是安全的」也是有效结论。</li>
+            <li><b>「降级后质量掉太多」</b>：把那一档收回大模型，只保留确实没掉的档。<b>不要为了达成 30% 硬降级</b>——「我试了，只有 18% 是安全的」也是有效结论。</li>
             <li><b>「两种模型行为差异太大，prompt 要各写一套」</b>：这是真实代价。先统一 prompt，如果某模型明显不听话，为它单独加一段约束。</li>
           </ul>
         </div>
@@ -948,7 +1017,14 @@ def percentile(values: list[float], p: float) -&gt; float:
         <p>跑 20 条 query，报 p50 和 p95。<b>为什么必须报 p95 而不是平均</b>：用户记住的是最慢那几次，平均值会把长尾抹掉。</p>
 
         <div class="out"><b>产物</b>四段耗时分布表（p50/p95 各一段）+ 改造前后对比</div>
-        <div class="verify"><b>验收</b>能回答「我的 p95 延迟是 X ms，其中最大的一段是 Y，我改了什么把 Z 降了多少」。</div>
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 1 条</b>
+          <p>手册正文这份代码，在 <code>labs/p4-11/</code> 的 15 条判分里有 <b>1 条是红的</b>——这是实测，不是放水。四段埋点里有一段对不上。<br>
+          跑 <code>python3 labs/p4-11/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p4-11/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
+        </div>
+
+<div class="verify"><b>验收</b>能回答「我的 p95 延迟是 X ms，其中最大的一段是 Y，我改了什么把 Z 降了多少」。
+<br><b>至少跑 20 次再报 p95</b>：样本只有几条时 p95 就等于最大值，那不是分位数。报的时候<b>必须带上样本数</b>——「p95 = 2.4s（n=24）」和「p95 = 2.4s（n=5）」不是一回事，后面这个数在面试里一问就穿。<br><b>自检</b><code>labs/p4-11/</code> 有 15 条离线判分（四段派生、非流式退化、最近邻分位），跑 <code>python3 labs/p4-11/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>拿不到 TTFT</b>：用流式调用，记第一个 chunk 到达的时间。非流式就拿不到，这也是「为什么要流式」的一个理由。</li>
@@ -959,6 +1035,73 @@ def percentile(values: list[float], p: float) -&gt; float:
     </details>
 
     
+
+    <details class="task" id="p4-12">
+      <summary>
+        <span class="tid">P4-12</span>
+        <span class="tname">并行工具调用：它救的是墙钟，不是钱</span>
+        <span class="tmin">周日 1h</span>
+      </summary>
+      <div class="task-body">
+        <div class="why"><b>为什么</b>：P4-11 量完之后，「工具」那一段通常是最大的一块，而模型一次返回多个 <code>tool_calls</code> 时把它们<b>并发</b>跑掉，是最直接的解法——也是<b>最容易被讲错</b>的解法。它值得单练一张卡，因为有两个反直觉的点：① <b>延迟降了，token 和钱一分不减</b>，所以它不是成本手段；② 并发会把 P4-3 攒的<b>幂等键</b>第一次真正压出问题来。面试里「我说我会并行」和「我知道并行会带来什么新问题」是两回事。</div>
+
+        <h5>先把三个约束想清楚，再写 gather</h5>
+        <ul>
+          <li><b>必须限并发。</b> 不限并发的 <code>gather</code> 等于对你的下游（数据库、检索、第三方 API）做 DoS，而且会把 P4-3 做的退避全废掉——限流一触发，20 个请求同时退避同时重试。</li>
+          <li><b>失败要逐个兜住。</b> <code>asyncio.gather</code> 默认一个协程抛异常，整批结果全部作废。一个工具挂了不该让另外三个已经成功的结果一起丢。</li>
+          <li><b>结果按 <code>tool_call_id</code> 回填，不按完成顺序。</b> 工具消息和 assistant 里的 <code>tool_calls</code> 必须一一对应，顺序乱了模型就不知道哪个结果对应哪个调用——这条是从 P1-10 一路传下来的纪律。</li>
+        </ul>
+
+        <h5>改造 loop 的工具执行那一段</h5>
+<pre><code><span class="str">"""src/agentlab/parallel.py — 并发执行一轮里的多个 tool_calls"""</span>
+import asyncio
+
+from agentlab.tools import Registry, ToolResult
+
+
+async def run_tool_calls(registry: Registry, calls: list, *, limit: int = 4):
+    <span class="cmt"># Semaphore 而不是无脑 gather：并发上限是一道护栏，不是性能开关。
+    # 默认值怎么定？下游是单个 Postgres 就用连接数的一半；
+    # 是三方 API 就照它的 QPS 配额倒推——这个值必须能说清来历。</span>
+    sem = asyncio.Semaphore(limit)
+
+    async def one(call):
+        async with sem:
+            try:
+                return call.id, await registry.acall(call.name, call.args)
+            except Exception as exc:  # noqa: BLE001
+                <span class="cmt"># 在「每个调用」这一层兜底，而不是用 gather(return_exceptions=True)：
+                # 后者会把异常对象和正常结果混在一个 list 里，下游还得挨个 isinstance 判断。
+                # 在这里兜，返回类型始终统一成一个 ToolResult。</span>
+                return call.id, ToolResult(
+                    ok=False, content=f"{type(exc).__name__}: {exc}")
+
+    <span class="cmt"># 返回值是个 dict：按 call.id 取用，顺序问题在消费端就不存在了</span>
+    return dict(await asyncio.gather(*(one(c) for c in calls)))</code></pre>
+
+        <div class="callout warn">
+          <b>有副作用的工具不要进这个并发池</b>
+          <p>写文件、下订单、发消息这类操作，并行 + <b>重试</b>（P4-3）= 双重副作用。两条路二选一：要么单独串行执行；要么带上幂等键，让「同一个 key 第二次执行」变成空操作。<b>这一条要在 <code>notes/</code> 里写清楚你选了哪个、为什么</b>——它是面试官最愿意追问的一处。</p>
+        </div>
+
+        <div class="out"><b>产物</b><code>src/agentlab/parallel.py</code> + loop 里的并行分支 + 一张四列对比表（<b>串行 / 并行</b> × <b>P50 / P95 / 单次成本 / 失败率</b>）</div>
+        <div class="verify"><b>验收</b>三个都能演示出来：
+          <ol>
+            <li><b>延迟降了，钱没变</b>：同一个 case 串行 X ms → 并行 Y ms，而 <code>cost_usd</code> 波动在 ±5% 以内。<b>差得多说明你其实改了别的东西</b>（比如少跑了一次工具），这条是在证明你理解并行救的是墙钟不是 token。</li>
+            <li><b>坏一个不影响其余</b>：故意注入一个必失败的工具，另外三个的结果仍然进入上下文。</li>
+            <li><b>Semaphore 真的生效</b>：6 个耗时 1s 的工具，<code>limit=2</code> 时总耗时 ≥ 3s。<b>如果这里跑成 1s，说明限并发根本没接上。</b></li>
+          </ol>
+        </div>
+        <div class="stuck"><b>卡住怎么办</b>
+          <ul>
+            <li><b>改完反而更慢</b>：先看是不是 <code>limit</code> 太小，再看数据库连接池够不够——连接池只有 5 个，你并发 20 个请求只是在排队，还多付了上下文切换。</li>
+            <li><b>模型开始认错工具结果</b>：九成是 <code>tool_call_id</code> 回填顺序错了。回 P1-10 重看那条纪律，别去调 prompt。</li>
+            <li><b>同一个写操作执行了两次</b>：并发 + 重试的经典组合。用 P4-3 的幂等键，或者把这个工具踢出并发池。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
 
     <details class="task" id="p4-13">
       <summary>
@@ -1024,9 +1167,15 @@ def breakdown(trace) -&gt; list[tuple[str, float, int]]:
 
         <div class="out"><b>产物</b><code>scripts/breakdown.py</code> + <code>notes/cost-latency-drill.md</code>（含分解表照片 + 25 分钟讲稿大纲 + 你实际做完的两个杠杆的数据）</div>
 
-        <div class="verify"><b>验收</b>
-          三件事：① 分解表能说出「钱花在哪一跳、占比多少」；② 讲稿能<b>不看稿</b>在 25 分钟内讲完，且第一句是结论不是背景；③ <b>真的做了至少两个杠杆</b>（缓存 + 路由最便宜），并把改前改后的 $ / ms / Pass@5 三个数记下来。只有讲稿没有实测数据的，面试官追问两句就穿了。
+                <div class="callout warn">
+          <b>本卡的参考实现自己就红了 1 条</b>
+          <p>手册正文这份代码，在 <code>labs/p4-13/</code> 的 12 条判分里有 <b>1 条是红的</b>——这是实测，不是放水。成本分解的某一项算错了。<br>
+          跑 <code>python3 labs/p4-13/tools/verify_reference.py</code> 能看到它红在哪几条；修法写在 <code>labs/p4-13/NOTES</code>。<b>别把这几条当成「手册写错了」，把它们当成这张卡真正要你做的事</b>——判分器判的是机制，机制对了自然就绿。</p>
         </div>
+
+<div class="verify"><b>验收</b>
+          三件事：① 分解表能说出「钱花在哪一跳、占比多少」；② 讲稿能<b>不看稿</b>在 25 分钟内讲完，且第一句是结论不是背景；③ <b>真的做了至少两个杠杆</b>（缓存 + 路由最便宜），并把改前改后的 $ / ms / Pass@5 三个数记下来。只有讲稿没有实测数据的，面试官追问两句就穿了。
+        <br><b>自检</b><code>labs/p4-13/</code> 有 12 条离线判分（聚合、排序、分母），跑 <code>python3 labs/p4-13/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1087,10 +1236,11 @@ def breakdown(trace) -&gt; list[tuple[str, float, int]]:
           <tr><td>☐</td><td>失败报告</td><td><code>notes/failure-report.md</code></td><td>五类故障的「现象→根因→修法」</td></tr>
           <tr><td>☐</td><td>威胁模型</td><td><code>notes/threat-model.md</code></td><td>10 条攻击 + 残留风险</td></tr>
           <tr><td>☐</td><td>审计日志</td><td><code>audit_log</code> 表</td><td>「append-only，触发器挡 UPDATE」</td></tr>
-          <tr><td>☐</td><td>错题本</td><td><code>notes/retro-w16.md</code></td><td>27 题档位分布，绿 ≥18</td></tr>
+          <tr><td>☐</td><td>错题本</td><td><code>notes/retro-w16.md</code></td><td>29 题档位分布，绿 ≥19</td></tr>
           <tr><td>☐</td><td>成本核算</td><td><code>cost.py</code> + 报告四行</td><td>「单任务 $0.0038，输入占 78%」</td></tr>
           <tr><td>☐</td><td>路由</td><td><code>routing.py</code></td><td>「三档路由，成本降 34%，质量掉 1 点」</td></tr>
           <tr><td>☐</td><td>缓存实验</td><td><code>notes/prompt-caching.md</code></td><td>「命中率 62%，读写比 4.1」</td></tr>
+          <tr><td>☐</td><td>并行工具调用</td><td><code>src/agentlab/parallel.py</code></td><td>「延迟降了但成本不变，而且我没把写操作放进并发池」</td></tr>
         </tbody>
       </table>
     </div>

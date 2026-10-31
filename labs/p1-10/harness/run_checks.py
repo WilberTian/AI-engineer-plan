@@ -20,6 +20,8 @@ from typing import Any, Callable
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent.parent / "_shared"))
+from checkkit import exit_missing, run_all  # noqa: E402
 from fake_llm import FakeLLM, resp  # noqa: E402
 
 PARAMS = {
@@ -255,14 +257,14 @@ CHECKS: list[tuple[str, Callable[[Ctx], str]]] = [
 def main() -> int:
     ap = argparse.ArgumentParser(description="判 P1-10 的 loop 实现是否符合 CONTRACT.md")
     ap.add_argument("--target", default="src", help="含 agentlab/ 的目录，默认 ./src")
-    ap.add_argument("--filter", default="", help="只跑名字里含这个词的检查")
-    args = ap.parse_args()
+    args, rest = ap.parse_known_args()
 
     target = Path(args.target).expanduser().resolve()
     if not (target / "agentlab").is_dir():
-        print(f"× 在 {target} 下没找到 agentlab/")
-        print("  用 --target 指到你的 src 目录，例：--target ~/code/agentlab-project/src")
-        return 2
+        return exit_missing(
+            f"× 在 {target} 下没找到 agentlab/",
+            "  用 --target 指到你的 src 目录，例：--target ~/code/agentlab-project/src",
+        )
     sys.path.insert(0, str(target))
 
     try:
@@ -274,33 +276,16 @@ def main() -> int:
         traceback.print_exc()
         return 2
 
-    ctx = Ctx(run, Registry, Tool, ToolResult)
-    print("=" * 74)
-    print(f"P1-10 判分 · 目标 {target}")
-    print("=" * 74)
-
-    npass = nfail = 0
-    for i, (name, fn) in enumerate(CHECKS, 1):
-        if args.filter and args.filter not in name:
-            continue
-        try:
-            detail = fn(ctx)
-            npass += 1
-            print(f"  {i:2d} PASS  {name}" + (f"   [{detail}]" if detail else ""))
-        except AssertionError as exc:
-            nfail += 1
-            print(f"  {i:2d} FAIL  {name}")
-            print(f"          {exc}")
-        except Exception as exc:
-            nfail += 1
-            print(f"  {i:2d} ERR   {name}   {type(exc).__name__}: {exc}")
-
-    print("-" * 74)
-    print(f"合计 {npass + nfail} 条：PASS {npass} / FAIL+ERR {nfail}")
-    print()
-    print("注意：全绿只说明协议层对了。卡里验收 ①③（模型选对工具、靠候选自我修正）")
-    print("      需要真模型，离线判不了——见 CONTRACT.md 第 6 节。")
-    return 0 if nfail == 0 else 1
+    return run_all(
+        f"P1-10 判分 · 目标 {target}",
+        CHECKS,
+        Ctx(run, Registry, Tool, ToolResult),
+        argv=rest,
+        footer=(
+            "注意：全绿只说明协议层对了。卡里验收 ①③（模型选对工具、靠候选自我修正）\n"
+            "      需要真模型，离线判不了——见 CONTRACT.md 第 6 节。"
+        ),
+    )
 
 
 if __name__ == "__main__":

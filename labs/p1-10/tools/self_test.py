@@ -12,17 +12,20 @@ from __future__ import annotations
 
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+LAB = HERE.parent
+sys.path.insert(0, str(LAB.parent / "_shared"))
 sys.path.insert(0, str(HERE))
-from verify_reference import LLM_STUB, REPO, SOURCES, block  # noqa: E402
+from htmlcode import block                 # noqa: E402
+from mutate import run_mutations           # noqa: E402
+from verify_reference import LLM_STUB, SOURCES  # noqa: E402
 
-RUN_CHECKS = HERE.parent / "harness" / "run_checks.py"
+RUN_CHECKS = LAB / "harness" / "run_checks.py"
 
 # (名字, 原文, 改坏成什么, 期望报出来的那条检查名)
-MUTATIONS: list[tuple[str, str, str, str]] = [
+MUTATIONS = [
     (
         "漏掉 assistant 消息回填",
         "        messages.append(msg.model_dump(exclude_none=True))",
@@ -64,6 +67,15 @@ MUTATIONS: list[tuple[str, str, str, str]] = [
 ]
 
 
+def build(tmp: Path, loop_src: str) -> None:
+    pkg = tmp / "agentlab"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "llm.py").write_text(LLM_STUB, encoding="utf-8")
+    (pkg / "tools.py").write_text(block("stage-p1.html", *SOURCES["tools.py"]), encoding="utf-8")
+    (pkg / "loop.py").write_text(loop_src, encoding="utf-8")
+
+
 def run_checks(target: Path) -> tuple[int, str]:
     r = subprocess.run(
         [sys.executable, str(RUN_CHECKS), "--target", str(target)],
@@ -73,52 +85,13 @@ def run_checks(target: Path) -> tuple[int, str]:
 
 
 def main() -> int:
-    stage = REPO / "stage-p1.html"
-    tools_code = block(stage, *SOURCES["tools.py"])
-    loop_code = block(stage, *SOURCES["loop.py"])
-
-    print("=" * 74)
-    print("判分器体检：塞 bug → 判分必须红")
-    print("=" * 74)
-
-    npass = nfail = 0
-    for name, old, new, expect in MUTATIONS:
-        if old not in loop_code:
-            nfail += 1
-            print(f"  FAIL  {name}")
-            print("        原文没找到，mutation 失效（手册代码可能已改）")
-            continue
-
-        with tempfile.TemporaryDirectory(prefix="p1-10-mut-") as tmp:
-            pkg = Path(tmp) / "agentlab"
-            pkg.mkdir()
-            (pkg / "__init__.py").write_text("", encoding="utf-8")
-            (pkg / "llm.py").write_text(LLM_STUB, encoding="utf-8")
-            (pkg / "tools.py").write_text(tools_code, encoding="utf-8")
-            (pkg / "loop.py").write_text(loop_code.replace(old, new, 1), encoding="utf-8")
-            rc, out = run_checks(Path(tmp))
-
-        caught = rc != 0 and any(
-            (("FAIL" in line) or ("ERR " in line)) and expect in line
-            for line in out.splitlines()
-        )
-        if caught:
-            npass += 1
-            print(f"  PASS  {name}")
-            print(f"        被「{expect}」抓住")
-        else:
-            nfail += 1
-            print(f"  FAIL  {name}")
-            print(f"        期望「{expect}」报错，但 exit={rc} 且那条检查没红")
-            for line in out.splitlines():
-                if "PASS" in line or "FAIL" in line or "ERR" in line:
-                    print(f"        | {line.strip()}")
-
-    print("-" * 74)
-    print(f"合计 {npass + nfail} 个 mutation：判分抓住 {npass} / 漏掉 {nfail}")
-    if nfail:
-        print("漏掉的那个断言是摆设，要改。")
-    return 0 if nfail == 0 else 1
+    return run_mutations(
+        "P1-10 判分器体检：塞 bug → 判分必须红",
+        baseline=block("stage-p1.html", *SOURCES["loop.py"]),
+        mutations=MUTATIONS,
+        build=build,
+        run_checks=run_checks,
+    )
 
 
 if __name__ == "__main__":

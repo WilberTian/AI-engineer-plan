@@ -465,7 +465,8 @@ def build_system(extra: str = "") -&gt; str:
     return "\n\n".join(p.strip() for p in parts if p.strip())</code></pre>
 
         <div class="out"><b>产物</b><code>src/agentlab/prompt.py</code> + <code>loop.py</code> 改为调 <code>build_system()</code>，跑一次 eval 确认通过率不下降</div>
-        <div class="verify"><b>验收</b>eval 通过率不低于改动前；能说出「动态部分为什么不能写死在常量里」（因为时间/文件数会变，写死会让模型基于过期信息行动，还会破坏 prompt 缓存）。</div>
+        <div class="verify"><b>验收</b>eval 通过率不低于改动前；能说出「动态部分为什么不能写死在常量里」（因为时间/文件数会变，写死会让模型基于过期信息行动，还会破坏 prompt 缓存）。
+<br><b>自检</b><code>labs/p3-5/</code> 有 14 条离线判分（五段顺序、换时间换 extra 前缀仍稳定），跑 <code>python3 labs/p3-5/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
             <li><b>改完通过率掉了</b>：说明原来的常量里有某句关键的约束被你归错层或删了。用 eval 逐条查哪条 case 翻转，把它加回去。</li>
@@ -498,6 +499,12 @@ def build_system(extra: str = "") -&gt; str:
 
         <p>加一栏「组合用法」，这才是真实答案：</p>
         <p class="muted">典型生产组合 = <b>结构化抽取管任务状态</b> + <b>摘要压缩管对话脉络</b> + <b>外置检索管历史细节</b> + <b>滑动窗口兜底最近 3 轮原文</b>。单一策略都不够。</p>
+
+        <div class="callout">
+          <b>这张表和 P3-12 的「压缩三层」不是两套分类</b>
+          <p>本表是<b>策略空间</b>——对上下文一共能做这四种事，横向挑一个用。P3-12 那三层是<b>执行顺序</b>：同一次运行里从便宜到贵依次触发。两者一一对应，别记成两套：<b>截断 ↔ 滑动窗口</b>（都是直接丢旧的）、<b>摘要 ↔ 摘要压缩</b>（同一个东西）、<b>交接单 ↔ 结构化抽取</b>（交接单就是那五个字段的结构化产物）。</p>
+          <p><b>外置检索不在这条压缩链上</b>：它不是「对已进来的信息做减法」，而是「让信息根本别进来」——它属于 P3-12 线索二「按需加载」，和记忆走同一条路（P2-17）。</p>
+        </div>
 
         <div class="out"><b>产物</b><code>notes/context-strategies.md</code>：上面这张表 + 你的组合方案 + 一次实测（压缩前后任务完成率对比）</div>
         <div class="verify"><b>验收</b>能回答「压缩后任务失败率上升，你怎么定位是哪部分信息丢了」——方法：对比压缩前后的抽取结果，看哪个字段缺失；再针对那条 case 做最小复现。</div>
@@ -784,7 +791,7 @@ from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
-from agentlab.rag.retrieve import hybrid_retrieve   <span class="cmt"># P2 的实现</span>
+from agentlab.rag.retrieve import hybrid_retrieve   <span class="cmt"># P2-8 产出的统一入口</span>
 
 mcp = FastMCP("agentlab-kb")
 
@@ -820,9 +827,16 @@ def stats() -&gt; str:
 
     with psycopg.connect("postgresql://postgres:devpass@localhost:5432/agentlab") as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT count(*), count(DISTINCT doc_id) FROM chunks")
+            <span class="cmt"># 两个过滤都不能省：① strategy——入库时三种分块策略各存了一份，
+            # 不过滤会把块数算成 3 倍；② tenant_id——MCP 侧也要遵守 P2-11 的权限纪律，
+            # 这条数据对所有人都可见，等于把租户过滤绕过了一次。</span>
+            cur.execute(
+                """SELECT count(*), count(DISTINCT doc_id) FROM chunks
+                   WHERE strategy = %s AND tenant_id = %s""",
+                ("structural", "demo"),
+            )
             n, d = cur.fetchone()
-    return f"chunks={n}, documents={d}"
+    return f"documents={d}, chunks={n}（策略 structural）"
 
 
 if __name__ == "__main__":
@@ -848,12 +862,15 @@ if __name__ == "__main__":
           <li><b>写一个程序化客户端测试</b>（这样能进 CI）：
 <pre><code><span class="str">"""scripts/test_mcp.py"""</span>
 import asyncio
-from mcp import ClientSession
+from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 async def main() -&gt; None:
-    params = stdio_client(["uv", "run", "python", "src/agentlab/mcp_server.py"])
-    async with params as (read, write):
+    <span class="cmt"># command 是程序名，args 是参数列表——两个必须分开传。
+    # 写成 stdio_client(["uv","run","python",...]) 是搜到的最常见的错法。</span>
+    params = StdioServerParameters(
+        command="uv", args=["run", "python", "src/agentlab/mcp_server.py"])
+    async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
@@ -897,7 +914,7 @@ from __future__ import annotations
 import asyncio
 import json
 
-from mcp import ClientSession
+from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from agentlab.tools import Registry, Tool, ToolResult
@@ -911,9 +928,14 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
     """</span>
     registry = Registry()
 
+    <span class="cmt"># stdio_client 不吃 argv 列表：它要的是「程序名」和「参数列表」分开的
+    # StdioServerParameters。直接把 ["uv","run",...] 整个传进去会连不上 server，
+    # 而且报错信息不指向这里。统一在这里转一次，_load 和 _call 都用同一个 params。</span>
+    params = StdioServerParameters(command=command[0], args=command[1:])
+
     <span class="cmt"># 工具清单只在启动时取一次：schema 不会每轮都变，没必要每次调用都去问</span>
     async def _load() -&gt; list[tuple[str, str, dict]]:
-        async with stdio_client(command) as (read, write):
+        async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 listed = await session.list_tools()
@@ -927,7 +949,7 @@ def load_mcp_tools(command: list[str], prefix: str = "kb") -&gt; Registry:
                 <span class="cmt"># 每次调用都重开进程、重新 initialize：这是把代码留在同步世界要付的代价，</span>
                 <span class="cmt"># 单次多 100–300ms，而且拿不到 server 端的状态。</span>
                 async def _call() -&gt; ToolResult:
-                    async with stdio_client(command) as (read, write):
+                    async with stdio_client(params) as (read, write):
                         async with ClientSession(read, write) as session:
                             await session.initialize()
                             res = await session.call_tool(tool_name, kwargs)
@@ -1063,7 +1085,7 @@ def log_step(name: str, payload: dict, usage: dict | None = None) -&gt; None:
           <h5>记忆不是存储，是「按需加载」的一类</h5>
           <p><b>记忆和上下文不是两件事。</b>记忆是存在外面的数据，每次使用都是「取出来、拼进上下文」，所以它天然属于本卡第二条线索——按需加载。想清这一点，就不会把记忆做成「全文塞进 system」。</p>
           <ul>
-            <li><b>三种写入策略，按代价排序</b>：① <b>全量追加</b>（一句一句存，最便宜，但检索时噪音大）；② <b>摘要压缩</b>（每 N 轮让模型压成一段，多一次调用，会丢细节）；③ <b>结构化抽取</b>（只抽成「偏好 / 事实 / 待办」三类槽位，最贵，但冲突检测和过期处理只有结构化之后才做得了）。<b>先做全量 + 检索，不要一上来就结构化</b>——没有全量原始数据，你无法回填。</li>
+            <li><b>三种写入策略，按代价排序</b>：① <b>全量追加</b>（一句一句存，最便宜，但检索时噪音大）；② <b>摘要压缩</b>（每 N 轮让模型压成一段，多一次调用，会丢细节）；③ <b>结构化抽取</b>（只抽成「偏好 / 事实 / 待办」三类槽位，最贵，但冲突检测和过期处理只有结构化之后才做得了）。<b>先做全量 + 检索，不要一上来就结构化</b>——没有全量原始数据，你无法回填。<br><span class="muted">这三个档和 <a href="stage-p2.html#p2-17">P2-17</a> 的四种<b>存储格式</b>是同一件事的两个面，不是两套阶梯：全量追加 ↔ Simple / Enhanced Notes（原文留存），结构化抽取 ↔ JSON Cards（支持部分更新）。P2-17 决定「存成什么形状」，这里决定「愿意为写入花多少代价」。</span></li>
             <li><b>记忆是注入攻击的第二入口</b>：第一是文档（P4-4 已覆盖），第二就是记忆。攻击者只要让 agent 记下一条「以后这类操作都不用再确认」，之后每一轮都会自动带上它。<b>写入前要过和不可信内容同样的隔离规则</b>，别把记忆当成「自己的数据」。</li>
             <li><b>什么时候不该写</b>：一次性的任务参数、能从别处查到的（用户 ID、订单状态）、24 小时内会过期的状态。<b>写成记忆的东西会被一直读到，所以错误的记忆比没有记忆更糟</b>——它在之后每一轮都污染上下文。</li>
           </ul>
@@ -1166,6 +1188,7 @@ STATE_BAR = <span class="str">"""## 当前状态
         </div>
 
         <p class="muted">这三层都是<b>信息已经进来之后做减法</b>。还有一条更彻底的路：让它根本别进来。</p>
+        <p class="muted"><b>这三层不是另一套分类</b>：它就是 <a href="#p3-6">P3-6</a> 那张表里前三种策略按代价排好序之后的执行顺序——截断 ↔ 滑动窗口、摘要 ↔ 摘要压缩、交接单 ↔ 结构化抽取。P3-6 回答「有哪几种可选」，这里回答「先动哪一个」。第四种策略「外置检索」不在这条链上，它属于上面线索二的按需加载。</p>
 
         <h5>压缩之外的第四条路：让大块信息根本不进主上下文</h5>
 
@@ -1189,7 +1212,8 @@ STATE_BAR = <span class="str">"""## 当前状态
 
         <div class="verify"><b>验收</b>
           三个数都要有：① 同一个任务跑第二轮起，<code>cached_ratio</code> <b>大于 0.7</b>；② 接完 skill 后常驻工具数<b>下降而任务成功率不降</b>；③ 人为把上下文灌到 70% 触发压缩，<b>压缩后 token 降一半且通过率不掉超过 5 个点</b>；④ 子 agent 回传给主 agent 的内容 <b>不超过 500 token 且结论完整</b>（拿同一个搜索任务跟「主 agent 自己搜」对比主上下文的增量）。四个数缺一个都不算过——只讲「我做了压缩」而不报数字，面试官会继续追问到答不出。
-        </div>
+        
+<br><b>自检</b><code>labs/p3-12/</code> 有 15 条离线判分（状态栏不进前缀、命中率缺字段不除零），跑 <code>python3 labs/p3-12/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
@@ -1274,7 +1298,8 @@ python evals/run_eval.py --cases evals/v2.jsonl &gt; /tmp/v2.json</code></pre>
 
         <div class="verify"><b>验收</b>
           三个判据：① v2 至少 10 条，每条 <code>expected</code> 是人填的——模型自评的 case 在面试里一问就穿；② <b>v1 通过率 − v2 通过率 ≥ 10 个点</b>，如果两个几乎一样，先怀疑筛的信号不对，别先怀疑「我的系统很稳」；③ <code>compare.md</code> 能点出具体漏了哪一类，比如「v1 里 0 条涉及工具返回空结果，而线上 40% 的错都在这儿」。
-        </div>
+        
+<br><b>自检</b><code>labs/p3-13/</code> 有 13 条离线判分（9 条 trace 挖出 5 条、expected 留空、不误报），跑 <code>python3 labs/p3-13/harness/run_checks.py --target .</code>；判不了的那部分写在它的 CONTRACT §3。</div>
 
         <div class="stuck"><b>卡住怎么办</b>
           <ul>
